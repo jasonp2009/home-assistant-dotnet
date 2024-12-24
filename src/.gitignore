@@ -1,0 +1,10 @@
+obj
+bin
+appsettings.Development.json
+.vs
+*.gen
+.idea
+appsettings.json
+appsettings.*.json
+*.yaml
+#HomeAssistantGenerated.cs

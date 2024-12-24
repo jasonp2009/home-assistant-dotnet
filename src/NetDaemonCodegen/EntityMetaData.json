@@ -1,0 +1,1326 @@
+{
+  "domains": [
+    {
+      "domain": "light",
+      "entities": [
+        {
+          "id": "light.bedroom_lamp",
+          "friendlyName": "Bedroom Lamp",
+          "cSharpName": "BedroomLamp"
+        },
+        {
+          "id": "light.shelf_lamp",
+          "friendlyName": "Shelf Lamp",
+          "cSharpName": "ShelfLamp"
+        }
+      ],
+      "attributes": [
+        {
+          "jsonName": "supported_color_modes",
+          "cSharpName": "SupportedColorModes",
+          "clrType": "System.Collections.Generic.IReadOnlyList\u00601[System.String]"
+        },
+        {
+          "jsonName": "supported_features",
+          "cSharpName": "SupportedFeatures",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "color_mode",
+          "cSharpName": "ColorMode",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "min_color_temp_kelvin",
+          "cSharpName": "MinColorTempKelvin",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "max_color_temp_kelvin",
+          "cSharpName": "MaxColorTempKelvin",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "min_mireds",
+          "cSharpName": "MinMireds",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "max_mireds",
+          "cSharpName": "MaxMireds",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "brightness",
+          "cSharpName": "Brightness",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "color_temp_kelvin",
+          "cSharpName": "ColorTempKelvin",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "color_temp",
+          "cSharpName": "ColorTemp",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "hs_color",
+          "cSharpName": "HsColor",
+          "clrType": "System.Collections.Generic.IReadOnlyList\u00601[System.Double]"
+        },
+        {
+          "jsonName": "rgb_color",
+          "cSharpName": "RgbColor",
+          "clrType": "System.Collections.Generic.IReadOnlyList\u00601[System.Double]"
+        },
+        {
+          "jsonName": "xy_color",
+          "cSharpName": "XyColor",
+          "clrType": "System.Collections.Generic.IReadOnlyList\u00601[System.Double]"
+        },
+        {
+          "jsonName": "entity_id",
+          "cSharpName": "EntityId",
+          "clrType": "System.Collections.Generic.IReadOnlyList\u00601[System.String]"
+        },
+        {
+          "jsonName": "effect_list",
+          "cSharpName": "EffectList",
+          "clrType": "System.Collections.Generic.IReadOnlyList\u00601[System.String]"
+        },
+        {
+          "jsonName": "color",
+          "cSharpName": "Color",
+          "clrType": "System.Object"
+        },
+        {
+          "jsonName": "friendly_name",
+          "cSharpName": "FriendlyName",
+          "clrType": "System.String"
+        }
+      ]
+    },
+    {
+      "domain": "media_player",
+      "entities": [
+        {
+          "id": "media_player.av_samsung_soundbar_q950a",
+          "friendlyName": "[AV] Samsung Soundbar Q950A",
+          "cSharpName": "AvSamsungSoundbarQ950a"
+        },
+        {
+          "id": "media_player.chromecast",
+          "friendlyName": null,
+          "cSharpName": "Chromecast"
+        },
+        {
+          "id": "media_player.kitchen_display",
+          "friendlyName": "Kitchen display",
+          "cSharpName": "KitchenDisplay"
+        },
+        {
+          "id": "media_player.lg_webos_tv_oled65g4psa",
+          "friendlyName": "[LG] webOS TV OLED65G4PSA",
+          "cSharpName": "LgWebosTvOled65g4psa"
+        },
+        {
+          "id": "media_player.shield",
+          "friendlyName": "SHIELD",
+          "cSharpName": "Shield"
+        }
+      ],
+      "attributes": [
+        {
+          "jsonName": "app_id",
+          "cSharpName": "AppId",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "app_name",
+          "cSharpName": "AppName",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "device_class",
+          "cSharpName": "DeviceClass",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "entity_picture_local",
+          "cSharpName": "EntityPictureLocal",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "entity_picture",
+          "cSharpName": "EntityPicture",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "icon",
+          "cSharpName": "Icon",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "friendly_name",
+          "cSharpName": "FriendlyName",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "supported_features",
+          "cSharpName": "SupportedFeatures",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "volume_level",
+          "cSharpName": "VolumeLevel",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "is_volume_muted",
+          "cSharpName": "IsVolumeMuted",
+          "clrType": "System.Boolean"
+        },
+        {
+          "jsonName": "media_content_id",
+          "cSharpName": "MediaContentId",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "media_content_type",
+          "cSharpName": "MediaContentType",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "media_duration",
+          "cSharpName": "MediaDuration",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "media_position",
+          "cSharpName": "MediaPosition",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "media_position_updated_at",
+          "cSharpName": "MediaPositionUpdatedAt",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "media_title",
+          "cSharpName": "MediaTitle",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "media_album_name",
+          "cSharpName": "MediaAlbumName",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "media_image_url",
+          "cSharpName": "MediaImageUrl",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "media_artist",
+          "cSharpName": "MediaArtist",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "sound_mode_list",
+          "cSharpName": "SoundModeList",
+          "clrType": "System.Collections.Generic.IReadOnlyList\u00601[System.String]"
+        },
+        {
+          "jsonName": "media_track",
+          "cSharpName": "MediaTrack",
+          "clrType": "System.Object"
+        },
+        {
+          "jsonName": "shuffle",
+          "cSharpName": "Shuffle",
+          "clrType": "System.Boolean"
+        },
+        {
+          "jsonName": "repeat",
+          "cSharpName": "Repeat",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "source_list",
+          "cSharpName": "SourceList",
+          "clrType": "System.Collections.Generic.IReadOnlyList\u00601[System.String]"
+        },
+        {
+          "jsonName": "source",
+          "cSharpName": "Source",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "adb_response",
+          "cSharpName": "AdbResponse",
+          "clrType": "System.Object"
+        },
+        {
+          "jsonName": "hdmi_input",
+          "cSharpName": "HdmiInput",
+          "clrType": "System.Object"
+        },
+        {
+          "jsonName": "sound_mode",
+          "cSharpName": "SoundMode",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "sound_mode_raw",
+          "cSharpName": "SoundModeRaw",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "restored",
+          "cSharpName": "Restored",
+          "clrType": "System.Boolean"
+        }
+      ]
+    },
+    {
+      "domain": "binary_sensor",
+      "entities": [
+        {
+          "id": "binary_sensor.lights_button_cloud_connection",
+          "friendlyName": "Lights Button Cloud connection",
+          "cSharpName": "LightsButtonCloudConnection"
+        },
+        {
+          "id": "binary_sensor.remote_ui",
+          "friendlyName": "Remote UI",
+          "cSharpName": "RemoteUi"
+        },
+        {
+          "id": "binary_sensor.temperature_and_humidity_sensor_cloud_connection",
+          "friendlyName": "Jason\u0027s Bedroom Temperature Sensor Cloud connection",
+          "cSharpName": "TemperatureAndHumiditySensorCloudConnection"
+        }
+      ],
+      "attributes": [
+        {
+          "jsonName": "device_class",
+          "cSharpName": "DeviceClass",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "friendly_name",
+          "cSharpName": "FriendlyName",
+          "clrType": "System.String"
+        }
+      ]
+    },
+    {
+      "domain": "climate",
+      "entities": [
+        {
+          "id": "climate.auto_discovery",
+          "friendlyName": "Mitsubishi AC",
+          "cSharpName": "AutoDiscovery"
+        }
+      ],
+      "attributes": [
+        {
+          "jsonName": "hvac_modes",
+          "cSharpName": "HvacModes",
+          "clrType": "System.Collections.Generic.IReadOnlyList\u00601[System.String]"
+        },
+        {
+          "jsonName": "min_temp",
+          "cSharpName": "MinTemp",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "max_temp",
+          "cSharpName": "MaxTemp",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "target_temp_step",
+          "cSharpName": "TargetTempStep",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "fan_modes",
+          "cSharpName": "FanModes",
+          "clrType": "System.Collections.Generic.IReadOnlyList\u00601[System.String]"
+        },
+        {
+          "jsonName": "current_temperature",
+          "cSharpName": "CurrentTemperature",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "temperature",
+          "cSharpName": "Temperature",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "fan_mode",
+          "cSharpName": "FanMode",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "hvac_action",
+          "cSharpName": "HvacAction",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "friendly_name",
+          "cSharpName": "FriendlyName",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "supported_features",
+          "cSharpName": "SupportedFeatures",
+          "clrType": "System.Double"
+        }
+      ]
+    },
+    {
+      "domain": "conversation",
+      "entities": [
+        {
+          "id": "conversation.home_assistant",
+          "friendlyName": "Home Assistant",
+          "cSharpName": "HomeAssistant"
+        }
+      ],
+      "attributes": [
+        {
+          "jsonName": "friendly_name",
+          "cSharpName": "FriendlyName",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "supported_features",
+          "cSharpName": "SupportedFeatures",
+          "clrType": "System.Double"
+        }
+      ]
+    },
+    {
+      "domain": "person",
+      "entities": [
+        {
+          "id": "person.jason_pawar",
+          "friendlyName": "Jason Pawar",
+          "cSharpName": "JasonPawar"
+        }
+      ],
+      "attributes": [
+        {
+          "jsonName": "editable",
+          "cSharpName": "Editable",
+          "clrType": "System.Boolean"
+        },
+        {
+          "jsonName": "id",
+          "cSharpName": "Id",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "device_trackers",
+          "cSharpName": "DeviceTrackers",
+          "clrType": "System.Object"
+        },
+        {
+          "jsonName": "user_id",
+          "cSharpName": "UserId",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "friendly_name",
+          "cSharpName": "FriendlyName",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "latitude",
+          "cSharpName": "Latitude",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "longitude",
+          "cSharpName": "Longitude",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "gps_accuracy",
+          "cSharpName": "GpsAccuracy",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "source",
+          "cSharpName": "Source",
+          "clrType": "System.String"
+        }
+      ]
+    },
+    {
+      "domain": "select",
+      "entities": [
+        {
+          "id": "select.tapo_hub_alarm_sound",
+          "friendlyName": "Tapo Hub Alarm sound",
+          "cSharpName": "TapoHubAlarmSound"
+        }
+      ],
+      "attributes": [
+        {
+          "jsonName": "options",
+          "cSharpName": "Options",
+          "clrType": "System.Collections.Generic.IReadOnlyList\u00601[System.String]"
+        },
+        {
+          "jsonName": "friendly_name",
+          "cSharpName": "FriendlyName",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "notify",
+          "cSharpName": "Notify",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "icon",
+          "cSharpName": "Icon",
+          "clrType": "System.String"
+        }
+      ]
+    },
+    {
+      "domain": "sensor",
+      "entities": [
+        {
+          "id": "sensor.lights_button_signal_level",
+          "friendlyName": "Lights Button Signal level",
+          "cSharpName": "LightsButtonSignalLevel"
+        },
+        {
+          "id": "sensor.pixel_7_pro_battery_state",
+          "friendlyName": "Pixel 7 Pro Battery state",
+          "cSharpName": "Pixel7ProBatteryState"
+        },
+        {
+          "id": "sensor.pixel_7_pro_charger_type",
+          "friendlyName": "Pixel 7 Pro Charger type",
+          "cSharpName": "Pixel7ProChargerType"
+        },
+        {
+          "id": "sensor.puppy_activity",
+          "friendlyName": "puppy Activity",
+          "cSharpName": "PuppyActivity"
+        },
+        {
+          "id": "sensor.puppy_app_version",
+          "friendlyName": "puppy App Version",
+          "cSharpName": "PuppyAppVersion"
+        },
+        {
+          "id": "sensor.puppy_audio_output",
+          "friendlyName": "puppy Audio Output",
+          "cSharpName": "PuppyAudioOutput"
+        },
+        {
+          "id": "sensor.puppy_battery_state",
+          "friendlyName": "puppy Battery State",
+          "cSharpName": "PuppyBatteryState"
+        },
+        {
+          "id": "sensor.puppy_bssid",
+          "friendlyName": "puppy BSSID",
+          "cSharpName": "PuppyBssid"
+        },
+        {
+          "id": "sensor.puppy_connection_type",
+          "friendlyName": "puppy Connection Type",
+          "cSharpName": "PuppyConnectionType"
+        },
+        {
+          "id": "sensor.puppy_geocoded_location",
+          "friendlyName": "puppy Geocoded Location",
+          "cSharpName": "PuppyGeocodedLocation"
+        },
+        {
+          "id": "sensor.puppy_last_update_trigger",
+          "friendlyName": "puppy Last Update Trigger",
+          "cSharpName": "PuppyLastUpdateTrigger"
+        },
+        {
+          "id": "sensor.puppy_location_permission",
+          "friendlyName": "puppy Location permission",
+          "cSharpName": "PuppyLocationPermission"
+        },
+        {
+          "id": "sensor.puppy_ssid",
+          "friendlyName": "puppy SSID",
+          "cSharpName": "PuppySsid"
+        },
+        {
+          "id": "sensor.sun_next_dawn",
+          "friendlyName": "Sun Next dawn",
+          "cSharpName": "SunNextDawn"
+        },
+        {
+          "id": "sensor.sun_next_dusk",
+          "friendlyName": "Sun Next dusk",
+          "cSharpName": "SunNextDusk"
+        },
+        {
+          "id": "sensor.sun_next_midnight",
+          "friendlyName": "Sun Next midnight",
+          "cSharpName": "SunNextMidnight"
+        },
+        {
+          "id": "sensor.sun_next_noon",
+          "friendlyName": "Sun Next noon",
+          "cSharpName": "SunNextNoon"
+        },
+        {
+          "id": "sensor.sun_next_rising",
+          "friendlyName": "Sun Next rising",
+          "cSharpName": "SunNextRising"
+        },
+        {
+          "id": "sensor.sun_next_setting",
+          "friendlyName": "Sun Next setting",
+          "cSharpName": "SunNextSetting"
+        },
+        {
+          "id": "sensor.temperature_and_humidity_sensor_signal_level",
+          "friendlyName": "Jason\u0027s Bedroom Temperature Sensor Signal level",
+          "cSharpName": "TemperatureAndHumiditySensorSignalLevel"
+        }
+      ],
+      "attributes": [
+        {
+          "jsonName": "device_class",
+          "cSharpName": "DeviceClass",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "friendly_name",
+          "cSharpName": "FriendlyName",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "state_class",
+          "cSharpName": "StateClass",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "options",
+          "cSharpName": "Options",
+          "clrType": "System.Collections.Generic.IReadOnlyList\u00601[System.String]"
+        },
+        {
+          "jsonName": "icon",
+          "cSharpName": "Icon",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "Low Power Mode",
+          "cSharpName": "LowPowerMode",
+          "clrType": "System.Boolean"
+        },
+        {
+          "jsonName": "Confidence",
+          "cSharpName": "Confidence",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "Types",
+          "cSharpName": "Types",
+          "clrType": "System.Collections.Generic.IReadOnlyList\u00601[System.String]"
+        }
+      ]
+    },
+    {
+      "domain": "sensor",
+      "isNumeric": true,
+      "entities": [
+        {
+          "id": "sensor.pixel_7_pro_battery_level",
+          "friendlyName": "Pixel 7 Pro Battery level",
+          "cSharpName": "Pixel7ProBatteryLevel"
+        },
+        {
+          "id": "sensor.puppy_battery_level",
+          "friendlyName": "puppy Battery Level",
+          "cSharpName": "PuppyBatteryLevel"
+        },
+        {
+          "id": "sensor.puppy_storage",
+          "friendlyName": "puppy Storage",
+          "cSharpName": "PuppyStorage"
+        },
+        {
+          "id": "sensor.temperature_and_humidity_sensor_humidity",
+          "friendlyName": "Jason\u0027s Bedroom Temperature Sensor Humidity",
+          "cSharpName": "TemperatureAndHumiditySensorHumidity"
+        },
+        {
+          "id": "sensor.temperature_and_humidity_sensor_temperature",
+          "friendlyName": "Jason\u0027s Bedroom Temperature Sensor Temperature",
+          "cSharpName": "TemperatureAndHumiditySensorTemperature"
+        }
+      ],
+      "attributes": [
+        {
+          "jsonName": "state_class",
+          "cSharpName": "StateClass",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "unit_of_measurement",
+          "cSharpName": "UnitOfMeasurement",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "device_class",
+          "cSharpName": "DeviceClass",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "friendly_name",
+          "cSharpName": "FriendlyName",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "notify",
+          "cSharpName": "Notify",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "icon",
+          "cSharpName": "Icon",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "Available",
+          "cSharpName": "Available",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "Available (Important)",
+          "cSharpName": "AvailableImportant",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "Available (Opportunistic)",
+          "cSharpName": "AvailableOpportunistic",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "Total",
+          "cSharpName": "Total",
+          "clrType": "System.String"
+        }
+      ]
+    },
+    {
+      "domain": "stt",
+      "entities": [
+        {
+          "id": "stt.home_assistant_cloud",
+          "friendlyName": "Home Assistant Cloud",
+          "cSharpName": "HomeAssistantCloud"
+        }
+      ],
+      "attributes": [
+        {
+          "jsonName": "friendly_name",
+          "cSharpName": "FriendlyName",
+          "clrType": "System.String"
+        }
+      ]
+    },
+    {
+      "domain": "sun",
+      "entities": [
+        {
+          "id": "sun.sun",
+          "friendlyName": "Sun",
+          "cSharpName": "Sun"
+        }
+      ],
+      "attributes": [
+        {
+          "jsonName": "next_dawn",
+          "cSharpName": "NextDawn",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "next_dusk",
+          "cSharpName": "NextDusk",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "next_midnight",
+          "cSharpName": "NextMidnight",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "next_noon",
+          "cSharpName": "NextNoon",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "next_rising",
+          "cSharpName": "NextRising",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "next_setting",
+          "cSharpName": "NextSetting",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "elevation",
+          "cSharpName": "Elevation",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "azimuth",
+          "cSharpName": "Azimuth",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "rising",
+          "cSharpName": "Rising",
+          "clrType": "System.Boolean"
+        },
+        {
+          "jsonName": "friendly_name",
+          "cSharpName": "FriendlyName",
+          "clrType": "System.String"
+        }
+      ]
+    },
+    {
+      "domain": "switch",
+      "entities": [
+        {
+          "id": "switch.tapo_hub_led",
+          "friendlyName": "Tapo Hub LED",
+          "cSharpName": "TapoHubLed"
+        }
+      ],
+      "attributes": [
+        {
+          "jsonName": "friendly_name",
+          "cSharpName": "FriendlyName",
+          "clrType": "System.String"
+        }
+      ]
+    },
+    {
+      "domain": "todo",
+      "entities": [
+        {
+          "id": "todo.shopping_list",
+          "friendlyName": "Shopping List",
+          "cSharpName": "ShoppingList"
+        }
+      ],
+      "attributes": [
+        {
+          "jsonName": "friendly_name",
+          "cSharpName": "FriendlyName",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "supported_features",
+          "cSharpName": "SupportedFeatures",
+          "clrType": "System.Double"
+        }
+      ]
+    },
+    {
+      "domain": "tts",
+      "entities": [
+        {
+          "id": "tts.google_translate_en_com",
+          "friendlyName": "Google Translate en com",
+          "cSharpName": "GoogleTranslateEnCom"
+        },
+        {
+          "id": "tts.home_assistant_cloud",
+          "friendlyName": "Home Assistant Cloud",
+          "cSharpName": "HomeAssistantCloud"
+        }
+      ],
+      "attributes": [
+        {
+          "jsonName": "friendly_name",
+          "cSharpName": "FriendlyName",
+          "clrType": "System.String"
+        }
+      ]
+    },
+    {
+      "domain": "update",
+      "entities": [
+        {
+          "id": "update.dual_smart_thermostat_update",
+          "friendlyName": "Dual Smart Thermostat update",
+          "cSharpName": "DualSmartThermostatUpdate"
+        },
+        {
+          "id": "update.echonetlite_platform_update",
+          "friendlyName": "ECHONETLite Platform update",
+          "cSharpName": "EchonetlitePlatformUpdate"
+        },
+        {
+          "id": "update.get_hacs_update",
+          "friendlyName": "Get HACS Update",
+          "cSharpName": "GetHacsUpdate"
+        },
+        {
+          "id": "update.hacs_update",
+          "friendlyName": "HACS update",
+          "cSharpName": "HacsUpdate"
+        },
+        {
+          "id": "update.home_assistant_core_update",
+          "friendlyName": "Home Assistant Core Update",
+          "cSharpName": "HomeAssistantCoreUpdate"
+        },
+        {
+          "id": "update.home_assistant_operating_system_update",
+          "friendlyName": "Home Assistant Operating System Update",
+          "cSharpName": "HomeAssistantOperatingSystemUpdate"
+        },
+        {
+          "id": "update.home_assistant_supervisor_update",
+          "friendlyName": "Home Assistant Supervisor Update",
+          "cSharpName": "HomeAssistantSupervisorUpdate"
+        },
+        {
+          "id": "update.netdaemon_v5_net_9_update",
+          "friendlyName": "NetDaemon V5 (.NET 9) Update",
+          "cSharpName": "NetdaemonV5Net9Update"
+        },
+        {
+          "id": "update.samba_share_update",
+          "friendlyName": "Samba share Update",
+          "cSharpName": "SambaShareUpdate"
+        }
+      ],
+      "attributes": [
+        {
+          "jsonName": "auto_update",
+          "cSharpName": "AutoUpdate",
+          "clrType": "System.Boolean"
+        },
+        {
+          "jsonName": "display_precision",
+          "cSharpName": "DisplayPrecision",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "installed_version",
+          "cSharpName": "InstalledVersion",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "in_progress",
+          "cSharpName": "InProgress",
+          "clrType": "System.Boolean"
+        },
+        {
+          "jsonName": "latest_version",
+          "cSharpName": "LatestVersion",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "release_summary",
+          "cSharpName": "ReleaseSummary",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "release_url",
+          "cSharpName": "ReleaseUrl",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "skipped_version",
+          "cSharpName": "SkippedVersion",
+          "clrType": null
+        },
+        {
+          "jsonName": "title",
+          "cSharpName": "Title",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "update_percentage",
+          "cSharpName": "UpdatePercentage",
+          "clrType": null
+        },
+        {
+          "jsonName": "entity_picture",
+          "cSharpName": "EntityPicture",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "friendly_name",
+          "cSharpName": "FriendlyName",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "supported_features",
+          "cSharpName": "SupportedFeatures",
+          "clrType": "System.Double"
+        }
+      ]
+    },
+    {
+      "domain": "weather",
+      "entities": [
+        {
+          "id": "weather.forecast_home",
+          "friendlyName": "Forecast Home",
+          "cSharpName": "ForecastHome"
+        }
+      ],
+      "attributes": [
+        {
+          "jsonName": "temperature",
+          "cSharpName": "Temperature",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "dew_point",
+          "cSharpName": "DewPoint",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "temperature_unit",
+          "cSharpName": "TemperatureUnit",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "humidity",
+          "cSharpName": "Humidity",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "cloud_coverage",
+          "cSharpName": "CloudCoverage",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "uv_index",
+          "cSharpName": "UvIndex",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "pressure",
+          "cSharpName": "Pressure",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "pressure_unit",
+          "cSharpName": "PressureUnit",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "wind_bearing",
+          "cSharpName": "WindBearing",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "wind_speed",
+          "cSharpName": "WindSpeed",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "wind_speed_unit",
+          "cSharpName": "WindSpeedUnit",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "visibility_unit",
+          "cSharpName": "VisibilityUnit",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "precipitation_unit",
+          "cSharpName": "PrecipitationUnit",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "attribution",
+          "cSharpName": "Attribution",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "friendly_name",
+          "cSharpName": "FriendlyName",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "supported_features",
+          "cSharpName": "SupportedFeatures",
+          "clrType": "System.Double"
+        }
+      ]
+    },
+    {
+      "domain": "zone",
+      "entities": [
+        {
+          "id": "zone.home",
+          "friendlyName": "Home",
+          "cSharpName": "Home"
+        }
+      ],
+      "attributes": [
+        {
+          "jsonName": "latitude",
+          "cSharpName": "Latitude",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "longitude",
+          "cSharpName": "Longitude",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "radius",
+          "cSharpName": "Radius",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "passive",
+          "cSharpName": "Passive",
+          "clrType": "System.Boolean"
+        },
+        {
+          "jsonName": "persons",
+          "cSharpName": "Persons",
+          "clrType": "System.Object"
+        },
+        {
+          "jsonName": "editable",
+          "cSharpName": "Editable",
+          "clrType": "System.Boolean"
+        },
+        {
+          "jsonName": "icon",
+          "cSharpName": "Icon",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "friendly_name",
+          "cSharpName": "FriendlyName",
+          "clrType": "System.String"
+        }
+      ]
+    },
+    {
+      "domain": "input_boolean",
+      "entities": [
+        {
+          "id": "input_boolean.dev_netdaemon_app_model_hello_yaml_app",
+          "friendlyName": "dev_netdaemon_app_model_hello_yaml_app",
+          "cSharpName": "DevNetdaemonAppModelHelloYamlApp"
+        },
+        {
+          "id": "input_boolean.dev_netdaemon_extensions_scheduling_scheduling_app",
+          "friendlyName": "dev_netdaemon_extensions_scheduling_scheduling_app",
+          "cSharpName": "DevNetdaemonExtensionsSchedulingSchedulingApp"
+        },
+        {
+          "id": "input_boolean.dev_netdaemon_hass_model_hello_world_app",
+          "friendlyName": "dev_netdaemon_hass_model_hello_world_app",
+          "cSharpName": "DevNetdaemonHassModelHelloWorldApp"
+        },
+        {
+          "id": "input_boolean.dev_netdaemon_hass_model_light_on_movement",
+          "friendlyName": "dev_netdaemon_hass_model_light_on_movement",
+          "cSharpName": "DevNetdaemonHassModelLightOnMovement"
+        },
+        {
+          "id": "input_boolean.dev_netdaemon_src_apps_hass_model_ac_ac_control",
+          "friendlyName": "dev_netdaemon_src_apps_hass_model_ac_ac_control",
+          "cSharpName": "DevNetdaemonSrcAppsHassModelAcAcControl"
+        },
+        {
+          "id": "input_boolean.jason_s_bedroom_ac_switch",
+          "friendlyName": "Jason\u0027s Bedroom AC Switch",
+          "cSharpName": "JasonSBedroomAcSwitch"
+        },
+        {
+          "id": "input_boolean.netdaemon_app_model_hello_yaml_app",
+          "friendlyName": "netdaemon_app_model_hello_yaml_app",
+          "cSharpName": "NetdaemonAppModelHelloYamlApp"
+        },
+        {
+          "id": "input_boolean.netdaemon_extensions_scheduling_scheduling_app",
+          "friendlyName": "netdaemon_extensions_scheduling_scheduling_app",
+          "cSharpName": "NetdaemonExtensionsSchedulingSchedulingApp"
+        },
+        {
+          "id": "input_boolean.netdaemon_hass_model_hello_world_app",
+          "friendlyName": "netdaemon_hass_model_hello_world_app",
+          "cSharpName": "NetdaemonHassModelHelloWorldApp"
+        },
+        {
+          "id": "input_boolean.netdaemon_hass_model_light_on_movement",
+          "friendlyName": "netdaemon_hass_model_light_on_movement",
+          "cSharpName": "NetdaemonHassModelLightOnMovement"
+        },
+        {
+          "id": "input_boolean.netdaemon_src_apps_hass_model_ac_ac_control",
+          "friendlyName": "netdaemon_src_apps_hass_model_ac_ac_control",
+          "cSharpName": "NetdaemonSrcAppsHassModelAcAcControl"
+        }
+      ],
+      "attributes": [
+        {
+          "jsonName": "editable",
+          "cSharpName": "Editable",
+          "clrType": "System.Boolean"
+        },
+        {
+          "jsonName": "friendly_name",
+          "cSharpName": "FriendlyName",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "icon",
+          "cSharpName": "Icon",
+          "clrType": "System.String"
+        }
+      ]
+    },
+    {
+      "domain": "input_number",
+      "isNumeric": true,
+      "entities": [
+        {
+          "id": "input_number.jason_s_bedroom_set_temperature",
+          "friendlyName": "Jason\u0027s Bedroom Set Temperature",
+          "cSharpName": "JasonSBedroomSetTemperature"
+        }
+      ],
+      "attributes": [
+        {
+          "jsonName": "initial",
+          "cSharpName": "Initial",
+          "clrType": null
+        },
+        {
+          "jsonName": "editable",
+          "cSharpName": "Editable",
+          "clrType": "System.Boolean"
+        },
+        {
+          "jsonName": "min",
+          "cSharpName": "Min",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "max",
+          "cSharpName": "Max",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "step",
+          "cSharpName": "Step",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "mode",
+          "cSharpName": "Mode",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "unit_of_measurement",
+          "cSharpName": "UnitOfMeasurement",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "icon",
+          "cSharpName": "Icon",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "friendly_name",
+          "cSharpName": "FriendlyName",
+          "clrType": "System.String"
+        }
+      ]
+    },
+    {
+      "domain": "device_tracker",
+      "entities": [
+        {
+          "id": "device_tracker.pixel_7_pro",
+          "friendlyName": "Pixel 7 Pro",
+          "cSharpName": "Pixel7Pro"
+        },
+        {
+          "id": "device_tracker.puppy",
+          "friendlyName": "puppy",
+          "cSharpName": "Puppy"
+        }
+      ],
+      "attributes": [
+        {
+          "jsonName": "source_type",
+          "cSharpName": "SourceType",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "latitude",
+          "cSharpName": "Latitude",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "longitude",
+          "cSharpName": "Longitude",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "gps_accuracy",
+          "cSharpName": "GpsAccuracy",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "altitude",
+          "cSharpName": "Altitude",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "course",
+          "cSharpName": "Course",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "speed",
+          "cSharpName": "Speed",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "vertical_accuracy",
+          "cSharpName": "VerticalAccuracy",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "friendly_name",
+          "cSharpName": "FriendlyName",
+          "clrType": "System.String"
+        }
+      ]
+    }
+  ]
+}
