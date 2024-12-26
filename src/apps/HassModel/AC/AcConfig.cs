@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using HomeAssistantGenerated;
 using NetDaemon.HassModel.Entities;
 
@@ -8,10 +9,18 @@ public class AcConfig
 {
     public string MitsubishiUsername { get; set; }
     public string MitsubishiPassword { get; set; }
+    public decimal Aggressiveness { get; set; } = 0;
+    public string DefaultProfileName { get; set; }
+    public AcProfileConfig DefaultProfile => Profiles.First(mode => mode.Name == DefaultProfileName);
+    public IEnumerable<AcProfileConfig> Profiles { get; set; }
+    public IEnumerable<AcRoomConfig> Rooms { get; set; }
+}
+
+public class AcProfileConfig
+{
+    public string Name { get; set; }
     public decimal OnTolerance { get; set; } = 1M;
     public decimal OffTolerance { get; set; } = 0.5M;
-    public decimal Aggressiveness { get; set; } = 0;
-    public IEnumerable<AcRoomConfig> Rooms { get; set; }
 }
 
 public class AcRoomConfig
@@ -20,6 +29,7 @@ public class AcRoomConfig
     public SensorEntity TemperatureSensorEntity { get; set; }
     public InputNumberEntity SetTemperatureEntity { get; set; }
     public InputBooleanEntity AcToggleEntity { get; set; }
+    public InputSelectEntity AcProfileSelectEntity { get; set; }
     public int ZoneId { get; set; }
     public bool IsOn => AcToggleEntity?.EntityState.IsOn() ?? false;
     public decimal? SetTemperature => Convert.ToDecimal(SetTemperatureEntity?.EntityState?.State);

@@ -4,14 +4,44 @@
       "domain": "light",
       "entities": [
         {
-          "id": "light.bedroom_lamp",
-          "friendlyName": "Bedroom Lamp",
-          "cSharpName": "BedroomLamp"
+          "id": "light.backyard_light",
+          "friendlyName": "Backyard Light",
+          "cSharpName": "BackyardLight"
         },
         {
-          "id": "light.shelf_lamp",
-          "friendlyName": "Shelf Lamp",
-          "cSharpName": "ShelfLamp"
+          "id": "light.dining_room_lamp",
+          "friendlyName": "Dining Room Lamp",
+          "cSharpName": "DiningRoomLamp"
+        },
+        {
+          "id": "light.dining_secondary_smart_bulb",
+          "friendlyName": "Secondary Light",
+          "cSharpName": "DiningSecondarySmartBulb"
+        },
+        {
+          "id": "light.jason_s_bedroom_light",
+          "friendlyName": "Jason\u0027s Bedroom Light",
+          "cSharpName": "JasonSBedroomLight"
+        },
+        {
+          "id": "light.lounge_smart_bulb",
+          "friendlyName": "Lounge Smart Bulb",
+          "cSharpName": "LoungeSmartBulb"
+        },
+        {
+          "id": "light.master_bedroom_entry_smart_bulb",
+          "friendlyName": "Master Bedroom Entry Smart Bulb",
+          "cSharpName": "MasterBedroomEntrySmartBulb"
+        },
+        {
+          "id": "light.master_bedroom_smart_bulb",
+          "friendlyName": "Master Bedroom Smart Bulb",
+          "cSharpName": "MasterBedroomSmartBulb"
+        },
+        {
+          "id": "light.office_smart_bulb",
+          "friendlyName": null,
+          "cSharpName": "OfficeSmartBulb"
         }
       ],
       "attributes": [
@@ -99,6 +129,16 @@
           "jsonName": "friendly_name",
           "cSharpName": "FriendlyName",
           "clrType": "System.String"
+        },
+        {
+          "jsonName": "effect",
+          "cSharpName": "Effect",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "restored",
+          "cSharpName": "Restored",
+          "clrType": "System.Boolean"
         }
       ]
     },
@@ -112,7 +152,7 @@
         },
         {
           "id": "media_player.chromecast",
-          "friendlyName": null,
+          "friendlyName": "Chromecast",
           "cSharpName": "Chromecast"
         },
         {
@@ -124,6 +164,41 @@
           "id": "media_player.lg_webos_tv_oled65g4psa",
           "friendlyName": "[LG] webOS TV OLED65G4PSA",
           "cSharpName": "LgWebosTvOled65g4psa"
+        },
+        {
+          "id": "media_player.lg_webos_tv_oled65g4psa_2",
+          "friendlyName": "[LG] webOS TV OLED65G4PSA",
+          "cSharpName": "LgWebosTvOled65g4psa2"
+        },
+        {
+          "id": "media_player.plex_krishna_plex_for_android_tv_shield_android_tv",
+          "friendlyName": "Plex (Plex for Android (TV) - SHIELD Android TV)",
+          "cSharpName": "PlexKrishnaPlexForAndroidTvShieldAndroidTv"
+        },
+        {
+          "id": "media_player.plex_plex_for_android_mobile_pixel_7_pro",
+          "friendlyName": "Plex (Plex for Android (Mobile) - Pixel 7 Pro)",
+          "cSharpName": "PlexPlexForAndroidMobilePixel7Pro"
+        },
+        {
+          "id": "media_player.plex_plex_for_windows_laptop_irmdvafv",
+          "friendlyName": "Plex (Plex for Windows - LAPTOP-IRMDVAFV)",
+          "cSharpName": "PlexPlexForWindowsLaptopIrmdvafv"
+        },
+        {
+          "id": "media_player.plex_plex_web_chrome_windows",
+          "friendlyName": "Plex (Plex Web - Chrome - Windows)",
+          "cSharpName": "PlexPlexWebChromeWindows"
+        },
+        {
+          "id": "media_player.plex_plexamp_android",
+          "friendlyName": "Plex (Plexamp - Android)",
+          "cSharpName": "PlexPlexampAndroid"
+        },
+        {
+          "id": "media_player.plex_udita_pradhan_plex_for_ios_ipad",
+          "friendlyName": "Plex (Udita Pradhan - Plex for iOS - iPad)",
+          "cSharpName": "PlexUditaPradhanPlexForIosIpad"
         },
         {
           "id": "media_player.shield",
@@ -281,6 +356,11 @@
           "jsonName": "restored",
           "cSharpName": "Restored",
           "clrType": "System.Boolean"
+        },
+        {
+          "jsonName": "assumed_state",
+          "cSharpName": "AssumedState",
+          "clrType": "System.Boolean"
         }
       ]
     },
@@ -288,19 +368,234 @@
       "domain": "binary_sensor",
       "entities": [
         {
-          "id": "binary_sensor.lights_button_cloud_connection",
-          "friendlyName": "Lights Button Cloud connection",
-          "cSharpName": "LightsButtonCloudConnection"
+          "id": "binary_sensor.backyard_door_contact_sensor_cloud_connection",
+          "friendlyName": "Backyard Door Contact Sensor Cloud connection",
+          "cSharpName": "BackyardDoorContactSensorCloudConnection"
+        },
+        {
+          "id": "binary_sensor.backyard_door_contact_sensor_door",
+          "friendlyName": "Backyard Door Contact Sensor Door",
+          "cSharpName": "BackyardDoorContactSensorDoor"
+        },
+        {
+          "id": "binary_sensor.backyard_light_cloud_connection",
+          "friendlyName": "Backyard Light Cloud connection",
+          "cSharpName": "BackyardLightCloudConnection"
+        },
+        {
+          "id": "binary_sensor.backyard_light_overheated",
+          "friendlyName": "Backyard Light Overheated",
+          "cSharpName": "BackyardLightOverheated"
+        },
+        {
+          "id": "binary_sensor.bedroom_smart_hub_cloud_connection",
+          "friendlyName": "Bedroom Smart Hub Cloud connection",
+          "cSharpName": "BedroomSmartHubCloudConnection"
+        },
+        {
+          "id": "binary_sensor.bedroom_smart_hub_overheated",
+          "friendlyName": "Bedroom Smart Hub Overheated",
+          "cSharpName": "BedroomSmartHubOverheated"
+        },
+        {
+          "id": "binary_sensor.dining_room_lamp_cloud_connection",
+          "friendlyName": "Dining Room Lamp Cloud connection",
+          "cSharpName": "DiningRoomLampCloudConnection"
+        },
+        {
+          "id": "binary_sensor.dining_room_lamp_overheated",
+          "friendlyName": "Dining Room Lamp Overheated",
+          "cSharpName": "DiningRoomLampOverheated"
+        },
+        {
+          "id": "binary_sensor.dining_room_motion_sensor_cloud_connection",
+          "friendlyName": "Dining Room Motion Sensor Cloud connection",
+          "cSharpName": "DiningRoomMotionSensorCloudConnection"
+        },
+        {
+          "id": "binary_sensor.dining_room_motion_sensor_motion",
+          "friendlyName": "Dining Room Motion Sensor Motion",
+          "cSharpName": "DiningRoomMotionSensorMotion"
+        },
+        {
+          "id": "binary_sensor.dining_room_smart_button_cloud_connection",
+          "friendlyName": "Dining Room Smart Button Cloud connection",
+          "cSharpName": "DiningRoomSmartButtonCloudConnection"
+        },
+        {
+          "id": "binary_sensor.dining_room_temperature_and_humidity_sensor_cloud_connection",
+          "friendlyName": "Dining Room Temperature and Humidity Sensor Cloud connection",
+          "cSharpName": "DiningRoomTemperatureAndHumiditySensorCloudConnection"
+        },
+        {
+          "id": "binary_sensor.dining_secondary_smart_bulb_cloud_connection",
+          "friendlyName": "Dining Secondary Smart Bulb Cloud connection",
+          "cSharpName": "DiningSecondarySmartBulbCloudConnection"
+        },
+        {
+          "id": "binary_sensor.dining_secondary_smart_bulb_overheated",
+          "friendlyName": "Dining Secondary Smart Bulb Overheated",
+          "cSharpName": "DiningSecondarySmartBulbOverheated"
+        },
+        {
+          "id": "binary_sensor.eero_wan_status",
+          "friendlyName": "eero WAN status",
+          "cSharpName": "EeroWanStatus"
+        },
+        {
+          "id": "binary_sensor.front_door_contact_sensor_cloud_connection",
+          "friendlyName": "Front Door Contact Sensor Cloud connection",
+          "cSharpName": "FrontDoorContactSensorCloudConnection"
+        },
+        {
+          "id": "binary_sensor.front_door_contact_sensor_door",
+          "friendlyName": "Front Door Contact Sensor Door",
+          "cSharpName": "FrontDoorContactSensorDoor"
+        },
+        {
+          "id": "binary_sensor.guest_bedroom_temperature_and_humidity_sensor_cloud_connection",
+          "friendlyName": "Guest Bedroom Temperature and Humidity Sensor Cloud connection",
+          "cSharpName": "GuestBedroomTemperatureAndHumiditySensorCloudConnection"
+        },
+        {
+          "id": "binary_sensor.hallway_temperature_and_humidity_sensor_cloud_connection",
+          "friendlyName": "Hallway Temperature and Humidity Sensor Cloud connection",
+          "cSharpName": "HallwayTemperatureAndHumiditySensorCloudConnection"
+        },
+        {
+          "id": "binary_sensor.jason_s_bedroom_light_cloud_connection",
+          "friendlyName": "Jason\u0027s Bedroom Light Cloud connection",
+          "cSharpName": "JasonSBedroomLightCloudConnection"
+        },
+        {
+          "id": "binary_sensor.jason_s_bedroom_light_overheated",
+          "friendlyName": "Jason\u0027s Bedroom Light Overheated",
+          "cSharpName": "JasonSBedroomLightOverheated"
+        },
+        {
+          "id": "binary_sensor.jason_s_bedroom_motion_sensor_cloud_connection",
+          "friendlyName": "Jason\u0027s Bedroom Motion Sensor Cloud connection",
+          "cSharpName": "JasonSBedroomMotionSensorCloudConnection"
+        },
+        {
+          "id": "binary_sensor.jason_s_bedroom_motion_sensor_motion",
+          "friendlyName": "Jason\u0027s Bedroom Motion Sensor Motion",
+          "cSharpName": "JasonSBedroomMotionSensorMotion"
+        },
+        {
+          "id": "binary_sensor.jason_s_bedroom_smart_button_cloud_connection",
+          "friendlyName": "Jason\u0027s Bedroom Smart Button Cloud connection",
+          "cSharpName": "JasonSBedroomSmartButtonCloudConnection"
+        },
+        {
+          "id": "binary_sensor.jason_s_bedroom_temperature_and_humidity_sensor_cloud_connection",
+          "friendlyName": "Jason\u0027s Bedroom Temperature and Humidity Sensor Cloud connection",
+          "cSharpName": "JasonSBedroomTemperatureAndHumiditySensorCloudConnection"
+        },
+        {
+          "id": "binary_sensor.kitchen_temperature_and_humidity_sensor_cloud_connection",
+          "friendlyName": "Kitchen Temperature and Humidity Sensor Cloud connection",
+          "cSharpName": "KitchenTemperatureAndHumiditySensorCloudConnection"
+        },
+        {
+          "id": "binary_sensor.lounge_room_motion_sensor_cloud_connection",
+          "friendlyName": "Lounge Room Motion Sensor Cloud connection",
+          "cSharpName": "LoungeRoomMotionSensorCloudConnection"
+        },
+        {
+          "id": "binary_sensor.lounge_room_motion_sensor_motion",
+          "friendlyName": "Lounge Room Motion Sensor Motion",
+          "cSharpName": "LoungeRoomMotionSensorMotion"
+        },
+        {
+          "id": "binary_sensor.lounge_room_smart_button_cloud_connection",
+          "friendlyName": "Lounge Room Smart Button Cloud connection",
+          "cSharpName": "LoungeRoomSmartButtonCloudConnection"
+        },
+        {
+          "id": "binary_sensor.lounge_room_smart_hub_cloud_connection",
+          "friendlyName": "Lounge Room Smart Hub Cloud connection",
+          "cSharpName": "LoungeRoomSmartHubCloudConnection"
+        },
+        {
+          "id": "binary_sensor.lounge_room_smart_hub_overheated",
+          "friendlyName": "Lounge Room Smart Hub Overheated",
+          "cSharpName": "LoungeRoomSmartHubOverheated"
+        },
+        {
+          "id": "binary_sensor.lounge_room_temperature_and_humidity_sensor_cloud_connection",
+          "friendlyName": "Lounge Room Temperature and Humidity Sensor Cloud connection",
+          "cSharpName": "LoungeRoomTemperatureAndHumiditySensorCloudConnection"
+        },
+        {
+          "id": "binary_sensor.lounge_smart_bulb_cloud_connection",
+          "friendlyName": "Lounge Smart Bulb Cloud connection",
+          "cSharpName": "LoungeSmartBulbCloudConnection"
+        },
+        {
+          "id": "binary_sensor.lounge_smart_bulb_overheated",
+          "friendlyName": "Lounge Smart Bulb Overheated",
+          "cSharpName": "LoungeSmartBulbOverheated"
+        },
+        {
+          "id": "binary_sensor.master_bedroom_entry_smart_bulb_cloud_connection",
+          "friendlyName": "Master Bedroom Entry Smart Bulb Cloud connection",
+          "cSharpName": "MasterBedroomEntrySmartBulbCloudConnection"
+        },
+        {
+          "id": "binary_sensor.master_bedroom_entry_smart_bulb_overheated",
+          "friendlyName": "Master Bedroom Entry Smart Bulb Overheated",
+          "cSharpName": "MasterBedroomEntrySmartBulbOverheated"
+        },
+        {
+          "id": "binary_sensor.master_bedroom_smart_bulb_cloud_connection",
+          "friendlyName": "Master Bedroom Smart Bulb Cloud connection",
+          "cSharpName": "MasterBedroomSmartBulbCloudConnection"
+        },
+        {
+          "id": "binary_sensor.master_bedroom_smart_bulb_overheated",
+          "friendlyName": "Master Bedroom Smart Bulb Overheated",
+          "cSharpName": "MasterBedroomSmartBulbOverheated"
+        },
+        {
+          "id": "binary_sensor.master_bedroom_smart_button_cloud_connection",
+          "friendlyName": "Master Bedroom Smart Button Cloud connection",
+          "cSharpName": "MasterBedroomSmartButtonCloudConnection"
+        },
+        {
+          "id": "binary_sensor.master_bedroom_temperature_and_humidity_sensor_cloud_connection",
+          "friendlyName": "Master Bedroom Temperature and Humidity Sensor Cloud connection",
+          "cSharpName": "MasterBedroomTemperatureAndHumiditySensorCloudConnection"
+        },
+        {
+          "id": "binary_sensor.office_motion_sensor_cloud_connection",
+          "friendlyName": "Office Motion Sensor Cloud connection",
+          "cSharpName": "OfficeMotionSensorCloudConnection"
+        },
+        {
+          "id": "binary_sensor.office_motion_sensor_motion",
+          "friendlyName": "Office Motion Sensor Motion",
+          "cSharpName": "OfficeMotionSensorMotion"
+        },
+        {
+          "id": "binary_sensor.office_smart_bulb_cloud_connection",
+          "friendlyName": "Cloud connection",
+          "cSharpName": "OfficeSmartBulbCloudConnection"
+        },
+        {
+          "id": "binary_sensor.office_smart_bulb_overheated",
+          "friendlyName": "Overheated",
+          "cSharpName": "OfficeSmartBulbOverheated"
+        },
+        {
+          "id": "binary_sensor.office_smart_button_cloud_connection",
+          "friendlyName": "Office Smart Button Cloud connection",
+          "cSharpName": "OfficeSmartButtonCloudConnection"
         },
         {
           "id": "binary_sensor.remote_ui",
           "friendlyName": "Remote UI",
           "cSharpName": "RemoteUi"
-        },
-        {
-          "id": "binary_sensor.temperature_and_humidity_sensor_cloud_connection",
-          "friendlyName": "Jason\u0027s Bedroom Temperature Sensor Cloud connection",
-          "cSharpName": "TemperatureAndHumiditySensorCloudConnection"
         }
       ],
       "attributes": [
@@ -313,6 +608,16 @@
           "jsonName": "friendly_name",
           "cSharpName": "FriendlyName",
           "clrType": "System.String"
+        },
+        {
+          "jsonName": "restored",
+          "cSharpName": "Restored",
+          "clrType": "System.Boolean"
+        },
+        {
+          "jsonName": "supported_features",
+          "cSharpName": "SupportedFeatures",
+          "clrType": "System.Double"
         }
       ]
     },
@@ -466,9 +771,64 @@
       "domain": "select",
       "entities": [
         {
-          "id": "select.tapo_hub_alarm_sound",
-          "friendlyName": "Tapo Hub Alarm sound",
-          "cSharpName": "TapoHubAlarmSound"
+          "id": "select.backyard_light_light_preset",
+          "friendlyName": "Backyard Light Light preset",
+          "cSharpName": "BackyardLightLightPreset"
+        },
+        {
+          "id": "select.bedroom_smart_hub_alarm_sound",
+          "friendlyName": "Bedroom Smart Hub Alarm sound",
+          "cSharpName": "BedroomSmartHubAlarmSound"
+        },
+        {
+          "id": "select.bedroom_smart_hub_alarm_volume",
+          "friendlyName": "Bedroom Smart Hub Alarm volume",
+          "cSharpName": "BedroomSmartHubAlarmVolume"
+        },
+        {
+          "id": "select.dining_room_lamp_light_preset",
+          "friendlyName": "Dining Room Lamp Light preset",
+          "cSharpName": "DiningRoomLampLightPreset"
+        },
+        {
+          "id": "select.dining_secondary_smart_bulb_light_preset",
+          "friendlyName": "Dining Secondary Smart Bulb Light preset",
+          "cSharpName": "DiningSecondarySmartBulbLightPreset"
+        },
+        {
+          "id": "select.jason_s_bedroom_light_light_preset",
+          "friendlyName": "Jason\u0027s Bedroom Light Light preset",
+          "cSharpName": "JasonSBedroomLightLightPreset"
+        },
+        {
+          "id": "select.lounge_room_smart_hub_alarm_sound",
+          "friendlyName": "Lounge Room Smart Hub Alarm sound",
+          "cSharpName": "LoungeRoomSmartHubAlarmSound"
+        },
+        {
+          "id": "select.lounge_room_smart_hub_alarm_volume",
+          "friendlyName": "Lounge Room Smart Hub Alarm volume",
+          "cSharpName": "LoungeRoomSmartHubAlarmVolume"
+        },
+        {
+          "id": "select.lounge_smart_bulb_light_preset",
+          "friendlyName": "Lounge Smart Bulb Light preset",
+          "cSharpName": "LoungeSmartBulbLightPreset"
+        },
+        {
+          "id": "select.master_bedroom_entry_smart_bulb_light_preset",
+          "friendlyName": "Master Bedroom Entry Smart Bulb Light preset",
+          "cSharpName": "MasterBedroomEntrySmartBulbLightPreset"
+        },
+        {
+          "id": "select.master_bedroom_smart_bulb_light_preset",
+          "friendlyName": "Master Bedroom Smart Bulb Light preset",
+          "cSharpName": "MasterBedroomSmartBulbLightPreset"
+        },
+        {
+          "id": "select.office_smart_bulb_light_preset",
+          "friendlyName": "Light preset",
+          "cSharpName": "OfficeSmartBulbLightPreset"
         }
       ],
       "attributes": [
@@ -491,6 +851,16 @@
           "jsonName": "icon",
           "cSharpName": "Icon",
           "clrType": "System.String"
+        },
+        {
+          "jsonName": "restored",
+          "cSharpName": "Restored",
+          "clrType": "System.Boolean"
+        },
+        {
+          "jsonName": "supported_features",
+          "cSharpName": "SupportedFeatures",
+          "clrType": "System.Double"
         }
       ]
     },
@@ -498,9 +868,159 @@
       "domain": "sensor",
       "entities": [
         {
-          "id": "sensor.lights_button_signal_level",
-          "friendlyName": "Lights Button Signal level",
-          "cSharpName": "LightsButtonSignalLevel"
+          "id": "sensor.backyard_door_contact_sensor_signal_level",
+          "friendlyName": "Backyard Door Contact Sensor Signal level",
+          "cSharpName": "BackyardDoorContactSensorSignalLevel"
+        },
+        {
+          "id": "sensor.backyard_light_signal_level",
+          "friendlyName": "Backyard Light Signal level",
+          "cSharpName": "BackyardLightSignalLevel"
+        },
+        {
+          "id": "sensor.bedroom_smart_hub_alarm_source",
+          "friendlyName": "Bedroom Smart Hub Alarm source",
+          "cSharpName": "BedroomSmartHubAlarmSource"
+        },
+        {
+          "id": "sensor.bedroom_smart_hub_signal_level",
+          "friendlyName": "Bedroom Smart Hub Signal level",
+          "cSharpName": "BedroomSmartHubSignalLevel"
+        },
+        {
+          "id": "sensor.dining_room_lamp_signal_level",
+          "friendlyName": "Dining Room Lamp Signal level",
+          "cSharpName": "DiningRoomLampSignalLevel"
+        },
+        {
+          "id": "sensor.dining_room_motion_sensor_signal_level",
+          "friendlyName": "Dining Room Motion Sensor Signal level",
+          "cSharpName": "DiningRoomMotionSensorSignalLevel"
+        },
+        {
+          "id": "sensor.dining_room_smart_button_signal_level",
+          "friendlyName": "Dining Room Smart Button Signal level",
+          "cSharpName": "DiningRoomSmartButtonSignalLevel"
+        },
+        {
+          "id": "sensor.dining_room_temperature_and_humidity_sensor_signal_level",
+          "friendlyName": "Dining Room Temperature and Humidity Sensor Signal level",
+          "cSharpName": "DiningRoomTemperatureAndHumiditySensorSignalLevel"
+        },
+        {
+          "id": "sensor.dining_secondary_smart_bulb_signal_level",
+          "friendlyName": "Dining Secondary Smart Bulb Signal level",
+          "cSharpName": "DiningSecondarySmartBulbSignalLevel"
+        },
+        {
+          "id": "sensor.eero_external_ip",
+          "friendlyName": "eero External IP",
+          "cSharpName": "EeroExternalIp"
+        },
+        {
+          "id": "sensor.front_door_contact_sensor_signal_level",
+          "friendlyName": "Front Door Contact Sensor Signal level",
+          "cSharpName": "FrontDoorContactSensorSignalLevel"
+        },
+        {
+          "id": "sensor.guest_bedroom_temperature_and_humidity_sensor_signal_level",
+          "friendlyName": "Guest Bedroom Temperature and Humidity Sensor Signal level",
+          "cSharpName": "GuestBedroomTemperatureAndHumiditySensorSignalLevel"
+        },
+        {
+          "id": "sensor.hallway_temperature_and_humidity_sensor_signal_level",
+          "friendlyName": "Hallway Temperature and Humidity Sensor Signal level",
+          "cSharpName": "HallwayTemperatureAndHumiditySensorSignalLevel"
+        },
+        {
+          "id": "sensor.jason_s_bedroom_light_signal_level",
+          "friendlyName": "Jason\u0027s Bedroom Light Signal level",
+          "cSharpName": "JasonSBedroomLightSignalLevel"
+        },
+        {
+          "id": "sensor.jason_s_bedroom_motion_sensor_signal_level",
+          "friendlyName": "Jason\u0027s Bedroom Motion Sensor Signal level",
+          "cSharpName": "JasonSBedroomMotionSensorSignalLevel"
+        },
+        {
+          "id": "sensor.jason_s_bedroom_smart_button_signal_level",
+          "friendlyName": "Jason\u0027s Bedroom Smart Button Signal level",
+          "cSharpName": "JasonSBedroomSmartButtonSignalLevel"
+        },
+        {
+          "id": "sensor.jason_s_bedroom_temperature_and_humidity_sensor_signal_level",
+          "friendlyName": "Jason\u0027s Bedroom Temperature and Humidity Sensor Signal level",
+          "cSharpName": "JasonSBedroomTemperatureAndHumiditySensorSignalLevel"
+        },
+        {
+          "id": "sensor.kitchen_temperature_and_humidity_sensor_signal_level",
+          "friendlyName": "Kitchen Temperature and Humidity Sensor Signal level",
+          "cSharpName": "KitchenTemperatureAndHumiditySensorSignalLevel"
+        },
+        {
+          "id": "sensor.lounge_room_motion_sensor_signal_level",
+          "friendlyName": "Lounge Room Motion Sensor Signal level",
+          "cSharpName": "LoungeRoomMotionSensorSignalLevel"
+        },
+        {
+          "id": "sensor.lounge_room_smart_button_signal_level",
+          "friendlyName": "Lounge Room Smart Button Signal level",
+          "cSharpName": "LoungeRoomSmartButtonSignalLevel"
+        },
+        {
+          "id": "sensor.lounge_room_smart_hub_alarm_source",
+          "friendlyName": "Lounge Room Smart Hub Alarm source",
+          "cSharpName": "LoungeRoomSmartHubAlarmSource"
+        },
+        {
+          "id": "sensor.lounge_room_smart_hub_signal_level",
+          "friendlyName": "Lounge Room Smart Hub Signal level",
+          "cSharpName": "LoungeRoomSmartHubSignalLevel"
+        },
+        {
+          "id": "sensor.lounge_room_temperature_and_humidity_sensor_signal_level",
+          "friendlyName": "Lounge Room Temperature and Humidity Sensor Signal level",
+          "cSharpName": "LoungeRoomTemperatureAndHumiditySensorSignalLevel"
+        },
+        {
+          "id": "sensor.lounge_smart_bulb_signal_level",
+          "friendlyName": "Lounge Smart Bulb Signal level",
+          "cSharpName": "LoungeSmartBulbSignalLevel"
+        },
+        {
+          "id": "sensor.master_bedroom_entry_smart_bulb_signal_level",
+          "friendlyName": "Master Bedroom Entry Smart Bulb Signal level",
+          "cSharpName": "MasterBedroomEntrySmartBulbSignalLevel"
+        },
+        {
+          "id": "sensor.master_bedroom_smart_bulb_signal_level",
+          "friendlyName": "Master Bedroom Smart Bulb Signal level",
+          "cSharpName": "MasterBedroomSmartBulbSignalLevel"
+        },
+        {
+          "id": "sensor.master_bedroom_smart_button_signal_level",
+          "friendlyName": "Master Bedroom Smart Button Signal level",
+          "cSharpName": "MasterBedroomSmartButtonSignalLevel"
+        },
+        {
+          "id": "sensor.master_bedroom_temperature_and_humidity_sensor_signal_level",
+          "friendlyName": "Master Bedroom Temperature and Humidity Sensor Signal level",
+          "cSharpName": "MasterBedroomTemperatureAndHumiditySensorSignalLevel"
+        },
+        {
+          "id": "sensor.office_motion_sensor_signal_level",
+          "friendlyName": "Office Motion Sensor Signal level",
+          "cSharpName": "OfficeMotionSensorSignalLevel"
+        },
+        {
+          "id": "sensor.office_smart_bulb_signal_level",
+          "friendlyName": "Signal level",
+          "cSharpName": "OfficeSmartBulbSignalLevel"
+        },
+        {
+          "id": "sensor.office_smart_button_signal_level",
+          "friendlyName": "Office Smart Button Signal level",
+          "cSharpName": "OfficeSmartButtonSignalLevel"
         },
         {
           "id": "sensor.pixel_7_pro_battery_state",
@@ -591,11 +1111,6 @@
           "id": "sensor.sun_next_setting",
           "friendlyName": "Sun Next setting",
           "cSharpName": "SunNextSetting"
-        },
-        {
-          "id": "sensor.temperature_and_humidity_sensor_signal_level",
-          "friendlyName": "Jason\u0027s Bedroom Temperature Sensor Signal level",
-          "cSharpName": "TemperatureAndHumiditySensorSignalLevel"
         }
       ],
       "attributes": [
@@ -638,6 +1153,16 @@
           "jsonName": "Types",
           "cSharpName": "Types",
           "clrType": "System.Collections.Generic.IReadOnlyList\u00601[System.String]"
+        },
+        {
+          "jsonName": "restored",
+          "cSharpName": "Restored",
+          "clrType": "System.Boolean"
+        },
+        {
+          "jsonName": "supported_features",
+          "cSharpName": "SupportedFeatures",
+          "clrType": "System.Double"
         }
       ]
     },
@@ -645,6 +1170,81 @@
       "domain": "sensor",
       "isNumeric": true,
       "entities": [
+        {
+          "id": "sensor.dining_room_temperature_and_humidity_sensor_humidity",
+          "friendlyName": "Humidity",
+          "cSharpName": "DiningRoomTemperatureAndHumiditySensorHumidity"
+        },
+        {
+          "id": "sensor.dining_room_temperature_and_humidity_sensor_temperature",
+          "friendlyName": "Temperature",
+          "cSharpName": "DiningRoomTemperatureAndHumiditySensorTemperature"
+        },
+        {
+          "id": "sensor.guest_bedroom_temperature_and_humidity_sensor_humidity",
+          "friendlyName": "Humidity",
+          "cSharpName": "GuestBedroomTemperatureAndHumiditySensorHumidity"
+        },
+        {
+          "id": "sensor.guest_bedroom_temperature_and_humidity_sensor_temperature",
+          "friendlyName": "Temperature",
+          "cSharpName": "GuestBedroomTemperatureAndHumiditySensorTemperature"
+        },
+        {
+          "id": "sensor.hallway_temperature_and_humidity_sensor_humidity",
+          "friendlyName": "Humidity",
+          "cSharpName": "HallwayTemperatureAndHumiditySensorHumidity"
+        },
+        {
+          "id": "sensor.hallway_temperature_and_humidity_sensor_temperature",
+          "friendlyName": "Temperature",
+          "cSharpName": "HallwayTemperatureAndHumiditySensorTemperature"
+        },
+        {
+          "id": "sensor.jason_s_bedroom_temperature_and_humidity_sensor_humidity",
+          "friendlyName": "Humidity",
+          "cSharpName": "JasonSBedroomTemperatureAndHumiditySensorHumidity"
+        },
+        {
+          "id": "sensor.jason_s_bedroom_temperature_and_humidity_sensor_temperature",
+          "friendlyName": "Temperature",
+          "cSharpName": "JasonSBedroomTemperatureAndHumiditySensorTemperature"
+        },
+        {
+          "id": "sensor.kitchen_temperature_and_humidity_sensor_humidity",
+          "friendlyName": "Humidity",
+          "cSharpName": "KitchenTemperatureAndHumiditySensorHumidity"
+        },
+        {
+          "id": "sensor.kitchen_temperature_and_humidity_sensor_temperature",
+          "friendlyName": "Temperature",
+          "cSharpName": "KitchenTemperatureAndHumiditySensorTemperature"
+        },
+        {
+          "id": "sensor.lounge_room_temperature_and_humidity_sensor_humidity",
+          "friendlyName": "Humidity",
+          "cSharpName": "LoungeRoomTemperatureAndHumiditySensorHumidity"
+        },
+        {
+          "id": "sensor.lounge_room_temperature_and_humidity_sensor_temperature",
+          "friendlyName": "Temperature",
+          "cSharpName": "LoungeRoomTemperatureAndHumiditySensorTemperature"
+        },
+        {
+          "id": "sensor.master_bedroom_temperature_and_humidity_sensor_humidity",
+          "friendlyName": "Humidity",
+          "cSharpName": "MasterBedroomTemperatureAndHumiditySensorHumidity"
+        },
+        {
+          "id": "sensor.master_bedroom_temperature_and_humidity_sensor_temperature",
+          "friendlyName": "Temperature",
+          "cSharpName": "MasterBedroomTemperatureAndHumiditySensorTemperature"
+        },
+        {
+          "id": "sensor.pawar_serve",
+          "friendlyName": "pawar-serve",
+          "cSharpName": "PawarServe"
+        },
         {
           "id": "sensor.pixel_7_pro_battery_level",
           "friendlyName": "Pixel 7 Pro Battery level",
@@ -659,16 +1259,6 @@
           "id": "sensor.puppy_storage",
           "friendlyName": "puppy Storage",
           "cSharpName": "PuppyStorage"
-        },
-        {
-          "id": "sensor.temperature_and_humidity_sensor_humidity",
-          "friendlyName": "Jason\u0027s Bedroom Temperature Sensor Humidity",
-          "cSharpName": "TemperatureAndHumiditySensorHumidity"
-        },
-        {
-          "id": "sensor.temperature_and_humidity_sensor_temperature",
-          "friendlyName": "Jason\u0027s Bedroom Temperature Sensor Temperature",
-          "cSharpName": "TemperatureAndHumiditySensorTemperature"
         }
       ],
       "attributes": [
@@ -807,9 +1397,64 @@
       "domain": "switch",
       "entities": [
         {
-          "id": "switch.tapo_hub_led",
-          "friendlyName": "Tapo Hub LED",
-          "cSharpName": "TapoHubLed"
+          "id": "switch.backyard_light_auto_update_enabled",
+          "friendlyName": "Backyard Light Auto update enabled",
+          "cSharpName": "BackyardLightAutoUpdateEnabled"
+        },
+        {
+          "id": "switch.bedroom_smart_hub_auto_update_enabled",
+          "friendlyName": "Bedroom Smart Hub Auto update enabled",
+          "cSharpName": "BedroomSmartHubAutoUpdateEnabled"
+        },
+        {
+          "id": "switch.bedroom_smart_hub_led",
+          "friendlyName": "Bedroom Smart Hub LED",
+          "cSharpName": "BedroomSmartHubLed"
+        },
+        {
+          "id": "switch.dining_room_lamp_auto_update_enabled",
+          "friendlyName": "Dining Room Lamp Auto update enabled",
+          "cSharpName": "DiningRoomLampAutoUpdateEnabled"
+        },
+        {
+          "id": "switch.dining_secondary_smart_bulb_auto_update_enabled",
+          "friendlyName": "Dining Secondary Smart Bulb Auto update enabled",
+          "cSharpName": "DiningSecondarySmartBulbAutoUpdateEnabled"
+        },
+        {
+          "id": "switch.jason_s_bedroom_light_auto_update_enabled",
+          "friendlyName": "Jason\u0027s Bedroom Light Auto update enabled",
+          "cSharpName": "JasonSBedroomLightAutoUpdateEnabled"
+        },
+        {
+          "id": "switch.lounge_room_smart_hub_auto_update_enabled",
+          "friendlyName": "Lounge Room Smart Hub Auto update enabled",
+          "cSharpName": "LoungeRoomSmartHubAutoUpdateEnabled"
+        },
+        {
+          "id": "switch.lounge_room_smart_hub_led",
+          "friendlyName": "Lounge Room Smart Hub LED",
+          "cSharpName": "LoungeRoomSmartHubLed"
+        },
+        {
+          "id": "switch.lounge_smart_bulb_auto_update_enabled",
+          "friendlyName": "Lounge Smart Bulb Auto update enabled",
+          "cSharpName": "LoungeSmartBulbAutoUpdateEnabled"
+        },
+        {
+          "id": "switch.master_bedroom_entry_smart_bulb_auto_update_enabled",
+          "friendlyName": "Master Bedroom Entry Smart Bulb Auto update enabled",
+          "cSharpName": "MasterBedroomEntrySmartBulbAutoUpdateEnabled"
+        },
+        {
+          "id": "switch.master_bedroom_smart_bulb_auto_update_enabled",
+          "friendlyName": "Master Bedroom Smart Bulb Auto update enabled",
+          "cSharpName": "MasterBedroomSmartBulbAutoUpdateEnabled"
+        },
+        {
+          "id": "switch.office_smart_bulb_auto_update_enabled",
+          "friendlyName": "Auto update enabled",
+          "cSharpName": "OfficeSmartBulbAutoUpdateEnabled"
         }
       ],
       "attributes": [
@@ -817,6 +1462,16 @@
           "jsonName": "friendly_name",
           "cSharpName": "FriendlyName",
           "clrType": "System.String"
+        },
+        {
+          "jsonName": "restored",
+          "cSharpName": "Restored",
+          "clrType": "System.Boolean"
+        },
+        {
+          "jsonName": "supported_features",
+          "cSharpName": "SupportedFeatures",
+          "clrType": "System.Double"
         }
       ]
     },
@@ -903,9 +1558,19 @@
           "cSharpName": "HomeAssistantSupervisorUpdate"
         },
         {
+          "id": "update.matter_server_update",
+          "friendlyName": "Matter Server Update",
+          "cSharpName": "MatterServerUpdate"
+        },
+        {
           "id": "update.netdaemon_v5_net_9_update",
           "friendlyName": "NetDaemon V5 (.NET 9) Update",
           "cSharpName": "NetdaemonV5Net9Update"
+        },
+        {
+          "id": "update.plex_media_server_pawar_serve",
+          "friendlyName": "Plex Media Server (pawar-serve)",
+          "cSharpName": "PlexMediaServerPawarServe"
         },
         {
           "id": "update.samba_share_update",
@@ -1129,34 +1794,39 @@
       "domain": "input_boolean",
       "entities": [
         {
-          "id": "input_boolean.dev_netdaemon_app_model_hello_yaml_app",
-          "friendlyName": "dev_netdaemon_app_model_hello_yaml_app",
-          "cSharpName": "DevNetdaemonAppModelHelloYamlApp"
+          "id": "input_boolean.dining_room_ac_switch",
+          "friendlyName": "Dining Room AC Switch",
+          "cSharpName": "DiningRoomAcSwitch"
         },
         {
-          "id": "input_boolean.dev_netdaemon_extensions_scheduling_scheduling_app",
-          "friendlyName": "dev_netdaemon_extensions_scheduling_scheduling_app",
-          "cSharpName": "DevNetdaemonExtensionsSchedulingSchedulingApp"
+          "id": "input_boolean.guest_bedroom_ac_switch",
+          "friendlyName": "Guest Bedroom AC Switch",
+          "cSharpName": "GuestBedroomAcSwitch"
         },
         {
-          "id": "input_boolean.dev_netdaemon_hass_model_hello_world_app",
-          "friendlyName": "dev_netdaemon_hass_model_hello_world_app",
-          "cSharpName": "DevNetdaemonHassModelHelloWorldApp"
-        },
-        {
-          "id": "input_boolean.dev_netdaemon_hass_model_light_on_movement",
-          "friendlyName": "dev_netdaemon_hass_model_light_on_movement",
-          "cSharpName": "DevNetdaemonHassModelLightOnMovement"
-        },
-        {
-          "id": "input_boolean.dev_netdaemon_src_apps_hass_model_ac_ac_control",
-          "friendlyName": "dev_netdaemon_src_apps_hass_model_ac_ac_control",
-          "cSharpName": "DevNetdaemonSrcAppsHassModelAcAcControl"
+          "id": "input_boolean.hallway_ac_switch",
+          "friendlyName": "Hallway AC Switch",
+          "cSharpName": "HallwayAcSwitch"
         },
         {
           "id": "input_boolean.jason_s_bedroom_ac_switch",
           "friendlyName": "Jason\u0027s Bedroom AC Switch",
           "cSharpName": "JasonSBedroomAcSwitch"
+        },
+        {
+          "id": "input_boolean.kitchen_ac_switch",
+          "friendlyName": "Kitchen AC Switch",
+          "cSharpName": "KitchenAcSwitch"
+        },
+        {
+          "id": "input_boolean.lounge_ac_switch",
+          "friendlyName": "Lounge AC Switch",
+          "cSharpName": "LoungeAcSwitch"
+        },
+        {
+          "id": "input_boolean.master_bedroom_ac_switch",
+          "friendlyName": "Master Bedroom AC Switch",
+          "cSharpName": "MasterBedroomAcSwitch"
         },
         {
           "id": "input_boolean.netdaemon_app_model_hello_yaml_app",
@@ -1182,6 +1852,11 @@
           "id": "input_boolean.netdaemon_src_apps_hass_model_ac_ac_control",
           "friendlyName": "netdaemon_src_apps_hass_model_ac_ac_control",
           "cSharpName": "NetdaemonSrcAppsHassModelAcAcControl"
+        },
+        {
+          "id": "input_boolean.netdaemon_src_apps_hass_model_light_adjust_light_adjust",
+          "friendlyName": "netdaemon_src_apps_hass_model_light_adjust_light_adjust",
+          "cSharpName": "NetdaemonSrcAppsHassModelLightAdjustLightAdjust"
         }
       ],
       "attributes": [
@@ -1207,9 +1882,39 @@
       "isNumeric": true,
       "entities": [
         {
+          "id": "input_number.dining_room_set_temperature",
+          "friendlyName": "Dining Room Set Temperature",
+          "cSharpName": "DiningRoomSetTemperature"
+        },
+        {
+          "id": "input_number.guest_bedroom_set_temperature",
+          "friendlyName": "Guest Bedroom Set Temperature",
+          "cSharpName": "GuestBedroomSetTemperature"
+        },
+        {
+          "id": "input_number.hallway_set_temperature",
+          "friendlyName": "Hallway Set Temperature",
+          "cSharpName": "HallwaySetTemperature"
+        },
+        {
           "id": "input_number.jason_s_bedroom_set_temperature",
           "friendlyName": "Jason\u0027s Bedroom Set Temperature",
           "cSharpName": "JasonSBedroomSetTemperature"
+        },
+        {
+          "id": "input_number.kitchen_set_temperature",
+          "friendlyName": "Kitchen Set Temperature",
+          "cSharpName": "KitchenSetTemperature"
+        },
+        {
+          "id": "input_number.lounge_set_temperature",
+          "friendlyName": "Lounge Set Temperature",
+          "cSharpName": "LoungeSetTemperature"
+        },
+        {
+          "id": "input_number.master_bedroom_set_temperature",
+          "friendlyName": "Master Bedroom Set Temperature",
+          "cSharpName": "MasterBedroomSetTemperature"
         }
       ],
       "attributes": [
@@ -1319,6 +2024,277 @@
           "jsonName": "friendly_name",
           "cSharpName": "FriendlyName",
           "clrType": "System.String"
+        }
+      ]
+    },
+    {
+      "domain": "automation",
+      "entities": [
+        {
+          "id": "automation.backyard_door_lights_on",
+          "friendlyName": "Backyard Door Contact Lights",
+          "cSharpName": "BackyardDoorLightsOn"
+        },
+        {
+          "id": "automation.dining_motion_lights",
+          "friendlyName": "Dining Motion Lights",
+          "cSharpName": "DiningMotionLights"
+        },
+        {
+          "id": "automation.disabled_enabled_at_night",
+          "friendlyName": "Disabled \u0027Enabled at Night\u0027",
+          "cSharpName": "DisabledEnabledAtNight"
+        },
+        {
+          "id": "automation.jason_s_bedroom_motions_lights",
+          "friendlyName": "Jason\u0027s Bedroom Motions Lights",
+          "cSharpName": "JasonSBedroomMotionsLights"
+        },
+        {
+          "id": "automation.lounge_motion_lights",
+          "friendlyName": "Lounge Motion Lights",
+          "cSharpName": "LoungeMotionLights"
+        },
+        {
+          "id": "automation.office_motion_lights",
+          "friendlyName": "Office Motion Lights",
+          "cSharpName": "OfficeMotionLights"
+        },
+        {
+          "id": "automation.sunset_lights",
+          "friendlyName": "Enabled \u0027Enabled at Night\u0027",
+          "cSharpName": "SunsetLights"
+        },
+        {
+          "id": "automation.tv_playing_lights",
+          "friendlyName": "TV Playing Lights",
+          "cSharpName": "TvPlayingLights"
+        }
+      ],
+      "attributes": [
+        {
+          "jsonName": "id",
+          "cSharpName": "Id",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "last_triggered",
+          "cSharpName": "LastTriggered",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "mode",
+          "cSharpName": "Mode",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "current",
+          "cSharpName": "Current",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "friendly_name",
+          "cSharpName": "FriendlyName",
+          "clrType": "System.String"
+        }
+      ]
+    },
+    {
+      "domain": "button",
+      "entities": [
+        {
+          "id": "button.pawar_serve_scan_clients",
+          "friendlyName": "pawar-serve Scan clients",
+          "cSharpName": "PawarServeScanClients"
+        }
+      ],
+      "attributes": [
+        {
+          "jsonName": "friendly_name",
+          "cSharpName": "FriendlyName",
+          "clrType": "System.String"
+        }
+      ]
+    },
+    {
+      "domain": "input_select",
+      "entities": [
+        {
+          "id": "input_select.jason_s_bedroom_ac_mode",
+          "friendlyName": "AC Mode",
+          "cSharpName": "JasonSBedroomAcMode"
+        }
+      ],
+      "attributes": [
+        {
+          "jsonName": "options",
+          "cSharpName": "Options",
+          "clrType": "System.Collections.Generic.IReadOnlyList\u00601[System.String]"
+        },
+        {
+          "jsonName": "editable",
+          "cSharpName": "Editable",
+          "clrType": "System.Boolean"
+        },
+        {
+          "jsonName": "icon",
+          "cSharpName": "Icon",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "friendly_name",
+          "cSharpName": "FriendlyName",
+          "clrType": "System.String"
+        }
+      ]
+    },
+    {
+      "domain": "number",
+      "isNumeric": true,
+      "entities": [
+        {
+          "id": "number.backyard_light_smooth_off",
+          "friendlyName": "Backyard Light Smooth off",
+          "cSharpName": "BackyardLightSmoothOff"
+        },
+        {
+          "id": "number.backyard_light_smooth_on",
+          "friendlyName": "Backyard Light Smooth on",
+          "cSharpName": "BackyardLightSmoothOn"
+        },
+        {
+          "id": "number.dining_room_lamp_smooth_off",
+          "friendlyName": "Dining Room Lamp Smooth off",
+          "cSharpName": "DiningRoomLampSmoothOff"
+        },
+        {
+          "id": "number.dining_room_lamp_smooth_on",
+          "friendlyName": "Dining Room Lamp Smooth on",
+          "cSharpName": "DiningRoomLampSmoothOn"
+        },
+        {
+          "id": "number.dining_secondary_smart_bulb_smooth_off",
+          "friendlyName": "Dining Secondary Smart Bulb Smooth off",
+          "cSharpName": "DiningSecondarySmartBulbSmoothOff"
+        },
+        {
+          "id": "number.dining_secondary_smart_bulb_smooth_on",
+          "friendlyName": "Dining Secondary Smart Bulb Smooth on",
+          "cSharpName": "DiningSecondarySmartBulbSmoothOn"
+        },
+        {
+          "id": "number.jason_s_bedroom_light_smooth_off",
+          "friendlyName": "Jason\u0027s Bedroom Light Smooth off",
+          "cSharpName": "JasonSBedroomLightSmoothOff"
+        },
+        {
+          "id": "number.jason_s_bedroom_light_smooth_on",
+          "friendlyName": "Jason\u0027s Bedroom Light Smooth on",
+          "cSharpName": "JasonSBedroomLightSmoothOn"
+        },
+        {
+          "id": "number.lounge_smart_bulb_smooth_off",
+          "friendlyName": "Lounge Smart Bulb Smooth off",
+          "cSharpName": "LoungeSmartBulbSmoothOff"
+        },
+        {
+          "id": "number.lounge_smart_bulb_smooth_on",
+          "friendlyName": "Lounge Smart Bulb Smooth on",
+          "cSharpName": "LoungeSmartBulbSmoothOn"
+        },
+        {
+          "id": "number.master_bedroom_entry_smart_bulb_smooth_off",
+          "friendlyName": "Master Bedroom Entry Smart Bulb Smooth off",
+          "cSharpName": "MasterBedroomEntrySmartBulbSmoothOff"
+        },
+        {
+          "id": "number.master_bedroom_entry_smart_bulb_smooth_on",
+          "friendlyName": "Master Bedroom Entry Smart Bulb Smooth on",
+          "cSharpName": "MasterBedroomEntrySmartBulbSmoothOn"
+        },
+        {
+          "id": "number.master_bedroom_smart_bulb_smooth_off",
+          "friendlyName": "Master Bedroom Smart Bulb Smooth off",
+          "cSharpName": "MasterBedroomSmartBulbSmoothOff"
+        },
+        {
+          "id": "number.master_bedroom_smart_bulb_smooth_on",
+          "friendlyName": "Master Bedroom Smart Bulb Smooth on",
+          "cSharpName": "MasterBedroomSmartBulbSmoothOn"
+        },
+        {
+          "id": "number.office_smart_bulb_smooth_off",
+          "friendlyName": "Smooth off",
+          "cSharpName": "OfficeSmartBulbSmoothOff"
+        },
+        {
+          "id": "number.office_smart_bulb_smooth_on",
+          "friendlyName": "Smooth on",
+          "cSharpName": "OfficeSmartBulbSmoothOn"
+        }
+      ],
+      "attributes": [
+        {
+          "jsonName": "min",
+          "cSharpName": "Min",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "max",
+          "cSharpName": "Max",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "step",
+          "cSharpName": "Step",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "mode",
+          "cSharpName": "Mode",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "friendly_name",
+          "cSharpName": "FriendlyName",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "restored",
+          "cSharpName": "Restored",
+          "clrType": "System.Boolean"
+        },
+        {
+          "jsonName": "supported_features",
+          "cSharpName": "SupportedFeatures",
+          "clrType": "System.Double"
+        }
+      ]
+    },
+    {
+      "domain": "siren",
+      "entities": [
+        {
+          "id": "siren.bedroom_smart_hub",
+          "friendlyName": "Bedroom Smart Hub",
+          "cSharpName": "BedroomSmartHub"
+        },
+        {
+          "id": "siren.lounge_room_smart_hub",
+          "friendlyName": "Lounge Room Smart Hub",
+          "cSharpName": "LoungeRoomSmartHub"
+        }
+      ],
+      "attributes": [
+        {
+          "jsonName": "friendly_name",
+          "cSharpName": "FriendlyName",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "supported_features",
+          "cSharpName": "SupportedFeatures",
+          "clrType": "System.Double"
         }
       ]
     }
