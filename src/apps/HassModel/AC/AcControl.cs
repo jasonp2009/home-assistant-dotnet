@@ -148,13 +148,15 @@ public class AcControl : IAsyncInitializable
         var offPoint = room.SetTemperature.Value + (isCooling ? profile.OffTolerance : -profile.OffTolerance);
         if (isCooling)
         {
+            if (profile.CheckForecast && _currentWeatherTemperature <= offPoint) return false;
             if (room.CurrentTemperate >= onPoint) return true;
-            if (room.CurrentTemperate <= offPoint || _currentWeatherTemperature <= offPoint) return false;
+            if (room.CurrentTemperate <= offPoint) return false;
         }
         else
         {
+            if (profile.CheckForecast && _currentWeatherTemperature >= offPoint) return false;
             if (room.CurrentTemperate <= onPoint) return true;
-            if (room.CurrentTemperate >= offPoint || _currentWeatherTemperature >= offPoint) return false;
+            if (room.CurrentTemperate >= offPoint) return false;
         }
         return _mitsubishiClient.State.IsZoneOn(room.ZoneId);
     }

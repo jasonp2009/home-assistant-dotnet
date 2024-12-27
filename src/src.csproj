@@ -21,7 +21,7 @@
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
             <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
         </None>
-        <None Update="apps\HassModel\LightAdjust\AcControl.yaml">
+        <None Update="apps\HassModel\LightAdjust\LightAdjust.yaml">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
             <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
         </None>

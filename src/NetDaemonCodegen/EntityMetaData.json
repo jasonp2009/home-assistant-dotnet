@@ -361,6 +361,11 @@
           "jsonName": "assumed_state",
           "cSharpName": "AssumedState",
           "clrType": "System.Boolean"
+        },
+        {
+          "jsonName": "sound_output",
+          "cSharpName": "SoundOutput",
+          "clrType": "System.String"
         }
       ]
     },
@@ -413,11 +418,6 @@
           "cSharpName": "DiningRoomMotionSensorCloudConnection"
         },
         {
-          "id": "binary_sensor.dining_room_motion_sensor_motion",
-          "friendlyName": "Dining Room Motion Sensor Motion",
-          "cSharpName": "DiningRoomMotionSensorMotion"
-        },
-        {
           "id": "binary_sensor.dining_room_smart_button_cloud_connection",
           "friendlyName": "Dining Room Smart Button Cloud connection",
           "cSharpName": "DiningRoomSmartButtonCloudConnection"
@@ -436,6 +436,11 @@
           "id": "binary_sensor.dining_secondary_smart_bulb_overheated",
           "friendlyName": "Dining Secondary Smart Bulb Overheated",
           "cSharpName": "DiningSecondarySmartBulbOverheated"
+        },
+        {
+          "id": "binary_sensor.dining_table_motion_sensor_motion",
+          "friendlyName": "Dining Table Motion Sensor",
+          "cSharpName": "DiningTableMotionSensorMotion"
         },
         {
           "id": "binary_sensor.eero_wan_status",
@@ -496,6 +501,11 @@
           "id": "binary_sensor.kitchen_temperature_and_humidity_sensor_cloud_connection",
           "friendlyName": "Kitchen Temperature and Humidity Sensor Cloud connection",
           "cSharpName": "KitchenTemperatureAndHumiditySensorCloudConnection"
+        },
+        {
+          "id": "binary_sensor.living_area_motion_sensor_motion",
+          "friendlyName": "Living Area Motion Sensor",
+          "cSharpName": "LivingAreaMotionSensorMotion"
         },
         {
           "id": "binary_sensor.lounge_room_motion_sensor_cloud_connection",
@@ -571,11 +581,6 @@
           "id": "binary_sensor.office_motion_sensor_cloud_connection",
           "friendlyName": "Office Motion Sensor Cloud connection",
           "cSharpName": "OfficeMotionSensorCloudConnection"
-        },
-        {
-          "id": "binary_sensor.office_motion_sensor_motion",
-          "friendlyName": "Office Motion Sensor Motion",
-          "cSharpName": "OfficeMotionSensorMotion"
         },
         {
           "id": "binary_sensor.office_smart_bulb_cloud_connection",
@@ -2056,11 +2061,6 @@
           "cSharpName": "LoungeMotionLights"
         },
         {
-          "id": "automation.office_motion_lights",
-          "friendlyName": "Office Motion Lights",
-          "cSharpName": "OfficeMotionLights"
-        },
-        {
           "id": "automation.sunset_lights",
           "friendlyName": "Enabled \u0027Enabled at Night\u0027",
           "cSharpName": "SunsetLights"
@@ -2120,9 +2120,39 @@
       "domain": "input_select",
       "entities": [
         {
+          "id": "input_select.dining_room_ac_mode",
+          "friendlyName": "AC Mode",
+          "cSharpName": "DiningRoomAcMode"
+        },
+        {
+          "id": "input_select.guest_bedroom_ac_mode",
+          "friendlyName": "AC Mode",
+          "cSharpName": "GuestBedroomAcMode"
+        },
+        {
+          "id": "input_select.hallway_ac_mode",
+          "friendlyName": "AC Mode",
+          "cSharpName": "HallwayAcMode"
+        },
+        {
           "id": "input_select.jason_s_bedroom_ac_mode",
           "friendlyName": "AC Mode",
           "cSharpName": "JasonSBedroomAcMode"
+        },
+        {
+          "id": "input_select.kitchen_ac_mode",
+          "friendlyName": "AC Mode",
+          "cSharpName": "KitchenAcMode"
+        },
+        {
+          "id": "input_select.lounge_room_ac_mode",
+          "friendlyName": "AC Mode",
+          "cSharpName": "LoungeRoomAcMode"
+        },
+        {
+          "id": "input_select.master_bedroom_ac_mode",
+          "friendlyName": "AC Mode",
+          "cSharpName": "MasterBedroomAcMode"
         }
       ],
       "attributes": [

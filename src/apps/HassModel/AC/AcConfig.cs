@@ -19,6 +19,7 @@ public class AcProfileConfig
     public string Name { get; set; }
     public decimal OnTolerance { get; set; } = 1M;
     public decimal OffTolerance { get; set; } = 0.5M;
+    public bool CheckForecast { get; set; }
 }
 
 public class AcRoomConfig
