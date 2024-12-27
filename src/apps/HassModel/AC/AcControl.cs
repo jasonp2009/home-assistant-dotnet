@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using HomeAssistantGenerated;
 using Microsoft.Extensions.Logging;
 using NetDaemon.Extensions.Scheduler;
 using NetDaemon.HassModel.Entities;
@@ -15,9 +16,11 @@ public class AcControl : IAsyncInitializable
     private readonly IMitsubishiClient _mitsubishiClient;
     private readonly IAppConfig<AcConfig> _config;
     private readonly ILogger<AcControl> _logger;
+    private decimal _currentWeatherTemperature;
     
     public AcControl(IHaContext ha, INetDaemonScheduler scheduler, IAppConfig<AcConfig> config, ILogger<AcControl> logger, IMitsubishiClient mitsubishiClient)
     {
+        var forecastHome = new WeatherEntities(ha).ForecastHome;
         _mitsubishiClient = mitsubishiClient;
         _config = config;
         _logger = logger;
@@ -65,6 +68,14 @@ public class AcControl : IAsyncInitializable
             if (currentMeasuredTemp != _mitsubishiClient.State.RoomTemp)
             {
                 await HandleChange();
+            }
+
+            var beforeTemperature = _currentWeatherTemperature;
+            _currentWeatherTemperature = Convert.ToDecimal(forecastHome.Attributes!.Temperature);
+            if (beforeTemperature != _currentWeatherTemperature)
+            {
+                _logger.LogInformation("Weather temperature changed to {WeatherTemperature}",
+                    _currentWeatherTemperature);
             }
         });
     }
@@ -138,12 +149,12 @@ public class AcControl : IAsyncInitializable
         if (isCooling)
         {
             if (room.CurrentTemperate >= onPoint) return true;
-            if (room.CurrentTemperate <= offPoint) return false;
+            if (room.CurrentTemperate <= offPoint || _currentWeatherTemperature <= offPoint) return false;
         }
         else
         {
             if (room.CurrentTemperate <= onPoint) return true;
-            if (room.CurrentTemperate >= offPoint) return false;
+            if (room.CurrentTemperate >= offPoint || _currentWeatherTemperature >= offPoint) return false;
         }
         return _mitsubishiClient.State.IsZoneOn(room.ZoneId);
     }
