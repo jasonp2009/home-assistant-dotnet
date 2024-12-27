@@ -13,12 +13,13 @@ namespace src.apps.HassModel.AC;
 [NetDaemonApp]
 public class AcControl : IAsyncInitializable
 {
-    private readonly IMitsubishiClient _mitsubishiClient;
     private readonly IAppConfig<AcConfig> _config;
     private readonly ILogger<AcControl> _logger;
+    private readonly IMitsubishiClient _mitsubishiClient;
     private decimal _currentWeatherTemperature;
-    
-    public AcControl(IHaContext ha, INetDaemonScheduler scheduler, IAppConfig<AcConfig> config, ILogger<AcControl> logger, IMitsubishiClient mitsubishiClient)
+
+    public AcControl(IHaContext ha, INetDaemonScheduler scheduler, IAppConfig<AcConfig> config,
+        ILogger<AcControl> logger, IMitsubishiClient mitsubishiClient)
     {
         var forecastHome = new WeatherEntities(ha).ForecastHome;
         _mitsubishiClient = mitsubishiClient;
@@ -65,18 +66,13 @@ public class AcControl : IAsyncInitializable
         {
             var currentMeasuredTemp = _mitsubishiClient.State.RoomTemp;
             await _mitsubishiClient.UpdateState();
-            if (currentMeasuredTemp != _mitsubishiClient.State.RoomTemp)
-            {
-                await HandleChange();
-            }
+            if (currentMeasuredTemp != _mitsubishiClient.State.RoomTemp) await HandleChange();
 
             var beforeTemperature = _currentWeatherTemperature;
             _currentWeatherTemperature = Convert.ToDecimal(forecastHome.Attributes!.Temperature);
             if (beforeTemperature != _currentWeatherTemperature)
-            {
                 _logger.LogInformation("Weather temperature changed to {WeatherTemperature}",
                     _currentWeatherTemperature);
-            }
         });
     }
 
@@ -93,12 +89,10 @@ public class AcControl : IAsyncInitializable
     {
         await _mitsubishiClient.SetMode(GetDesiredAcMode(), cancellationToken);
         await SetTemperature(cancellationToken);
-        
+
         foreach (var room in _config.Value.Rooms)
-        {
             await _mitsubishiClient.ToggleZone(room.ZoneId, ShouldEnableZone(room), cancellationToken);
-        }
-        
+
         await _mitsubishiClient.ToggleAc(_mitsubishiClient.State.IsAnyZoneOn(), cancellationToken);
     }
 
@@ -106,7 +100,7 @@ public class AcControl : IAsyncInitializable
     {
         if (_mitsubishiClient.State.SetMode is not (AcMode.Cool or AcMode.Heat)) return;
         var isCooling = _mitsubishiClient.State.SetMode is AcMode.Cool;
-        
+
         await _mitsubishiClient.SetTemperature(
             _mitsubishiClient.State.RoomTemp +
             (isCooling ? -_config.Value.Aggressiveness : _config.Value.Aggressiveness), cancellationToken);
@@ -116,10 +110,10 @@ public class AcControl : IAsyncInitializable
     {
         var currentMode = _mitsubishiClient.State.SetMode;
         if (currentMode is not (AcMode.Cool or AcMode.Heat))
-        {
             return _config.Value.Rooms.Count(room => ShouldEnableZone(room, AcMode.Cool)) >=
-                   _config.Value.Rooms.Count(room => ShouldEnableZone(room, AcMode.Heat)) ? AcMode.Cool : AcMode.Heat;
-        }
+                   _config.Value.Rooms.Count(room => ShouldEnableZone(room, AcMode.Heat))
+                ? AcMode.Cool
+                : AcMode.Heat;
 
         if (_config.Value.Rooms.Any(room => ShouldEnableZone(room, currentMode))) return currentMode;
         if (currentMode == AcMode.Cool)
@@ -133,7 +127,7 @@ public class AcControl : IAsyncInitializable
 
         return currentMode;
     }
-    
+
     private bool ShouldEnableZone(AcRoomConfig room, AcMode? mode = null)
     {
         mode ??= _mitsubishiClient.State.SetMode;
@@ -141,23 +135,26 @@ public class AcControl : IAsyncInitializable
         var isCooling = mode is AcMode.Cool;
         if (!room.IsOn || room.SetTemperature is null || room.CurrentTemperate is null) return false;
 
-        var profile = _config.Value.Profiles.FirstOrDefault(profile => profile.Name == room.AcProfileSelectEntity?.State)
-                   ?? _config.Value.DefaultProfile;
+        var profile =
+            _config.Value.Profiles.FirstOrDefault(profile => profile.Name == room.AcProfileSelectEntity?.State)
+            ?? _config.Value.DefaultProfile;
 
         var onPoint = room.SetTemperature.Value + (isCooling ? profile.OnTolerance : -profile.OnTolerance);
         var offPoint = room.SetTemperature.Value + (isCooling ? profile.OffTolerance : -profile.OffTolerance);
+        var weatherOffPoint = room.SetTemperature.Value + (isCooling ? -profile.WeatherOffset : profile.WeatherOffset);
         if (isCooling)
         {
-            if (profile.CheckForecast && _currentWeatherTemperature <= offPoint) return false;
+            if (_currentWeatherTemperature <= weatherOffPoint) return false;
             if (room.CurrentTemperate >= onPoint) return true;
             if (room.CurrentTemperate <= offPoint) return false;
         }
         else
         {
-            if (profile.CheckForecast && _currentWeatherTemperature >= offPoint) return false;
+            if (_currentWeatherTemperature >= weatherOffPoint) return false;
             if (room.CurrentTemperate <= onPoint) return true;
             if (room.CurrentTemperate >= offPoint) return false;
         }
+
         return _mitsubishiClient.State.IsZoneOn(room.ZoneId);
     }
 }
