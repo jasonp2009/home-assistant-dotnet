@@ -5,6 +5,7 @@ using NetDaemon.Extensions.Scheduler;
 using NetDaemon.Extensions.Tts;
 using NetDaemon.Runtime;
 using HomeAssistantGenerated;
+using src;
 
 #pragma warning disable CA1812
 
@@ -15,12 +16,13 @@ try
         .UseNetDaemonDefaultLogging()
         .UseNetDaemonRuntime()
         .UseNetDaemonTextToSpeech()
-        .ConfigureServices((_, services) =>
+        .ConfigureServices((context, services) =>
             services
                 .AddAppsFromAssembly(Assembly.GetExecutingAssembly())
                 .AddNetDaemonStateManager()
                 .AddNetDaemonScheduler()
                 .AddHomeAssistantGenerated()
+                .AddServices(context.Configuration)
         )
         .Build()
         .RunAsync()

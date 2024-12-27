@@ -5,6 +5,7 @@ using System.Security.Authentication;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using src.apps.HassModel.AC.MitsubishiClient.Models;
 
 namespace src.apps.HassModel.AC.MitsubishiClient;
@@ -16,13 +17,15 @@ public class MitsubishiClient : IMitsubishiClient
         BaseAddress = new Uri("https://api.melview.net/api/")
     };
 
+    private readonly IOptions<MitsubishiClientSettings> _settings;
     private readonly ILogger<MitsubishiClient> _logger;
 
     private const string LoginRoute = "login.aspx";
     private const string UnitCommandRoute = "unitcommand.aspx";
 
-    public MitsubishiClient(ILogger<MitsubishiClient> logger)
+    public MitsubishiClient(IOptions<MitsubishiClientSettings> settings, ILogger<MitsubishiClient> logger)
     {
+        _settings = settings;
         _logger = logger;
     }
 
@@ -69,12 +72,12 @@ public class MitsubishiClient : IMitsubishiClient
     }
 
 
-    public async Task Login(string userName, string password, CancellationToken cancellationToken = default)
+    public async Task Login(CancellationToken cancellationToken = default)
     {
         var response = await _httpClient.PostAsJsonAsync(LoginRoute, new
         {
-            User = userName,
-            Pass = password
+            User = _settings.Value.Username,
+            Pass = _settings.Value.Password
         }, cancellationToken: cancellationToken);
         if (!response.Headers.TryGetValues("Set-Cookie", out var cookies))
         {

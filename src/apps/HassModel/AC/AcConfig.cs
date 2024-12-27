@@ -7,8 +7,6 @@ namespace src.apps.HassModel.AC;
 
 public class AcConfig
 {
-    public string MitsubishiUsername { get; set; }
-    public string MitsubishiPassword { get; set; }
     public decimal Aggressiveness { get; set; } = 0;
     public string DefaultProfileName { get; set; }
     public AcProfileConfig DefaultProfile => Profiles.First(mode => mode.Name == DefaultProfileName);

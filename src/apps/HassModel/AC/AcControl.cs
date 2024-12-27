@@ -16,9 +16,9 @@ public class AcControl : IAsyncInitializable
     private readonly IAppConfig<AcConfig> _config;
     private readonly ILogger<AcControl> _logger;
     
-    public AcControl(IHaContext ha, INetDaemonScheduler scheduler, IAppConfig<AcConfig> config, ILogger<AcControl> logger, ILogger<MitsubishiClient.MitsubishiClient> mitsubishiLogger)
+    public AcControl(IHaContext ha, INetDaemonScheduler scheduler, IAppConfig<AcConfig> config, ILogger<AcControl> logger, IMitsubishiClient mitsubishiClient)
     {
-        _mitsubishiClient = new MitsubishiClient.MitsubishiClient(mitsubishiLogger);
+        _mitsubishiClient = mitsubishiClient;
         _config = config;
         _logger = logger;
         foreach (var room in config.Value.Rooms)
@@ -30,7 +30,7 @@ public class AcControl : IAsyncInitializable
                         acToggleEvent.Entity.IsOn(),
                         acToggleEvent.Entity.Area);
                     return HandleChange();
-                });
+                }, _logger);
             room.SetTemperatureEntity.StateChanges()
                 .SubscribeAsync(setTemperatureEvent =>
                 {
@@ -38,7 +38,7 @@ public class AcControl : IAsyncInitializable
                         setTemperatureEvent.Entity.State,
                         setTemperatureEvent.Entity.Area);
                     return HandleChange();
-                });
+                }, _logger);
             room.TemperatureSensorEntity.StateChanges()
                 .SubscribeAsync(temperatureChangedEvent =>
                 {
@@ -46,7 +46,7 @@ public class AcControl : IAsyncInitializable
                         temperatureChangedEvent.Entity.State,
                         temperatureChangedEvent.Entity.Area);
                     return HandleChange();
-                });
+                }, _logger);
             room.AcProfileSelectEntity.StateChanges()
                 .SubscribeAsync(acModeChangedEvent =>
                 {
@@ -54,7 +54,7 @@ public class AcControl : IAsyncInitializable
                         acModeChangedEvent.Entity.State,
                         acModeChangedEvent.Entity.Area);
                     return HandleChange();
-                });
+                }, _logger);
         }
 
         // ReSharper disable once AsyncVoidLambda
@@ -72,30 +72,23 @@ public class AcControl : IAsyncInitializable
     public async Task InitializeAsync(CancellationToken cancellationToken)
     {
         _logger.LogInformation("Attempting to login to mitsubishi client");
-        await _mitsubishiClient.Login(_config.Value.MitsubishiUsername, _config.Value.MitsubishiPassword,
-            cancellationToken);
+        await _mitsubishiClient.Login(cancellationToken);
         _logger.LogInformation("Successfully logged in to mitsubishi client");
+
+        await HandleChange(cancellationToken);
+    }
+
+    private async Task HandleChange(CancellationToken cancellationToken = default)
+    {
+        await _mitsubishiClient.SetMode(GetDesiredAcMode(), cancellationToken);
+        await SetTemperature(cancellationToken);
         
         foreach (var room in _config.Value.Rooms)
         {
             await _mitsubishiClient.ToggleZone(room.ZoneId, ShouldEnableZone(room), cancellationToken);
         }
-
-        await _mitsubishiClient.SetMode(AcMode.Cool, cancellationToken);
-        await SetTemperature(cancellationToken);
-    }
-
-    private async Task HandleChange()
-    {
-        await _mitsubishiClient.SetMode(GetDesiredAcMode());
-        await SetTemperature();
         
-        foreach (var room in _config.Value.Rooms)
-        {
-            await _mitsubishiClient.ToggleZone(room.ZoneId, ShouldEnableZone(room));
-        }
-        
-        await _mitsubishiClient.ToggleAc(_mitsubishiClient.State.IsAnyZoneOn());
+        await _mitsubishiClient.ToggleAc(_mitsubishiClient.State.IsAnyZoneOn(), cancellationToken);
     }
 
     private async Task SetTemperature(CancellationToken cancellationToken = default)

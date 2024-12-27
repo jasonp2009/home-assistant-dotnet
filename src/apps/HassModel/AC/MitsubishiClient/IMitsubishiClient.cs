@@ -7,7 +7,7 @@ namespace src.apps.HassModel.AC.MitsubishiClient;
 public interface IMitsubishiClient
 {
     public AcState State { get; set; }
-    public Task Login(string userName, string password, CancellationToken cancellationToken = default);
+    public Task Login(CancellationToken cancellationToken = default);
     public Task ToggleZone(int zoneId, bool? isOn = null, CancellationToken cancellationToken = default);
     public Task SetTemperature(decimal temperature, CancellationToken cancellationToken = default);
     public Task SetMode(AcMode mode, CancellationToken cancellationToken = default);
