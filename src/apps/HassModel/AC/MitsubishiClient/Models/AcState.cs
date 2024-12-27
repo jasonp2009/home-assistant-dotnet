@@ -22,7 +22,7 @@ public class AcState
 
     public bool IsZoneOn(int zoneId)
     {
-        return Zones.First(zone => zone.ZoneId == zoneId).Status != AcZoneStatus.Off;
+        return Zones.First(zone => zone.ZoneId == zoneId).Status == AcZoneStatus.On;
     }
 
     public bool IsAnyZoneOn() => Zones.Any(zone => IsZoneOn(zone.ZoneId));
