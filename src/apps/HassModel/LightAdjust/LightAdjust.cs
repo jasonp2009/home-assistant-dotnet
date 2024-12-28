@@ -33,14 +33,16 @@ public class LightAdjust
             });
             foreach (var adjustment in lightConfig.Adjustments)
             {
-                var firstRunDate = DateTime.Now.TimeOfDay > adjustment.Time.ToTimeSpan()
+                var firstRunDate = DateTime.Now.TimeOfDay >= adjustment.Time.ToTimeSpan()
                     ? DateTime.Today + TimeSpan.FromDays(1)
                     : DateTime.Today;
-                scheduler.RunEvery(TimeSpan.FromDays(1),
-                    new DateTimeOffset(
-                        DateOnly.FromDateTime(firstRunDate),
-                        adjustment.Time,
-                        TimeZoneInfo.Local.BaseUtcOffset), () =>
+
+                var firstRun = new DateTimeOffset(
+                    DateOnly.FromDateTime(firstRunDate),
+                    adjustment.Time,
+                    TimeSpan.FromHours(11));
+                scheduler.RunEvery(TimeSpan.FromDays(1), firstRun,
+                    () =>
                     {
                         if (light.IsOn())
                         {
