@@ -5,12 +5,13 @@ namespace src.apps.HassModel.LightAdjust;
 
 public class LightAdjustConfig
 {
-    public IEnumerable<LightConfig> Lights { get; set; }
+    public IEnumerable<LightAdjustmentGroupConfig> AdjustmentGroups { get; set; }
 }
 
-public class LightConfig
+public class LightAdjustmentGroupConfig
 {
-    public LightEntity LightEntity { get; set; }
+    public string Name { get; set; }
+    public IEnumerable<LightEntity> Lights { get; set; }
     public IEnumerable<AdjustmentConfig> Adjustments { get; set; }
 }
 

@@ -9,6 +9,26 @@
           "cSharpName": "BackyardLight"
         },
         {
+          "id": "light.dining_light_1",
+          "friendlyName": "Dining Light 1",
+          "cSharpName": "DiningLight1"
+        },
+        {
+          "id": "light.dining_light_2",
+          "friendlyName": "Dining Light 2",
+          "cSharpName": "DiningLight2"
+        },
+        {
+          "id": "light.dining_light_3",
+          "friendlyName": "Dining Light 3",
+          "cSharpName": "DiningLight3"
+        },
+        {
+          "id": "light.dining_light_4",
+          "friendlyName": "Dining Light 4",
+          "cSharpName": "DiningLight4"
+        },
+        {
           "id": "light.dining_room_lamp",
           "friendlyName": "Dining Room Lamp",
           "cSharpName": "DiningRoomLamp"
@@ -24,6 +44,76 @@
           "cSharpName": "JasonSBedroomLight"
         },
         {
+          "id": "light.kitchen_light_1",
+          "friendlyName": "Kitchen Light 1",
+          "cSharpName": "KitchenLight1"
+        },
+        {
+          "id": "light.kitchen_light_2",
+          "friendlyName": "Kitchen Light 2",
+          "cSharpName": "KitchenLight2"
+        },
+        {
+          "id": "light.kitchen_light_3",
+          "friendlyName": "Kitchen Light 3",
+          "cSharpName": "KitchenLight3"
+        },
+        {
+          "id": "light.kitchen_light_4",
+          "friendlyName": "Kitchen Light 4",
+          "cSharpName": "KitchenLight4"
+        },
+        {
+          "id": "light.living_room_light_1",
+          "friendlyName": "Living Room Light 1",
+          "cSharpName": "LivingRoomLight1"
+        },
+        {
+          "id": "light.living_room_light_2",
+          "friendlyName": "Living Room Light 2",
+          "cSharpName": "LivingRoomLight2"
+        },
+        {
+          "id": "light.living_room_light_3",
+          "friendlyName": "Living Room Light 3",
+          "cSharpName": "LivingRoomLight3"
+        },
+        {
+          "id": "light.living_room_light_4",
+          "friendlyName": "Living Room Light 4",
+          "cSharpName": "LivingRoomLight4"
+        },
+        {
+          "id": "light.lounge_light_1",
+          "friendlyName": "Lounge Light 1",
+          "cSharpName": "LoungeLight1"
+        },
+        {
+          "id": "light.lounge_light_2",
+          "friendlyName": "Lounge Light 2",
+          "cSharpName": "LoungeLight2"
+        },
+        {
+          "id": "light.lounge_light_3",
+          "friendlyName": "Lounge Light 3",
+          "cSharpName": "LoungeLight3"
+        },
+        {
+          "id": "light.lounge_light_4",
+          "friendlyName": "Lounge Light 4",
+          "cSharpName": "LoungeLight4"
+        },
+        {
+          "id": "light.lounge_light_5",
+          "friendlyName": "Lounge Light 5",
+          "cSharpName": "LoungeLight5"
+        },
+        {
+          "id": "light.lounge_light_6",
+          "friendlyName": "Lounge Light 6",
+          "cSharpName": "LoungeLight6"
+        },
+        {
           "id": "light.lounge_smart_bulb",
           "friendlyName": "Lounge Smart Bulb",
           "cSharpName": "LoungeSmartBulb"
@@ -37,11 +127,6 @@
           "id": "light.master_bedroom_smart_bulb",
           "friendlyName": "Master Bedroom Smart Bulb",
           "cSharpName": "MasterBedroomSmartBulb"
-        },
-        {
-          "id": "light.office_smart_bulb",
-          "friendlyName": null,
-          "cSharpName": "OfficeSmartBulb"
         }
       ],
       "attributes": [
@@ -152,7 +237,7 @@
         },
         {
           "id": "media_player.chromecast",
-          "friendlyName": "Chromecast",
+          "friendlyName": null,
           "cSharpName": "Chromecast"
         },
         {
@@ -366,6 +451,11 @@
           "jsonName": "sound_output",
           "cSharpName": "SoundOutput",
           "clrType": "System.String"
+        },
+        {
+          "jsonName": "player_source",
+          "cSharpName": "PlayerSource",
+          "clrType": "System.String"
         }
       ]
     },
@@ -414,7 +504,7 @@
         },
         {
           "id": "binary_sensor.dining_room_motion_sensor_cloud_connection",
-          "friendlyName": "Dining Room Motion Sensor Cloud connection",
+          "friendlyName": "Living Room Motion Sensor Cloud connection",
           "cSharpName": "DiningRoomMotionSensorCloudConnection"
         },
         {
@@ -498,6 +588,16 @@
           "cSharpName": "JasonSBedroomTemperatureAndHumiditySensorCloudConnection"
         },
         {
+          "id": "binary_sensor.kitchen_motion_sensor_cloud_connection",
+          "friendlyName": "Kitchen Motion Sensor Cloud connection",
+          "cSharpName": "KitchenMotionSensorCloudConnection"
+        },
+        {
+          "id": "binary_sensor.kitchen_motion_sensor_motion",
+          "friendlyName": "Kitchen Motion Sensor Motion",
+          "cSharpName": "KitchenMotionSensorMotion"
+        },
+        {
           "id": "binary_sensor.kitchen_temperature_and_humidity_sensor_cloud_connection",
           "friendlyName": "Kitchen Temperature and Humidity Sensor Cloud connection",
           "cSharpName": "KitchenTemperatureAndHumiditySensorCloudConnection"
@@ -579,18 +679,8 @@
         },
         {
           "id": "binary_sensor.office_motion_sensor_cloud_connection",
-          "friendlyName": "Office Motion Sensor Cloud connection",
+          "friendlyName": "Dining Table Motion Sensor Cloud connection",
           "cSharpName": "OfficeMotionSensorCloudConnection"
-        },
-        {
-          "id": "binary_sensor.office_smart_bulb_cloud_connection",
-          "friendlyName": "Cloud connection",
-          "cSharpName": "OfficeSmartBulbCloudConnection"
-        },
-        {
-          "id": "binary_sensor.office_smart_bulb_overheated",
-          "friendlyName": "Overheated",
-          "cSharpName": "OfficeSmartBulbOverheated"
         },
         {
           "id": "binary_sensor.office_smart_button_cloud_connection",
@@ -829,11 +919,6 @@
           "id": "select.master_bedroom_smart_bulb_light_preset",
           "friendlyName": "Master Bedroom Smart Bulb Light preset",
           "cSharpName": "MasterBedroomSmartBulbLightPreset"
-        },
-        {
-          "id": "select.office_smart_bulb_light_preset",
-          "friendlyName": "Light preset",
-          "cSharpName": "OfficeSmartBulbLightPreset"
         }
       ],
       "attributes": [
@@ -899,7 +984,7 @@
         },
         {
           "id": "sensor.dining_room_motion_sensor_signal_level",
-          "friendlyName": "Dining Room Motion Sensor Signal level",
+          "friendlyName": "Living Room Motion Sensor Signal level",
           "cSharpName": "DiningRoomMotionSensorSignalLevel"
         },
         {
@@ -958,6 +1043,11 @@
           "cSharpName": "JasonSBedroomTemperatureAndHumiditySensorSignalLevel"
         },
         {
+          "id": "sensor.kitchen_motion_sensor_signal_level",
+          "friendlyName": "Kitchen Motion Sensor Signal level",
+          "cSharpName": "KitchenMotionSensorSignalLevel"
+        },
+        {
           "id": "sensor.kitchen_temperature_and_humidity_sensor_signal_level",
           "friendlyName": "Kitchen Temperature and Humidity Sensor Signal level",
           "cSharpName": "KitchenTemperatureAndHumiditySensorSignalLevel"
@@ -1014,13 +1104,8 @@
         },
         {
           "id": "sensor.office_motion_sensor_signal_level",
-          "friendlyName": "Office Motion Sensor Signal level",
+          "friendlyName": "Dining Table Motion Sensor Signal level",
           "cSharpName": "OfficeMotionSensorSignalLevel"
-        },
-        {
-          "id": "sensor.office_smart_bulb_signal_level",
-          "friendlyName": "Signal level",
-          "cSharpName": "OfficeSmartBulbSignalLevel"
         },
         {
           "id": "sensor.office_smart_button_signal_level",
@@ -1455,11 +1540,6 @@
           "id": "switch.master_bedroom_smart_bulb_auto_update_enabled",
           "friendlyName": "Master Bedroom Smart Bulb Auto update enabled",
           "cSharpName": "MasterBedroomSmartBulbAutoUpdateEnabled"
-        },
-        {
-          "id": "switch.office_smart_bulb_auto_update_enabled",
-          "friendlyName": "Auto update enabled",
-          "cSharpName": "OfficeSmartBulbAutoUpdateEnabled"
         }
       ],
       "attributes": [
@@ -2041,9 +2121,9 @@
           "cSharpName": "BackyardDoorLightsOn"
         },
         {
-          "id": "automation.dining_motion_lights",
-          "friendlyName": "Dining Motion Lights",
-          "cSharpName": "DiningMotionLights"
+          "id": "automation.dining_room_motion_lights",
+          "friendlyName": "Dining Room Motion Lights",
+          "cSharpName": "DiningRoomMotionLights"
         },
         {
           "id": "automation.disabled_enabled_at_night",
@@ -2054,6 +2134,16 @@
           "id": "automation.jason_s_bedroom_motions_lights",
           "friendlyName": "Jason\u0027s Bedroom Motions Lights",
           "cSharpName": "JasonSBedroomMotionsLights"
+        },
+        {
+          "id": "automation.kitchen_motion_lights",
+          "friendlyName": "Kitchen Motion Lights",
+          "cSharpName": "KitchenMotionLights"
+        },
+        {
+          "id": "automation.living_room_motion_lights",
+          "friendlyName": "Living Room Motion Lights",
+          "cSharpName": "LivingRoomMotionLights"
         },
         {
           "id": "automation.lounge_motion_lights",
@@ -2251,16 +2341,6 @@
           "id": "number.master_bedroom_smart_bulb_smooth_on",
           "friendlyName": "Master Bedroom Smart Bulb Smooth on",
           "cSharpName": "MasterBedroomSmartBulbSmoothOn"
-        },
-        {
-          "id": "number.office_smart_bulb_smooth_off",
-          "friendlyName": "Smooth off",
-          "cSharpName": "OfficeSmartBulbSmoothOff"
-        },
-        {
-          "id": "number.office_smart_bulb_smooth_on",
-          "friendlyName": "Smooth on",
-          "cSharpName": "OfficeSmartBulbSmoothOn"
         }
       ],
       "attributes": [
