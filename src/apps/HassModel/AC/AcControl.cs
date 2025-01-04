@@ -94,6 +94,7 @@ public class AcControl : IAsyncInitializable
             await _mitsubishiClient.ToggleZone(room.ZoneId, ShouldEnableZone(room), cancellationToken);
 
         await _mitsubishiClient.ToggleAc(_mitsubishiClient.State.IsAnyZoneOn(), cancellationToken);
+        UpdateLogInputs();
     }
 
     private async Task SetTemperature(CancellationToken cancellationToken = default)
@@ -130,6 +131,7 @@ public class AcControl : IAsyncInitializable
 
     private bool ShouldEnableZone(AcRoomConfig room, AcMode? mode = null)
     {
+        if (!CheckContactAndMotion(room)) return false;
         mode ??= _mitsubishiClient.State.SetMode;
         if (mode is not (AcMode.Cool or AcMode.Heat)) return false;
         var isCooling = mode is AcMode.Cool;
@@ -156,5 +158,39 @@ public class AcControl : IAsyncInitializable
         }
 
         return _mitsubishiClient.State.IsZoneOn(room.ZoneId);
+    }
+
+    private bool CheckContactAndMotion(AcRoomConfig room)
+    {
+        if (room.MotionEnabledFrom is not null && room.MotionEnabledTo is not null &&
+            (DateTime.Now.TimeOfDay < room.MotionEnabledFrom.Value.ToTimeSpan() ||
+             room.MotionEnabledTo.Value.ToTimeSpan() < DateTime.Now.TimeOfDay)) return true;
+        return (room.ContactSensorEntities is null || !room.ContactSensorEntities.Any(contactSensorEntity =>
+                   contactSensorEntity.IsOn() &&
+                   contactSensorEntity.EntityState?.LastChanged < DateTime.Now.AddMinutes(-15))) &&
+               (room.MotionSensorEntities is null || !room.MotionSensorEntities.All(motionSensorEntity =>
+                   motionSensorEntity.IsOff() &&
+                   motionSensorEntity.EntityState?.LastChanged < DateTime.Now.AddMinutes(-15)));
+    }
+
+    private void UpdateLogInputs()
+    {
+        var state = _mitsubishiClient.State;
+        if (state.Power)
+            _config.Value.AcOnLogEntity.TurnOn();
+        else
+            _config.Value.AcOnLogEntity.TurnOff();
+
+        _config.Value.AcModeLogEntity.SelectOption(state.SetMode.ToString());
+
+        foreach (var room in _config.Value.Rooms)
+        {
+            if (room.ZoneOnLogEntity is null) continue;
+            var isZoneOn = state.IsZoneOn(room.ZoneId);
+            if (isZoneOn)
+                room.ZoneOnLogEntity.TurnOn();
+            else
+                room.ZoneOnLogEntity.TurnOff();
+        }
     }
 }

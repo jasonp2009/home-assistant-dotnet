@@ -12,6 +12,8 @@ public class AcConfig
     public AcProfileConfig DefaultProfile => Profiles.First(mode => mode.Name == DefaultProfileName);
     public IEnumerable<AcProfileConfig> Profiles { get; set; }
     public IEnumerable<AcRoomConfig> Rooms { get; set; }
+    public InputBooleanEntity AcOnLogEntity { get; set; }
+    public InputSelectEntity AcModeLogEntity { get; set; }
 }
 
 public class AcProfileConfig
@@ -29,6 +31,11 @@ public class AcRoomConfig
     public InputNumberEntity SetTemperatureEntity { get; set; }
     public InputBooleanEntity AcToggleEntity { get; set; }
     public InputSelectEntity AcProfileSelectEntity { get; set; }
+    public IEnumerable<BinarySensorEntity>? MotionSensorEntities { get; set; }
+    public IEnumerable<BinarySensorEntity>? ContactSensorEntities { get; set; }
+    public TimeOnly? MotionEnabledFrom { get; set; }
+    public TimeOnly? MotionEnabledTo { get; set; }
+    public InputBooleanEntity? ZoneOnLogEntity { get; set; }
     public int ZoneId { get; set; }
     public bool IsOn => AcToggleEntity?.EntityState.IsOn() ?? false;
     public decimal? SetTemperature => Convert.ToDecimal(SetTemperatureEntity?.EntityState?.State);

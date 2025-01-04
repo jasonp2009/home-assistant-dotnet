@@ -271,6 +271,11 @@
           "cSharpName": "PlexPlexForWindowsLaptopIrmdvafv"
         },
         {
+          "id": "media_player.plex_plex_web_chrome_linux",
+          "friendlyName": "Plex (Plex Web - Chrome - Linux)",
+          "cSharpName": "PlexPlexWebChromeLinux"
+        },
+        {
           "id": "media_player.plex_plex_web_chrome_windows",
           "friendlyName": "Plex (Plex Web - Chrome - Windows)",
           "cSharpName": "PlexPlexWebChromeWindows"
@@ -289,6 +294,11 @@
           "id": "media_player.shield",
           "friendlyName": "SHIELD",
           "cSharpName": "Shield"
+        },
+        {
+          "id": "media_player.shield_2",
+          "friendlyName": "SHIELD",
+          "cSharpName": "Shield2"
         }
       ],
       "attributes": [
@@ -1879,6 +1889,46 @@
       "domain": "input_boolean",
       "entities": [
         {
+          "id": "input_boolean.aclog_ison",
+          "friendlyName": "AcLog_IsOn",
+          "cSharpName": "AclogIson"
+        },
+        {
+          "id": "input_boolean.aclog_zoneon_dining",
+          "friendlyName": "AcLog_ZoneOn_Dining",
+          "cSharpName": "AclogZoneonDining"
+        },
+        {
+          "id": "input_boolean.aclog_zoneon_guestbedroom",
+          "friendlyName": "AcLog_ZoneOn_GuestBedroom",
+          "cSharpName": "AclogZoneonGuestbedroom"
+        },
+        {
+          "id": "input_boolean.aclog_zoneon_hallway",
+          "friendlyName": "AcLog_ZoneOn_Hallway",
+          "cSharpName": "AclogZoneonHallway"
+        },
+        {
+          "id": "input_boolean.aclog_zoneon_jason_sbedroom",
+          "friendlyName": "AcLog_ZoneOn_Jason\u0027sBedroom",
+          "cSharpName": "AclogZoneonJasonSbedroom"
+        },
+        {
+          "id": "input_boolean.aclog_zoneon_kitchen",
+          "friendlyName": "AcLog_ZoneOn_Kitchen",
+          "cSharpName": "AclogZoneonKitchen"
+        },
+        {
+          "id": "input_boolean.aclog_zoneon_lounge",
+          "friendlyName": "AcLog_ZoneOn_Lounge",
+          "cSharpName": "AclogZoneonLounge"
+        },
+        {
+          "id": "input_boolean.aclog_zoneon_masterbedroom",
+          "friendlyName": "AcLog_ZoneOn_MasterBedroom",
+          "cSharpName": "AclogZoneonMasterbedroom"
+        },
+        {
           "id": "input_boolean.dining_room_ac_switch",
           "friendlyName": "Dining Room AC Switch",
           "cSharpName": "DiningRoomAcSwitch"
@@ -2215,6 +2265,11 @@
       "domain": "input_select",
       "entities": [
         {
+          "id": "input_select.aclog_mode",
+          "friendlyName": "AcLog_Mode",
+          "cSharpName": "AclogMode"
+        },
+        {
           "id": "input_select.dining_room_ac_mode",
           "friendlyName": "AC Mode",
           "cSharpName": "DiningRoomAcMode"
@@ -2401,6 +2456,38 @@
         }
       ],
       "attributes": [
+        {
+          "jsonName": "friendly_name",
+          "cSharpName": "FriendlyName",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "supported_features",
+          "cSharpName": "SupportedFeatures",
+          "clrType": "System.Double"
+        }
+      ]
+    },
+    {
+      "domain": "remote",
+      "entities": [
+        {
+          "id": "remote.shield",
+          "friendlyName": "SHIELD",
+          "cSharpName": "Shield"
+        }
+      ],
+      "attributes": [
+        {
+          "jsonName": "activity_list",
+          "cSharpName": "ActivityList",
+          "clrType": "System.Collections.Generic.IReadOnlyList\u00601[System.Object]"
+        },
+        {
+          "jsonName": "current_activity",
+          "cSharpName": "CurrentActivity",
+          "clrType": "System.String"
+        },
         {
           "jsonName": "friendly_name",
           "cSharpName": "FriendlyName",
