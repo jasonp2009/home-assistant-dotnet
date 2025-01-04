@@ -1942,6 +1942,11 @@
           "id": "input_boolean.netdaemon_src_apps_hass_model_light_adjust_light_adjust",
           "friendlyName": "netdaemon_src_apps_hass_model_light_adjust_light_adjust",
           "cSharpName": "NetdaemonSrcAppsHassModelLightAdjustLightAdjust"
+        },
+        {
+          "id": "input_boolean.netdaemon_src_apps_hass_model_light_sync_light_sync",
+          "friendlyName": "netdaemon_src_apps_hass_model_light_sync_light_sync",
+          "cSharpName": "NetdaemonSrcAppsHassModelLightSyncLightSync"
         }
       ],
       "attributes": [
