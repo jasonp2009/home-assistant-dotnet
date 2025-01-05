@@ -272,7 +272,7 @@
         },
         {
           "id": "media_player.plex_plex_web_chrome_linux",
-          "friendlyName": "Plex (Plex Web - Chrome - Linux)",
+          "friendlyName": "Plex (Plex Web - Chrome - Android)",
           "cSharpName": "PlexPlexWebChromeLinux"
         },
         {
@@ -1277,7 +1277,7 @@
         },
         {
           "id": "sensor.dining_room_temperature_and_humidity_sensor_temperature",
-          "friendlyName": "Temperature",
+          "friendlyName": "Dining Room Temperature",
           "cSharpName": "DiningRoomTemperatureAndHumiditySensorTemperature"
         },
         {
@@ -1287,7 +1287,7 @@
         },
         {
           "id": "sensor.guest_bedroom_temperature_and_humidity_sensor_temperature",
-          "friendlyName": "Temperature",
+          "friendlyName": "Guest Bedroom Temperature",
           "cSharpName": "GuestBedroomTemperatureAndHumiditySensorTemperature"
         },
         {
@@ -1297,7 +1297,7 @@
         },
         {
           "id": "sensor.hallway_temperature_and_humidity_sensor_temperature",
-          "friendlyName": "Temperature",
+          "friendlyName": "Hallway Temperature",
           "cSharpName": "HallwayTemperatureAndHumiditySensorTemperature"
         },
         {
@@ -1307,7 +1307,7 @@
         },
         {
           "id": "sensor.jason_s_bedroom_temperature_and_humidity_sensor_temperature",
-          "friendlyName": "Temperature",
+          "friendlyName": "Jason\u0027s Bedroom Temperature",
           "cSharpName": "JasonSBedroomTemperatureAndHumiditySensorTemperature"
         },
         {
@@ -1317,7 +1317,7 @@
         },
         {
           "id": "sensor.kitchen_temperature_and_humidity_sensor_temperature",
-          "friendlyName": "Temperature",
+          "friendlyName": "Kitchen Temperature",
           "cSharpName": "KitchenTemperatureAndHumiditySensorTemperature"
         },
         {
@@ -1327,7 +1327,7 @@
         },
         {
           "id": "sensor.lounge_room_temperature_and_humidity_sensor_temperature",
-          "friendlyName": "Temperature",
+          "friendlyName": "Lounge Temperature",
           "cSharpName": "LoungeRoomTemperatureAndHumiditySensorTemperature"
         },
         {
@@ -1337,7 +1337,7 @@
         },
         {
           "id": "sensor.master_bedroom_temperature_and_humidity_sensor_temperature",
-          "friendlyName": "Temperature",
+          "friendlyName": "Master Bedroom Temperature",
           "cSharpName": "MasterBedroomTemperatureAndHumiditySensorTemperature"
         },
         {
