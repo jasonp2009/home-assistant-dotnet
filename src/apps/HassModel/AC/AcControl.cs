@@ -59,14 +59,17 @@ public class AcControl : IAsyncInitializable
                         acModeChangedEvent.Entity.Area);
                     return HandleChange();
                 }, _logger);
+            room.MotionSensorEntities?.StateChanges()
+                .SubscribeAsync(_ => HandleChange(), _logger);
+            room.ContactSensorEntities?.StateChanges()
+                .SubscribeAsync(_ => HandleChange(), _logger);
         }
 
-        // ReSharper disable once AsyncVoidLambda
-        scheduler.RunEvery(TimeSpan.FromSeconds(60), async () =>
+        scheduler.RunEvery(TimeSpan.FromSeconds(60), () =>
         {
             var currentMeasuredTemp = _mitsubishiClient.State.RoomTemp;
-            await _mitsubishiClient.UpdateState();
-            if (currentMeasuredTemp != _mitsubishiClient.State.RoomTemp) await HandleChange();
+            _mitsubishiClient.UpdateState().Wait();
+            if (currentMeasuredTemp != _mitsubishiClient.State.RoomTemp) HandleChange().Wait();
 
             var beforeTemperature = _currentWeatherTemperature;
             _currentWeatherTemperature = Convert.ToDecimal(forecastHome.Attributes!.Temperature);
