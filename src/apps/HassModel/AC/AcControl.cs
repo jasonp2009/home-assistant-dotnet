@@ -97,6 +97,9 @@ public class AcControl : IAsyncInitializable
             await _mitsubishiClient.ToggleZone(room.ZoneId, ShouldEnableZone(room), cancellationToken);
 
         await _mitsubishiClient.ToggleAc(_mitsubishiClient.State.IsAnyZoneOn(), cancellationToken);
+        await _mitsubishiClient.SetFanMode(
+            _mitsubishiClient.State.Zones.Count(zone => zone.IsOn) > 2 ? AcFanMode.High : AcFanMode.Low,
+            cancellationToken);
         UpdateLogInputs();
     }
 

@@ -11,6 +11,7 @@ public interface IMitsubishiClient
     public Task ToggleZone(int zoneId, bool? isOn = null, CancellationToken cancellationToken = default);
     public Task SetTemperature(decimal temperature, CancellationToken cancellationToken = default);
     public Task SetMode(AcMode mode, CancellationToken cancellationToken = default);
+    public Task SetFanMode(AcFanMode fanMode, CancellationToken cancellationToken = default);
     public Task ToggleAc(bool? isOn = null, CancellationToken cancellationToken = default);
     public Task UpdateState(CancellationToken cancellationToken = default);
 }
