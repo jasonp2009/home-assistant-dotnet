@@ -19,6 +19,7 @@ public class AcConfig
 public class AcProfileConfig
 {
     public string Name { get; set; }
+    public decimal ForceTolerance { get; set; } = 3M;
     public decimal OnTolerance { get; set; } = 1M;
     public decimal OffTolerance { get; set; } = 0.5M;
     public decimal WeatherOffset { get; set; } = 3M;

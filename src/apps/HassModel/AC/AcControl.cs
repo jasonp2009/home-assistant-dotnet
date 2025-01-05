@@ -141,19 +141,23 @@ public class AcControl : IAsyncInitializable
             _config.Value.Profiles.FirstOrDefault(profile => profile.Name == room.AcProfileSelectEntity?.State)
             ?? _config.Value.DefaultProfile;
 
+        var forcePoint = room.SetTemperature.Value + (isCooling ? profile.ForceTolerance : -profile.ForceTolerance);
         var onPoint = room.SetTemperature.Value + (isCooling ? profile.OnTolerance : -profile.OnTolerance);
         var offPoint = room.SetTemperature.Value + (isCooling ? profile.OffTolerance : -profile.OffTolerance);
         var weatherOffPoint = room.SetTemperature.Value + (isCooling ? -profile.WeatherOffset : profile.WeatherOffset);
+
+        var isAcOn = _mitsubishiClient.State.Power;
+
         if (isCooling)
         {
             if (_currentWeatherTemperature <= weatherOffPoint) return false;
-            if (room.CurrentTemperate >= onPoint) return true;
+            if (room.CurrentTemperate >= (isAcOn ? onPoint : forcePoint)) return true;
             if (room.CurrentTemperate <= offPoint) return false;
         }
         else
         {
             if (_currentWeatherTemperature >= weatherOffPoint) return false;
-            if (room.CurrentTemperate <= onPoint) return true;
+            if (room.CurrentTemperate <= (isAcOn ? onPoint : forcePoint)) return true;
             if (room.CurrentTemperate >= offPoint) return false;
         }
 
@@ -167,7 +171,7 @@ public class AcControl : IAsyncInitializable
              room.MotionEnabledTo.Value.ToTimeSpan() < DateTime.Now.TimeOfDay)) return true;
         return (room.ContactSensorEntities is null || !room.ContactSensorEntities.Any(contactSensorEntity =>
                    contactSensorEntity.IsOn() &&
-                   contactSensorEntity.EntityState?.LastChanged < DateTime.Now.AddMinutes(-15))) &&
+                   contactSensorEntity.EntityState?.LastChanged < DateTime.Now.AddMinutes(-5))) &&
                (room.MotionSensorEntities is null || !room.MotionSensorEntities.All(motionSensorEntity =>
                    motionSensorEntity.IsOff() &&
                    motionSensorEntity.EntityState?.LastChanged < DateTime.Now.AddMinutes(-15)));
