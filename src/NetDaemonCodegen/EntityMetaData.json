@@ -543,6 +543,16 @@
           "cSharpName": "DiningTableMotionSensorMotion"
         },
         {
+          "id": "binary_sensor.dining_window_contact_sensor_cloud_connection",
+          "friendlyName": "Dining Window Contact Sensor Cloud connection",
+          "cSharpName": "DiningWindowContactSensorCloudConnection"
+        },
+        {
+          "id": "binary_sensor.dining_window_contact_sensor_door",
+          "friendlyName": "Dining Window Contact Sensor Door",
+          "cSharpName": "DiningWindowContactSensorDoor"
+        },
+        {
           "id": "binary_sensor.eero_wan_status",
           "friendlyName": "eero WAN status",
           "cSharpName": "EeroWanStatus"
@@ -1013,6 +1023,11 @@
           "cSharpName": "DiningSecondarySmartBulbSignalLevel"
         },
         {
+          "id": "sensor.dining_window_contact_sensor_signal_level",
+          "friendlyName": "Dining Window Contact Sensor Signal level",
+          "cSharpName": "DiningWindowContactSensorSignalLevel"
+        },
+        {
           "id": "sensor.eero_external_ip",
           "friendlyName": "eero External IP",
           "cSharpName": "EeroExternalIp"
@@ -1341,6 +1356,36 @@
           "cSharpName": "MasterBedroomTemperatureAndHumiditySensorTemperature"
         },
         {
+          "id": "sensor.pawar_plant_total_energy_today",
+          "friendlyName": "Pawar Plant Total Energy Today",
+          "cSharpName": "PawarPlantTotalEnergyToday"
+        },
+        {
+          "id": "sensor.pawar_plant_total_lifetime_energy_output",
+          "friendlyName": "Pawar Plant Total Lifetime energy output",
+          "cSharpName": "PawarPlantTotalLifetimeEnergyOutput"
+        },
+        {
+          "id": "sensor.pawar_plant_total_maximum_power",
+          "friendlyName": "Pawar Plant Total Maximum power",
+          "cSharpName": "PawarPlantTotalMaximumPower"
+        },
+        {
+          "id": "sensor.pawar_plant_total_money_lifetime",
+          "friendlyName": "Pawar Plant Total Money lifetime",
+          "cSharpName": "PawarPlantTotalMoneyLifetime"
+        },
+        {
+          "id": "sensor.pawar_plant_total_output_power",
+          "friendlyName": "Pawar Plant Total Output Power",
+          "cSharpName": "PawarPlantTotalOutputPower"
+        },
+        {
+          "id": "sensor.pawar_plant_total_total_money_today",
+          "friendlyName": "Pawar Plant Total Total money today",
+          "cSharpName": "PawarPlantTotalTotalMoneyToday"
+        },
+        {
           "id": "sensor.pawar_serve",
           "friendlyName": "pawar-serve",
           "cSharpName": "PawarServe"
@@ -1359,6 +1404,251 @@
           "id": "sensor.puppy_storage",
           "friendlyName": "puppy Storage",
           "cSharpName": "PuppyStorage"
+        },
+        {
+          "id": "sensor.xtd7a1630f_ac_frequency",
+          "friendlyName": "XTD7A1630F AC frequency",
+          "cSharpName": "Xtd7a1630fAcFrequency"
+        },
+        {
+          "id": "sensor.xtd7a1630f_all_batteries_charged_today",
+          "friendlyName": "XTD7A1630F All batteries charged today",
+          "cSharpName": "Xtd7a1630fAllBatteriesChargedToday"
+        },
+        {
+          "id": "sensor.xtd7a1630f_all_batteries_discharged_today",
+          "friendlyName": "XTD7A1630F All batteries discharged today",
+          "cSharpName": "Xtd7a1630fAllBatteriesDischargedToday"
+        },
+        {
+          "id": "sensor.xtd7a1630f_battery_1_charging_w",
+          "friendlyName": "XTD7A1630F Battery 1 charging W",
+          "cSharpName": "Xtd7a1630fBattery1ChargingW"
+        },
+        {
+          "id": "sensor.xtd7a1630f_battery_1_discharging_w",
+          "friendlyName": "XTD7A1630F Battery 1 discharging W",
+          "cSharpName": "Xtd7a1630fBattery1DischargingW"
+        },
+        {
+          "id": "sensor.xtd7a1630f_battery_2_charging_w",
+          "friendlyName": "XTD7A1630F Battery 2 charging W",
+          "cSharpName": "Xtd7a1630fBattery2ChargingW"
+        },
+        {
+          "id": "sensor.xtd7a1630f_battery_2_discharging_w",
+          "friendlyName": "XTD7A1630F Battery 2 discharging W",
+          "cSharpName": "Xtd7a1630fBattery2DischargingW"
+        },
+        {
+          "id": "sensor.xtd7a1630f_energy_today",
+          "friendlyName": "XTD7A1630F Energy today",
+          "cSharpName": "Xtd7a1630fEnergyToday"
+        },
+        {
+          "id": "sensor.xtd7a1630f_energy_today_input_1",
+          "friendlyName": "XTD7A1630F Energy Today Input 1",
+          "cSharpName": "Xtd7a1630fEnergyTodayInput1"
+        },
+        {
+          "id": "sensor.xtd7a1630f_energy_today_input_2",
+          "friendlyName": "XTD7A1630F Energy Today Input 2",
+          "cSharpName": "Xtd7a1630fEnergyTodayInput2"
+        },
+        {
+          "id": "sensor.xtd7a1630f_energy_today_input_3",
+          "friendlyName": "XTD7A1630F Energy Today Input 3",
+          "cSharpName": "Xtd7a1630fEnergyTodayInput3"
+        },
+        {
+          "id": "sensor.xtd7a1630f_energy_today_input_4",
+          "friendlyName": "XTD7A1630F Energy Today Input 4",
+          "cSharpName": "Xtd7a1630fEnergyTodayInput4"
+        },
+        {
+          "id": "sensor.xtd7a1630f_export_to_grid_today",
+          "friendlyName": "XTD7A1630F Export to grid today",
+          "cSharpName": "Xtd7a1630fExportToGridToday"
+        },
+        {
+          "id": "sensor.xtd7a1630f_input_1_amperage",
+          "friendlyName": "XTD7A1630F Input 1 Amperage",
+          "cSharpName": "Xtd7a1630fInput1Amperage"
+        },
+        {
+          "id": "sensor.xtd7a1630f_input_1_voltage",
+          "friendlyName": "XTD7A1630F Input 1 voltage",
+          "cSharpName": "Xtd7a1630fInput1Voltage"
+        },
+        {
+          "id": "sensor.xtd7a1630f_input_1_wattage",
+          "friendlyName": "XTD7A1630F Input 1 Wattage",
+          "cSharpName": "Xtd7a1630fInput1Wattage"
+        },
+        {
+          "id": "sensor.xtd7a1630f_input_2_amperage",
+          "friendlyName": "XTD7A1630F Input 2 Amperage",
+          "cSharpName": "Xtd7a1630fInput2Amperage"
+        },
+        {
+          "id": "sensor.xtd7a1630f_input_2_voltage",
+          "friendlyName": "XTD7A1630F Input 2 voltage",
+          "cSharpName": "Xtd7a1630fInput2Voltage"
+        },
+        {
+          "id": "sensor.xtd7a1630f_input_2_wattage",
+          "friendlyName": "XTD7A1630F Input 2 Wattage",
+          "cSharpName": "Xtd7a1630fInput2Wattage"
+        },
+        {
+          "id": "sensor.xtd7a1630f_input_3_amperage",
+          "friendlyName": "XTD7A1630F Input 3 Amperage",
+          "cSharpName": "Xtd7a1630fInput3Amperage"
+        },
+        {
+          "id": "sensor.xtd7a1630f_input_3_voltage",
+          "friendlyName": "XTD7A1630F Input 3 voltage",
+          "cSharpName": "Xtd7a1630fInput3Voltage"
+        },
+        {
+          "id": "sensor.xtd7a1630f_input_3_wattage",
+          "friendlyName": "XTD7A1630F Input 3 Wattage",
+          "cSharpName": "Xtd7a1630fInput3Wattage"
+        },
+        {
+          "id": "sensor.xtd7a1630f_input_4_amperage",
+          "friendlyName": "XTD7A1630F Input 4 Amperage",
+          "cSharpName": "Xtd7a1630fInput4Amperage"
+        },
+        {
+          "id": "sensor.xtd7a1630f_input_4_voltage",
+          "friendlyName": "XTD7A1630F Input 4 voltage",
+          "cSharpName": "Xtd7a1630fInput4Voltage"
+        },
+        {
+          "id": "sensor.xtd7a1630f_input_4_wattage",
+          "friendlyName": "XTD7A1630F Input 4 Wattage",
+          "cSharpName": "Xtd7a1630fInput4Wattage"
+        },
+        {
+          "id": "sensor.xtd7a1630f_internal_wattage",
+          "friendlyName": "XTD7A1630F Internal wattage",
+          "cSharpName": "Xtd7a1630fInternalWattage"
+        },
+        {
+          "id": "sensor.xtd7a1630f_lifetime_energy_output",
+          "friendlyName": "XTD7A1630F Lifetime energy output",
+          "cSharpName": "Xtd7a1630fLifetimeEnergyOutput"
+        },
+        {
+          "id": "sensor.xtd7a1630f_lifetime_total_all_batteries_charged",
+          "friendlyName": "XTD7A1630F Lifetime total all batteries charged",
+          "cSharpName": "Xtd7a1630fLifetimeTotalAllBatteriesCharged"
+        },
+        {
+          "id": "sensor.xtd7a1630f_lifetime_total_all_batteries_discharged",
+          "friendlyName": "XTD7A1630F Lifetime total all batteries discharged",
+          "cSharpName": "Xtd7a1630fLifetimeTotalAllBatteriesDischarged"
+        },
+        {
+          "id": "sensor.xtd7a1630f_lifetime_total_battery_1_charged",
+          "friendlyName": "XTD7A1630F Lifetime total battery 1 charged",
+          "cSharpName": "Xtd7a1630fLifetimeTotalBattery1Charged"
+        },
+        {
+          "id": "sensor.xtd7a1630f_lifetime_total_battery_1_discharged",
+          "friendlyName": "XTD7A1630F Lifetime total battery 1 discharged",
+          "cSharpName": "Xtd7a1630fLifetimeTotalBattery1Discharged"
+        },
+        {
+          "id": "sensor.xtd7a1630f_lifetime_total_battery_2_charged",
+          "friendlyName": "XTD7A1630F Lifetime total battery 2 charged",
+          "cSharpName": "Xtd7a1630fLifetimeTotalBattery2Charged"
+        },
+        {
+          "id": "sensor.xtd7a1630f_lifetime_total_battery_2_discharged",
+          "friendlyName": "XTD7A1630F Lifetime total battery 2 discharged",
+          "cSharpName": "Xtd7a1630fLifetimeTotalBattery2Discharged"
+        },
+        {
+          "id": "sensor.xtd7a1630f_lifetime_total_energy_input_1",
+          "friendlyName": "XTD7A1630F Lifetime total energy input 1",
+          "cSharpName": "Xtd7a1630fLifetimeTotalEnergyInput1"
+        },
+        {
+          "id": "sensor.xtd7a1630f_lifetime_total_energy_input_2",
+          "friendlyName": "XTD7A1630F Lifetime total energy input 2",
+          "cSharpName": "Xtd7a1630fLifetimeTotalEnergyInput2"
+        },
+        {
+          "id": "sensor.xtd7a1630f_lifetime_total_energy_input_3",
+          "friendlyName": "XTD7A1630F Lifetime total energy input 3",
+          "cSharpName": "Xtd7a1630fLifetimeTotalEnergyInput3"
+        },
+        {
+          "id": "sensor.xtd7a1630f_lifetime_total_energy_input_4",
+          "friendlyName": "XTD7A1630F Lifetime total energy input 4",
+          "cSharpName": "Xtd7a1630fLifetimeTotalEnergyInput4"
+        },
+        {
+          "id": "sensor.xtd7a1630f_lifetime_total_export_to_grid",
+          "friendlyName": "XTD7A1630F Lifetime total export to grid",
+          "cSharpName": "Xtd7a1630fLifetimeTotalExportToGrid"
+        },
+        {
+          "id": "sensor.xtd7a1630f_lifetime_total_load_consumption",
+          "friendlyName": "XTD7A1630F Lifetime total load consumption",
+          "cSharpName": "Xtd7a1630fLifetimeTotalLoadConsumption"
+        },
+        {
+          "id": "sensor.xtd7a1630f_lifetime_total_solar_energy",
+          "friendlyName": "XTD7A1630F Lifetime total solar energy",
+          "cSharpName": "Xtd7a1630fLifetimeTotalSolarEnergy"
+        },
+        {
+          "id": "sensor.xtd7a1630f_load_consumption_today",
+          "friendlyName": "XTD7A1630F Load consumption today",
+          "cSharpName": "Xtd7a1630fLoadConsumptionToday"
+        },
+        {
+          "id": "sensor.xtd7a1630f_output_power",
+          "friendlyName": "XTD7A1630F Output power",
+          "cSharpName": "Xtd7a1630fOutputPower"
+        },
+        {
+          "id": "sensor.xtd7a1630f_reactive_voltage",
+          "friendlyName": "XTD7A1630F Reactive voltage",
+          "cSharpName": "Xtd7a1630fReactiveVoltage"
+        },
+        {
+          "id": "sensor.xtd7a1630f_statement_of_charge_soc",
+          "friendlyName": "XTD7A1630F Statement of charge (SoC)",
+          "cSharpName": "Xtd7a1630fStatementOfChargeSoc"
+        },
+        {
+          "id": "sensor.xtd7a1630f_temperature_1",
+          "friendlyName": "XTD7A1630F Temperature 1",
+          "cSharpName": "Xtd7a1630fTemperature1"
+        },
+        {
+          "id": "sensor.xtd7a1630f_temperature_2",
+          "friendlyName": "XTD7A1630F Temperature 2",
+          "cSharpName": "Xtd7a1630fTemperature2"
+        },
+        {
+          "id": "sensor.xtd7a1630f_temperature_3",
+          "friendlyName": "XTD7A1630F Temperature 3",
+          "cSharpName": "Xtd7a1630fTemperature3"
+        },
+        {
+          "id": "sensor.xtd7a1630f_temperature_4",
+          "friendlyName": "XTD7A1630F Temperature 4",
+          "cSharpName": "Xtd7a1630fTemperature4"
+        },
+        {
+          "id": "sensor.xtd7a1630f_temperature_5",
+          "friendlyName": "XTD7A1630F Temperature 5",
+          "cSharpName": "Xtd7a1630fTemperature5"
         }
       ],
       "attributes": [
