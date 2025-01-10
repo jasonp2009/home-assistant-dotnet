@@ -67,9 +67,9 @@ public class AcControl : IAsyncInitializable
 
         scheduler.RunEvery(TimeSpan.FromSeconds(60), () =>
         {
-            var currentMeasuredTemp = _mitsubishiClient.State.RoomTemp;
+            var currentMeasuredTemp = _mitsubishiClient.State?.RoomTemp;
             _mitsubishiClient.UpdateState().Wait();
-            if (currentMeasuredTemp != _mitsubishiClient.State.RoomTemp) HandleChange().Wait();
+            if (currentMeasuredTemp != _mitsubishiClient.State?.RoomTemp) HandleChange().Wait();
 
             var beforeTemperature = _currentWeatherTemperature;
             _currentWeatherTemperature = Convert.ToDecimal(forecastHome.Attributes!.Temperature);

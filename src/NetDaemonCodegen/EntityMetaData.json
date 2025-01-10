@@ -247,7 +247,7 @@
         },
         {
           "id": "media_player.lg_webos_tv_oled65g4psa",
-          "friendlyName": "[LG] webOS TV OLED65G4PSA",
+          "friendlyName": null,
           "cSharpName": "LgWebosTvOled65g4psa"
         },
         {
@@ -548,9 +548,9 @@
           "cSharpName": "DiningWindowContactSensorCloudConnection"
         },
         {
-          "id": "binary_sensor.dining_window_contact_sensor_door",
-          "friendlyName": "Dining Window Contact Sensor Door",
-          "cSharpName": "DiningWindowContactSensorDoor"
+          "id": "binary_sensor.dining_window_contact_sensor_window",
+          "friendlyName": "Dining Window",
+          "cSharpName": "DiningWindowContactSensorWindow"
         },
         {
           "id": "binary_sensor.eero_wan_status",
@@ -733,6 +733,11 @@
           "jsonName": "supported_features",
           "cSharpName": "SupportedFeatures",
           "clrType": "System.Double"
+        },
+        {
+          "jsonName": "icon",
+          "cSharpName": "Icon",
+          "clrType": "System.String"
         }
       ]
     },
