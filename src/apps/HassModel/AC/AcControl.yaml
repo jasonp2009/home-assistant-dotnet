@@ -92,7 +92,7 @@
   - Name: GuestBedroom
     ZoneId: 6
     TemperatureSensorEntity: sensor.guest_bedroom_temperature_and_humidity_sensor_temperature
-    SetTemperatureEntity: input_number.guest_bedroom_ac_switch
-    AcToggleEntity: input_boolean.guest_bedroom_set_temperature
+    SetTemperatureEntity: input_number.guest_bedroom_set_temperature
+    AcToggleEntity: input_boolean.guest_bedroom_ac_switch
     AcProfileSelectEntity: input_select.guest_bedroom_ac_mode
     ZoneOnLogEntity: input_boolean.aclog_zoneon_guestbedroom
