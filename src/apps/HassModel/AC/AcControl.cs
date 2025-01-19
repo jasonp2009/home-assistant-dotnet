@@ -108,9 +108,18 @@ public class AcControl : IAsyncInitializable
         if (_mitsubishiClient.State.SetMode is not (AcMode.Cool or AcMode.Heat)) return;
         var isCooling = _mitsubishiClient.State.SetMode is AcMode.Cool;
 
+        var longestTimeOn = DateTime.Now - _config.Value.Rooms.Where(room =>
+                room.ZoneOnLogEntity?.EntityState?.LastChanged is not null && room.ZoneOnLogEntity.IsOn())
+            .MinBy(room => room.ZoneOnLogEntity!.EntityState!.LastChanged!.Value)?
+            .ZoneOnLogEntity?.EntityState?.LastChanged;
+
+        var aggressiveness = longestTimeOn.HasValue
+            ? (int)Math.Floor(longestTimeOn.Value.TotalMinutes / 10) + 1
+            : 1;
+
         await _mitsubishiClient.SetTemperature(
             _mitsubishiClient.State.RoomTemp +
-            (isCooling ? -_config.Value.Aggressiveness : _config.Value.Aggressiveness), cancellationToken);
+            (isCooling ? -aggressiveness : aggressiveness), cancellationToken);
     }
 
     private AcMode GetDesiredAcMode()

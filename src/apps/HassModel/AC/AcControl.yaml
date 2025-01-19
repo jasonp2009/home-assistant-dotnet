@@ -1,6 +1,5 @@
 ﻿src.apps.HassModel.AC.AcConfig:
   DefaultProfileName: Standard
-  Aggressiveness: 1
   Profiles:
   - Name: Boost Plus
     ForceTolerance: 0.5
