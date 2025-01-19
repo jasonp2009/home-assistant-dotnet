@@ -1,0 +1,6 @@
+﻿src.apps.HassModel.AlarmLight.AlarmLightConfig:
+  Groups:
+    - Name: Jason's Bedroom
+      NextAlarm: sensor.pixel_7_pro_next_alarm
+      Lights:
+        - light.jason_s_bedroom_light

@@ -1,0 +1,39 @@
+src.apps.HassModel.LightSync.LightSyncConfig:
+  Zones:
+    - Name: Dining Room
+      PrimaryLight: light.dining_secondary_smart_bulb
+      SecondaryLightGroups:
+        - OnAtPct: 80
+          Lights:
+            - light.dining_light_3
+            - light.dining_light_4
+        - OnAtPct: 40
+          Lights:
+            - light.dining_light_1
+            - light.dining_light_2
+    - Name: Lounge Room
+      PrimaryLight: light.lounge_smart_bulb
+      SecondaryLightGroups:
+        - OnAtPct: 80
+          Lights:
+            - light.lounge_light_1
+            - light.lounge_light_2
+        - OnAtPct: 55
+          Lights:
+            - light.lounge_light_3
+            - light.lounge_light_4
+        - OnAtPct: 30
+          Lights:
+            - light.lounge_light_5
+            - light.lounge_light_6
+    - Name: Living Room
+      PrimaryLight: light.dining_room_lamp
+      SecondaryLightGroups:
+        - OnAtPct: 80
+          Lights:
+            - light.living_room_light_1
+            - light.living_room_light_2
+        - OnAtPct: 40
+          Lights:
+            - light.living_room_light_3
+            - light.living_room_light_4

@@ -1,0 +1,52 @@
+﻿src.apps.HassModel.LightAdjust.LightAdjustConfig:
+  AdjustmentGroups:
+    - Name: Bedroom Lights
+      Lights:
+        - light.jason_s_bedroom_light
+        - light.master_bedroom_entry_smart_bulb
+        - light.master_bedroom_smart_bulb
+      Adjustments:
+        - Time: 09:00:00
+          Transition: 300
+          Kelvin: 6500
+          BrightnessPct: 100
+        - Time: 20:30:00
+          Transition: 300
+          Kelvin: 2500
+          BrightnessPct: 20
+    - Name: Lounge Lights
+      Lights:
+        - light.lounge_smart_bulb
+        - light.dining_room_lamp
+        - light.dining_secondary_smart_bulb
+      Adjustments:
+        - Time: 08:00:00
+          Transition: 300
+          Kelvin: 6500
+          BrightnessPct: 100
+        - Time: 17:30:00
+          Transition: 300
+          Kelvin: 6500
+          BrightnessPct: 75
+        - Time: 20:30:00
+          Transition: 300
+          Kelvin: 2500
+          BrightnessPct: 50
+    - Name: Lounge Lights
+      Lights:
+        - light.lounge_smart_bulb
+        - light.dining_room_lamp
+        - light.dining_secondary_smart_bulb
+      Adjustments:
+        - Time: 08:00:00
+          Transition: 300
+          Kelvin: 6500
+          BrightnessPct: 100
+        - Time: 17:30:00
+          Transition: 300
+          Kelvin: 6500
+          BrightnessPct: 75
+        - Time: 20:30:00
+          Transition: 300
+          Kelvin: 2500
+          BrightnessPct: 50

@@ -6,5 +6,4 @@ appsettings.Development.json
 .idea
 appsettings.json
 appsettings.*.json
-*.yaml
 #HomeAssistantGenerated.cs

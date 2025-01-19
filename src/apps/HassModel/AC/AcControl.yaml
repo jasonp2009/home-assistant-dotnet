@@ -1,0 +1,98 @@
+﻿src.apps.HassModel.AC.AcConfig:
+  DefaultProfileName: Standard
+  Aggressiveness: 1
+  Profiles:
+  - Name: Boost Plus
+    ForceTolerance: 0.5
+    OnTolerance: 0.5
+    OffTolerance: 0
+    WeatherOffset: 5
+  - Name: Boost
+    ForceTolerance: 1
+    OnTolerance: 1
+    OffTolerance: 0
+    WeatherOffset: 4
+  - Name: Standard
+    ForceTolerance: 1.5
+    OnTolerance: 1
+    OffTolerance: 0.5
+    WeatherOffset: 3
+  - Name: Eco
+    ForceTolerance: 3
+    OnTolerance: 2
+    OffTolerance: 1
+    WeatherOffset: 2
+  - Name: Eco Plus
+    ForceTolerance: 4
+    OnTolerance: 3
+    OffTolerance: 2
+    WeatherOffset: 1
+  AcOnLogEntity: input_boolean.aclog_ison
+  AcModeLogEntity: input_select.aclog_mode
+  Rooms:
+  - Name: JasonsBedroom
+    ZoneId: 7
+    TemperatureSensorEntity: sensor.jason_s_bedroom_temperature_and_humidity_sensor_temperature
+    SetTemperatureEntity: input_number.jason_s_bedroom_set_temperature
+    AcToggleEntity: input_boolean.jason_s_bedroom_ac_switch
+    AcProfileSelectEntity: input_select.jason_s_bedroom_ac_mode
+    MotionSensorEntities:
+      - binary_sensor.jason_s_bedroom_motion_sensor_motion
+    MotionEnabledFrom: 09:00:00
+    MotionEnabledTo: 21:00:00
+    ZoneOnLogEntity: input_boolean.aclog_zoneon_jason_sbedroom
+  - Name: Lounge
+    ZoneId: 1
+    TemperatureSensorEntity: sensor.lounge_room_temperature_and_humidity_sensor_temperature
+    SetTemperatureEntity: input_number.lounge_set_temperature
+    AcToggleEntity: input_boolean.lounge_ac_switch
+    AcProfileSelectEntity: input_select.lounge_room_ac_mode
+    MotionSensorEntities:
+      - binary_sensor.lounge_room_motion_sensor_motion
+    ZoneOnLogEntity: input_boolean.aclog_zoneon_lounge
+  - Name: Kitchen
+    ZoneId: 3
+    TemperatureSensorEntity: sensor.kitchen_temperature_and_humidity_sensor_temperature
+    SetTemperatureEntity: input_number.kitchen_set_temperature
+    AcToggleEntity: input_boolean.kitchen_ac_switch
+    AcProfileSelectEntity: input_select.kitchen_ac_mode
+    MotionSensorEntities:
+      - binary_sensor.kitchen_motion_sensor_motion
+    ContactSensorEntities:
+      - binary_sensor.backyard_door_contact_sensor_door
+      - binary_sensor.dining_window_contact_sensor_window
+    ZoneOnLogEntity: input_boolean.aclog_zoneon_kitchen
+  - Name: DiningRoom
+    ZoneId: 2
+    TemperatureSensorEntity: sensor.dining_room_temperature_and_humidity_sensor_temperature
+    SetTemperatureEntity: input_number.dining_room_set_temperature
+    AcToggleEntity: input_boolean.dining_room_ac_switch
+    AcProfileSelectEntity: input_select.dining_room_ac_mode
+    MotionSensorEntities:
+      - binary_sensor.dining_table_motion_sensor_motion
+      - binary_sensor.living_area_motion_sensor_motion
+    ContactSensorEntities:
+      - binary_sensor.backyard_door_contact_sensor_door
+      - binary_sensor.dining_window_contact_sensor_window
+    ZoneOnLogEntity: input_boolean.aclog_zoneon_dining
+  - Name: Hallway
+    ZoneId: 4
+    TemperatureSensorEntity: sensor.hallway_temperature_and_humidity_sensor_temperature
+    SetTemperatureEntity: input_number.hallway_set_temperature
+    AcToggleEntity: input_boolean.hallway_ac_switch
+    AcProfileSelectEntity: input_select.hallway_ac_mode
+    ZoneOnLogEntity: input_boolean.aclog_zoneon_hallway
+  - Name: MasterBedroom
+    ZoneId: 5
+    TemperatureSensorEntity: sensor.master_bedroom_temperature_and_humidity_sensor_temperature
+    SetTemperatureEntity: input_number.master_bedroom_set_temperature
+    AcToggleEntity: input_boolean.master_bedroom_ac_switch
+    AcProfileSelectEntity: input_select.master_bedroom_ac_mode
+    ZoneOnLogEntity: input_boolean.aclog_zoneon_masterbedroom
+  - Name: GuestBedroom
+    ZoneId: 6
+    TemperatureSensorEntity: sensor.guest_bedroom_temperature_and_humidity_sensor_temperature
+    SetTemperatureEntity: input_number.guest_bedroom_ac_switch
+    AcToggleEntity: input_boolean.guest_bedroom_set_temperature
+    AcProfileSelectEntity: input_select.guest_bedroom_ac_mode
+    ZoneOnLogEntity: input_boolean.aclog_zoneon_guestbedroom
