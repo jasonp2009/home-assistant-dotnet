@@ -176,7 +176,7 @@ public class AcControl : IAsyncInitializable
             if (room.CurrentTemperate >= offPoint) return false;
         }
 
-        return _mitsubishiClient.State.IsZoneOn(room.ZoneId);
+        return _mitsubishiClient.State.IsZoneOn(room.ZoneId) && mode == _mitsubishiClient.State.SetMode;
     }
 
     private bool CheckContactAndMotion(AcRoomConfig room)
