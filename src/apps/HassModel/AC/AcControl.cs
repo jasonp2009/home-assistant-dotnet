@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -16,6 +17,7 @@ public class AcControl : IAsyncInitializable
     private readonly IAppConfig<AcConfig> _config;
     private readonly ILogger<AcControl> _logger;
     private readonly IMitsubishiClient _mitsubishiClient;
+    private readonly Dictionary<int, DateTime> _tempLastChangedDict = new();
     private decimal _currentWeatherTemperature;
 
     public AcControl(IHaContext ha, INetDaemonScheduler scheduler, IAppConfig<AcConfig> config,
@@ -27,6 +29,7 @@ public class AcControl : IAsyncInitializable
         _logger = logger;
         foreach (var room in config.Value.Rooms)
         {
+            _tempLastChangedDict.Add(room.ZoneId, DateTime.Now);
             room.AcToggleEntity.StateChanges()
                 .SubscribeAsync(acToggleEvent =>
                 {
@@ -49,6 +52,17 @@ public class AcControl : IAsyncInitializable
                     _logger.LogInformation("Temperature changed to {Temperature} for {Area}",
                         temperatureChangedEvent.Entity.State,
                         temperatureChangedEvent.Entity.Area);
+                    if (temperatureChangedEvent?.New?.State is not null &&
+                        temperatureChangedEvent?.Old?.State is not null &&
+                        _mitsubishiClient?.State?.IsZoneOn(room.ZoneId) == true)
+                    {
+                        var tempDiff = Convert.ToDecimal(temperatureChangedEvent.New.State) -
+                                       Convert.ToDecimal(temperatureChangedEvent.Old.State);
+                        var isCooling = _mitsubishiClient.State.SetMode == AcMode.Cool;
+                        if ((isCooling && tempDiff < 0) || (!isCooling && tempDiff > 0))
+                            _tempLastChangedDict[room.ZoneId] = DateTime.Now;
+                    }
+
                     return HandleChange();
                 }, _logger);
             room.AcProfileSelectEntity.StateChanges()
@@ -114,11 +128,10 @@ public class AcControl : IAsyncInitializable
                     .Sum(room =>
                     {
                         if (room.ZoneOnLogEntity?.EntityState?.LastChanged is null
-                            || room.TemperatureSensorEntity?.EntityState?.LastChanged is null
                             || (room.ZoneOnLogEntity.IsOff() &&
                                 DateTime.Now - room.ZoneOnLogEntity.EntityState.LastChanged.Value >=
                                 TimeSpan.FromMinutes(5))) return 0M;
-                        var tempStateChange = room.TemperatureSensorEntity.EntityState.LastChanged.Value;
+                        var tempStateChange = _tempLastChangedDict[room.ZoneId];
                         var zoneOnStateChange = room.ZoneOnLogEntity.EntityState.LastChanged.Value;
                         var lastStateChange = tempStateChange > zoneOnStateChange ? tempStateChange : zoneOnStateChange;
                         var lastStateChangeTimeSpan = DateTime.Now - lastStateChange;
