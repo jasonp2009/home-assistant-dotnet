@@ -109,11 +109,11 @@ public class AcControl : IAsyncInitializable
         var isCooling = _mitsubishiClient.State.SetMode is AcMode.Cool;
 
         var aggressiveness = Math.Floor(_config.Value.Rooms
-            .Sum(room =>
+            .Min(room =>
             {
                 if (room.ZoneOnLogEntity?.EntityState?.LastChanged is null
                     || room.TemperatureSensorEntity?.EntityState?.LastChanged is null
-                    || room.ZoneOnLogEntity.IsOff()) return 0M;
+                    || (room.ZoneOnLogEntity.IsOff() && DateTime.Now - room.ZoneOnLogEntity.EntityState.LastChanged.Value >= TimeSpan.FromMinutes(5))) return 0M;
                 var tempStateChange = room.TemperatureSensorEntity.EntityState.LastChanged.Value;
                 var zoneOnStateChange = room.ZoneOnLogEntity.EntityState.LastChanged.Value;
                 var lastStateChange = tempStateChange > zoneOnStateChange ? tempStateChange : zoneOnStateChange;
