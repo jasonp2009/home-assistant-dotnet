@@ -114,8 +114,8 @@ public class AcControl : IAsyncInitializable
             .ZoneOnLogEntity?.EntityState?.LastChanged;
 
         var aggressiveness = longestTimeOn.HasValue
-            ? (int)Math.Floor(longestTimeOn.Value.TotalMinutes / 10) + 1
-            : 1;
+            ? (int)Math.Floor(longestTimeOn.Value.TotalMinutes / 15)
+            : 0;
 
         await _mitsubishiClient.SetTemperature(
             _mitsubishiClient.State.RoomTemp +
