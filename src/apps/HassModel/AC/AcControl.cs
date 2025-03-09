@@ -119,7 +119,9 @@ public class AcControl : IAsyncInitializable
                 var lastStateChange = tempStateChange > zoneOnStateChange ? tempStateChange : zoneOnStateChange;
                 var lastStateChangeTimeSpan = DateTime.Now - lastStateChange;
                 return Convert.ToDecimal(lastStateChangeTimeSpan.TotalMinutes / 10);
-            }));
+            })) - 1;
+
+        _config.Value.AcAggressivenessLogEntity.SetValue(Convert.ToDouble(aggressiveness));
 
         await _mitsubishiClient.SetTemperature(
             _mitsubishiClient.State.RoomTemp +

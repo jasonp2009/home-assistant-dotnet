@@ -119,6 +119,6 @@ public class MitsubishiClient : IMitsubishiClient
         var previousState = State;
         State = await responseMessage.Content.ReadFromJsonAsync<AcState>(cancellationToken) ?? State;
         if (State?.RoomTemp != previousState?.RoomTemp)
-            _logger.LogDebug("AC measure room temp updated to {RoomTemp}", State?.RoomTemp);
+            _logger.LogDebug("AC measured room temp updated to {RoomTemp}", State?.RoomTemp);
     }
 }

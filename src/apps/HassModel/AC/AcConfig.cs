@@ -13,6 +13,7 @@ public class AcConfig
     public IEnumerable<AcRoomConfig> Rooms { get; set; }
     public InputBooleanEntity AcOnLogEntity { get; set; }
     public InputSelectEntity AcModeLogEntity { get; set; }
+    public InputNumberEntity AcAggressivenessLogEntity { get; set; }
 }
 
 public class AcProfileConfig
