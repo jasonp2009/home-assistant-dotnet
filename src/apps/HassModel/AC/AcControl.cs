@@ -114,7 +114,7 @@ public class AcControl : IAsyncInitializable
                 if (room.ZoneOnLogEntity?.EntityState?.LastChanged is null
                     || room.TemperatureSensorEntity?.EntityState?.LastChanged is null
                     || room.ZoneOnLogEntity.IsOff()) return 0M;
-                var lastChanged = DateTime.Now - room.ZoneOnLogEntity!.EntityState!.LastChanged!.Value;
+                var lastChanged = DateTime.Now - room.TemperatureSensorEntity.EntityState.LastChanged!.Value;
                 return Convert.ToDecimal(lastChanged.TotalMinutes / 10);
             }));
 
