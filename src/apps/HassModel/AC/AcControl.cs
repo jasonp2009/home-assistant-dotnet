@@ -123,20 +123,19 @@ public class AcControl : IAsyncInitializable
         var isCooling = _mitsubishiClient.State.SetMode is AcMode.Cool;
 
         var aggressiveness =
-            Math.Max(
-                Math.Floor(_config.Value.Rooms
-                    .Sum(room =>
-                    {
-                        if (room.ZoneOnLogEntity?.EntityState?.LastChanged is null
-                            || (room.ZoneOnLogEntity.IsOff() &&
-                                DateTime.Now - room.ZoneOnLogEntity.EntityState.LastChanged.Value >=
-                                TimeSpan.FromMinutes(5))) return 0M;
-                        var tempStateChange = _tempLastChangedDict[room.ZoneId];
-                        var zoneOnStateChange = room.ZoneOnLogEntity.EntityState.LastChanged.Value;
-                        var lastStateChange = tempStateChange > zoneOnStateChange ? tempStateChange : zoneOnStateChange;
-                        var lastStateChangeTimeSpan = DateTime.Now - lastStateChange;
-                        return Convert.ToDecimal(lastStateChangeTimeSpan.TotalMinutes / 10) - 0.5M;
-                    })), -1);
+            Math.Floor(_config.Value.Rooms
+                .Average(room =>
+                {
+                    if (room.ZoneOnLogEntity?.EntityState?.LastChanged is null
+                        || (room.ZoneOnLogEntity.IsOff() &&
+                            DateTime.Now - room.ZoneOnLogEntity.EntityState.LastChanged.Value >=
+                            TimeSpan.FromMinutes(5))) return 0M;
+                    var tempStateChange = _tempLastChangedDict[room.ZoneId];
+                    var zoneOnStateChange = room.ZoneOnLogEntity.EntityState.LastChanged.Value;
+                    var lastStateChange = tempStateChange > zoneOnStateChange ? tempStateChange : zoneOnStateChange;
+                    var lastStateChangeTimeSpan = DateTime.Now - lastStateChange;
+                    return Convert.ToDecimal(lastStateChangeTimeSpan.TotalMinutes / 10) - 0.5M;
+                }));
 
         _config.Value.AcAggressivenessLogEntity.SetValue(Convert.ToDouble(aggressiveness));
 
