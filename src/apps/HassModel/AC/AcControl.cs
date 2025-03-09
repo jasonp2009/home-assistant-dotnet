@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using HomeAssistantGenerated;
@@ -108,14 +108,15 @@ public class AcControl : IAsyncInitializable
         if (_mitsubishiClient.State.SetMode is not (AcMode.Cool or AcMode.Heat)) return;
         var isCooling = _mitsubishiClient.State.SetMode is AcMode.Cool;
 
-        var longestTimeOn = DateTime.Now - _config.Value.Rooms.Where(room =>
-                room.ZoneOnLogEntity?.EntityState?.LastChanged is not null && room.ZoneOnLogEntity.IsOn())
-            .MinBy(room => room.ZoneOnLogEntity!.EntityState!.LastChanged!.Value)?
-            .ZoneOnLogEntity?.EntityState?.LastChanged;
-
-        var aggressiveness = longestTimeOn.HasValue
-            ? (int)Math.Floor(longestTimeOn.Value.TotalMinutes / 15)
-            : 0;
+        var aggressiveness = Math.Floor(_config.Value.Rooms
+            .Sum(room =>
+            {
+                if (room.ZoneOnLogEntity?.EntityState?.LastChanged is null
+                    || room.TemperatureSensorEntity?.EntityState?.LastChanged is null
+                    || room.ZoneOnLogEntity.IsOff()) return 0M;
+                var lastChanged = DateTime.Now - room.ZoneOnLogEntity!.EntityState!.LastChanged!.Value;
+                return Convert.ToDecimal(lastChanged.TotalMinutes / 10);
+            }));
 
         await _mitsubishiClient.SetTemperature(
             _mitsubishiClient.State.RoomTemp +
