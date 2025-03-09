@@ -116,7 +116,11 @@ public class MitsubishiClient : IMitsubishiClient
     private async Task UpdateStateFromResponse(HttpResponseMessage responseMessage,
         CancellationToken cancellationToken = default)
     {
+        var previousState = State;
         State = await responseMessage.Content.ReadFromJsonAsync<AcState>(cancellationToken) ?? State;
-        _logger.LogDebug("Updated AC state {@State}", State);
+        if (State.RoomTemp != previousState.RoomTemp)
+        {
+            _logger.LogDebug("AC measure room temp updated to {RoomTemp}", State.RoomTemp);
+        }
     }
 }
