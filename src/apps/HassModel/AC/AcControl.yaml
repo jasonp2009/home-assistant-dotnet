@@ -2,17 +2,17 @@
   DefaultProfileName: Standard
   Profiles:
     - Name: Boost Plus
-      ForceTolerance: 1
+      ForceTolerance: 0.5
       OnTolerance: 0.5
       OffTolerance: 0
       WeatherOffset: 5
     - Name: Boost
-      ForceTolerance: 1.5
-      OnTolerance: 1
+      ForceTolerance: 1
+      OnTolerance: 0.5
       OffTolerance: 0
       WeatherOffset: 4
     - Name: Standard
-      ForceTolerance: 2
+      ForceTolerance: 1.5
       OnTolerance: 1
       OffTolerance: 0.5
       WeatherOffset: 3
@@ -28,6 +28,7 @@
       WeatherOffset: 1
   AcOnLogEntity: input_boolean.aclog_ison
   AcModeLogEntity: input_select.aclog_mode
+  AcAggressivenessLogEntity: input_number.aclog_aggressiveness
   Rooms:
     - Name: JasonsBedroom
       ZoneId: 7
