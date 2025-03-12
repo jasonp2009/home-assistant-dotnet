@@ -124,17 +124,18 @@ public class AcControl : IAsyncInitializable
 
         var aggressiveness =
             Math.Floor(_config.Value.Rooms
+                .Where(room =>
+                    room.IsOn
+                    && room.ZoneOnLogEntity?.EntityState?.LastChanged is not null
+                    && DateTime.Now - room.ZoneOnLogEntity.EntityState.LastChanged.Value <
+                    TimeSpan.FromMinutes(5))
                 .Average(room =>
                 {
-                    if (room.ZoneOnLogEntity?.EntityState?.LastChanged is null
-                        || (room.ZoneOnLogEntity.IsOff() &&
-                            DateTime.Now - room.ZoneOnLogEntity.EntityState.LastChanged.Value >=
-                            TimeSpan.FromMinutes(5))) return 0M;
                     var tempStateChange = _tempLastChangedDict[room.ZoneId];
-                    var zoneOnStateChange = room.ZoneOnLogEntity.EntityState.LastChanged.Value;
+                    var zoneOnStateChange = room.ZoneOnLogEntity!.EntityState.LastChanged.Value;
                     var lastStateChange = tempStateChange > zoneOnStateChange ? tempStateChange : zoneOnStateChange;
                     var lastStateChangeTimeSpan = DateTime.Now - lastStateChange;
-                    return Convert.ToDecimal(lastStateChangeTimeSpan.TotalMinutes / 10) - 0.5M;
+                    return Convert.ToDecimal(lastStateChangeTimeSpan.TotalMinutes / 5) - 2M;
                 }));
 
         _config.Value.AcAggressivenessLogEntity.SetValue(Convert.ToDouble(aggressiveness));
