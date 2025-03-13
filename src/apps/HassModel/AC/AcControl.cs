@@ -15,15 +15,15 @@ namespace src.apps.HassModel.AC;
 public class AcControl : IAsyncInitializable
 {
     private readonly IAppConfig<AcConfig> _config;
+    private readonly WeatherEntity _forecastHome;
     private readonly ILogger<AcControl> _logger;
     private readonly IMitsubishiClient _mitsubishiClient;
     private readonly Dictionary<int, DateTime> _tempLastChangedDict = new();
-    private decimal _currentWeatherTemperature;
 
     public AcControl(IHaContext ha, INetDaemonScheduler scheduler, IAppConfig<AcConfig> config,
         ILogger<AcControl> logger, IMitsubishiClient mitsubishiClient)
     {
-        var forecastHome = new WeatherEntities(ha).ForecastHome;
+        _forecastHome = new WeatherEntities(ha).ForecastHome;
         _mitsubishiClient = mitsubishiClient;
         _config = config;
         _logger = logger;
@@ -79,19 +79,17 @@ public class AcControl : IAsyncInitializable
                 .SubscribeAsync(_ => HandleChange(), _logger);
         }
 
+        _forecastHome.StateChanges().SubscribeAsync(_ => HandleChange(), _logger);
+
         scheduler.RunEvery(TimeSpan.FromSeconds(60), () =>
         {
             var currentMeasuredTemp = _mitsubishiClient.State?.RoomTemp;
             _mitsubishiClient.UpdateState().Wait();
             if (currentMeasuredTemp != _mitsubishiClient.State?.RoomTemp) HandleChange().Wait();
-
-            var beforeTemperature = _currentWeatherTemperature;
-            _currentWeatherTemperature = Convert.ToDecimal(forecastHome.Attributes!.Temperature);
-            if (beforeTemperature != _currentWeatherTemperature)
-                _logger.LogInformation("Weather temperature changed to {WeatherTemperature}",
-                    _currentWeatherTemperature);
         });
     }
+
+    private decimal CurrentWeatherTemperature => Convert.ToDecimal(_forecastHome.Attributes?.Temperature);
 
     public async Task InitializeAsync(CancellationToken cancellationToken)
     {
@@ -122,23 +120,35 @@ public class AcControl : IAsyncInitializable
         if (_mitsubishiClient.State.SetMode is not (AcMode.Cool or AcMode.Heat)) return;
         var isCooling = _mitsubishiClient.State.SetMode is AcMode.Cool;
 
-        var aggressiveness =
-            Math.Floor(_config.Value.Rooms
-                .Where(room =>
-                    room.IsOn
-                    && room.ZoneOnLogEntity?.EntityState?.LastChanged is not null
+        var validRooms = _config.Value.Rooms
+            .Where(room =>
+                (room.IsOn && _mitsubishiClient.State.IsZoneOn(room.ZoneId))
+                || (room.ZoneOnLogEntity?.EntityState?.LastChanged is not null
                     && DateTime.Now - room.ZoneOnLogEntity.EntityState.LastChanged.Value <
-                    TimeSpan.FromMinutes(5))
-                .Average(room =>
-                {
-                    var tempStateChange = _tempLastChangedDict[room.ZoneId];
-                    var zoneOnStateChange = room.ZoneOnLogEntity!.EntityState.LastChanged.Value;
-                    var lastStateChange = tempStateChange > zoneOnStateChange ? tempStateChange : zoneOnStateChange;
-                    var lastStateChangeTimeSpan = DateTime.Now - lastStateChange;
-                    return Convert.ToDecimal(lastStateChangeTimeSpan.TotalMinutes / 5) - 2M;
-                }));
+                    TimeSpan.FromMinutes(10)))
+            .ToList();
+        var aggressiveness = -1M;
+        if (validRooms.Count == 0)
+            _logger.LogDebug("No valid rooms to calculate temperate, skipping");
+        else
+            aggressiveness =
+                validRooms
+                    .Average(room =>
+                    {
+                        var tempStateChange = _tempLastChangedDict[room.ZoneId];
+                        var zoneOnStateChange = room.ZoneOnLogEntity!.EntityState!.LastChanged!.Value;
+                        var lastStateChange = tempStateChange > zoneOnStateChange ? tempStateChange : zoneOnStateChange;
+                        var lastStateChangeTimeSpan = DateTime.Now - lastStateChange;
+                        var roomAggressiveness = Convert.ToDecimal(lastStateChangeTimeSpan.TotalMinutes / 10) - 1M;
+                        _logger.LogDebug("Room {Room} has aggressiveness {Aggressiveness}", room.Name,
+                            roomAggressiveness);
+                        return roomAggressiveness;
+                    });
 
+        _logger.LogDebug("Total aggressiveness is: {Aggressiveness}", aggressiveness);
         _config.Value.AcAggressivenessLogEntity.SetValue(Convert.ToDouble(aggressiveness));
+
+        aggressiveness = Math.Floor(aggressiveness);
 
         await _mitsubishiClient.SetTemperature(
             _mitsubishiClient.State.RoomTemp +
@@ -188,13 +198,13 @@ public class AcControl : IAsyncInitializable
 
         if (isCooling)
         {
-            if (_currentWeatherTemperature <= weatherOffPoint) return false;
+            if (CurrentWeatherTemperature <= weatherOffPoint) return false;
             if (room.CurrentTemperate >= (isAcOn ? onPoint : forcePoint)) return true;
             if (room.CurrentTemperate <= offPoint) return false;
         }
         else
         {
-            if (_currentWeatherTemperature >= weatherOffPoint) return false;
+            if (CurrentWeatherTemperature >= weatherOffPoint) return false;
             if (room.CurrentTemperate <= (isAcOn ? onPoint : forcePoint)) return true;
             if (room.CurrentTemperate >= offPoint) return false;
         }
