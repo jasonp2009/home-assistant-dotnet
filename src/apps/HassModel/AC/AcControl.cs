@@ -125,7 +125,7 @@ public class AcControl : IAsyncInitializable
                 (room.IsOn && _mitsubishiClient.State.IsZoneOn(room.ZoneId))
                 || (room.ZoneOnLogEntity?.EntityState?.LastChanged is not null
                     && DateTime.Now - room.ZoneOnLogEntity.EntityState.LastChanged.Value <
-                    TimeSpan.FromMinutes(10)))
+                    TimeSpan.FromMinutes(5)))
             .ToList();
         var aggressiveness = -1M;
         if (validRooms.Count == 0)
@@ -139,7 +139,7 @@ public class AcControl : IAsyncInitializable
                         var zoneOnStateChange = room.ZoneOnLogEntity!.EntityState!.LastChanged!.Value;
                         var lastStateChange = tempStateChange > zoneOnStateChange ? tempStateChange : zoneOnStateChange;
                         var lastStateChangeTimeSpan = DateTime.Now - lastStateChange;
-                        var roomAggressiveness = Convert.ToDecimal(lastStateChangeTimeSpan.TotalMinutes / 10) - 1M;
+                        var roomAggressiveness = Convert.ToDecimal(lastStateChangeTimeSpan.TotalMinutes / 5) - 1M;
                         _logger.LogDebug("Room {Room} has aggressiveness {Aggressiveness}", room.Name,
                             roomAggressiveness);
                         return roomAggressiveness;
