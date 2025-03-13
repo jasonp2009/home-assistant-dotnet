@@ -29,7 +29,8 @@ public class AcControl : IAsyncInitializable
         _logger = logger;
         foreach (var room in config.Value.Rooms)
         {
-            _tempLastChangedDict.Add(room.ZoneId, DateTime.Now);
+            _tempLastChangedDict.Add(room.ZoneId,
+                room?.TemperatureSensorEntity?.EntityState?.LastChanged ?? DateTime.Now);
             room.AcToggleEntity.StateChanges()
                 .SubscribeAsync(acToggleEvent =>
                 {
