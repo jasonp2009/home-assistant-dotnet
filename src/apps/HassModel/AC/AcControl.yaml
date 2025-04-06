@@ -5,27 +5,27 @@
       ForceTolerance: 0.5
       OnTolerance: 0.5
       OffTolerance: 0
-      WeatherOffset: 3
+      WeatherOffset: 5
     - Name: Boost
       ForceTolerance: 1
       OnTolerance: 0.5
       OffTolerance: 0
-      WeatherOffset: 2
+      WeatherOffset: 4
     - Name: Standard
       ForceTolerance: 1.5
       OnTolerance: 1
       OffTolerance: 0.5
-      WeatherOffset: 1
+      WeatherOffset: 3
     - Name: Eco
       ForceTolerance: 3
       OnTolerance: 2
       OffTolerance: 1
-      WeatherOffset: 0
+      WeatherOffset: 2
     - Name: Eco Plus
       ForceTolerance: 4
       OnTolerance: 3
       OffTolerance: 2
-      WeatherOffset: 0
+      WeatherOffset: 1
   AcOnLogEntity: input_boolean.aclog_ison
   AcModeLogEntity: input_select.aclog_mode
   AcAggressivenessLogEntity: input_number.aclog_aggressiveness
