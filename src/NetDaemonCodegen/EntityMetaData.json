@@ -3237,6 +3237,11 @@
           "cSharpName": "AclogAggressiveness"
         },
         {
+          "id": "input_number.aclog_socmodifier",
+          "friendlyName": "Solar Battery Soc Modifier Log",
+          "cSharpName": "AclogSocmodifier"
+        },
+        {
           "id": "input_number.dining_room_set_temperature",
           "friendlyName": "Dining Room Set Temperature",
           "cSharpName": "DiningRoomSetTemperature"

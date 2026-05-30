@@ -46,6 +46,7 @@
   AcOnLogEntity: input_boolean.aclog_ison
   AcModeLogEntity: input_select.aclog_mode
   AcAggressivenessLogEntity: input_number.aclog_aggressiveness
+  SocModifierLogEntity: input_number.aclog_socmodifier
   SolarBatteryStateOfChargeEntity: sensor.ai_hb_g2_series_battery_state_of_charge
   Rooms:
     - Name: JasonsBedroom

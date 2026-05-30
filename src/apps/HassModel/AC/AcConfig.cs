@@ -14,6 +14,7 @@ public class AcConfig
     public InputBooleanEntity AcOnLogEntity { get; set; }
     public InputSelectEntity AcModeLogEntity { get; set; }
     public InputNumberEntity AcAggressivenessLogEntity { get; set; }
+    public InputNumberEntity SocModifierLogEntity { get; set; }
     public SensorEntity SolarBatteryStateOfChargeEntity { get; set; }
     public IEnumerable<SocAdjustConfig> SocAdjusts { get; set; }
 }

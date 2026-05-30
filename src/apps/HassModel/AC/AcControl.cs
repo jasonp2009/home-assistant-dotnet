@@ -248,6 +248,7 @@ public class AcControl : IAsyncInitializable
             socAdjust.SocMin < curSoc && curSoc <= socAdjust.SocMax);
         if (newSocAdjust is null) return;
         _curSocModifier = newSocAdjust.ProfileModifier;
+        _config.Value.SocModifierLogEntity.SetValue(Convert.ToDouble(_curSocModifier));
     }
 
     private bool CheckContactAndMotion(AcRoomConfig room)
