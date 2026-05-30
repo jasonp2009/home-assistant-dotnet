@@ -39,6 +39,16 @@
           "cSharpName": "DiningSecondarySmartBulb"
         },
         {
+          "id": "light.home_assistant_voice_0a140b_led_ring",
+          "friendlyName": "Home Assistant Voice Jason\u0027s Bedroom LED Ring",
+          "cSharpName": "HomeAssistantVoice0a140bLedRing"
+        },
+        {
+          "id": "light.home_assistant_voice_0a2ae7_led_ring",
+          "friendlyName": "Home Assistant Voice Kitchen LED Ring",
+          "cSharpName": "HomeAssistantVoice0a2ae7LedRing"
+        },
+        {
           "id": "light.jason_s_bedroom_light",
           "friendlyName": "Jason\u0027s Bedroom Light",
           "cSharpName": "JasonSBedroomLight"
@@ -120,7 +130,7 @@
         },
         {
           "id": "light.master_bedroom_entry_smart_bulb",
-          "friendlyName": "Master Bedroom Entry Smart Bulb",
+          "friendlyName": null,
           "cSharpName": "MasterBedroomEntrySmartBulb"
         },
         {
@@ -224,6 +234,11 @@
           "jsonName": "restored",
           "cSharpName": "Restored",
           "clrType": "System.Boolean"
+        },
+        {
+          "jsonName": "icon",
+          "cSharpName": "Icon",
+          "clrType": "System.String"
         }
       ]
     },
@@ -237,8 +252,18 @@
         },
         {
           "id": "media_player.chromecast",
-          "friendlyName": null,
+          "friendlyName": "Chromecast",
           "cSharpName": "Chromecast"
+        },
+        {
+          "id": "media_player.home_assistant_voice_0a140b_media_player",
+          "friendlyName": "Home Assistant Voice Jason\u0027s Bedroom Media Player",
+          "cSharpName": "HomeAssistantVoice0a140bMediaPlayer"
+        },
+        {
+          "id": "media_player.home_assistant_voice_0a2ae7_media_player",
+          "friendlyName": "Home Assistant Voice Kitchen Media Player",
+          "cSharpName": "HomeAssistantVoice0a2ae7MediaPlayer"
         },
         {
           "id": "media_player.kitchen_display",
@@ -247,7 +272,7 @@
         },
         {
           "id": "media_player.lg_webos_tv_oled65g4psa",
-          "friendlyName": "[LG] webOS TV OLED65G4PSA",
+          "friendlyName": null,
           "cSharpName": "LgWebosTvOled65g4psa"
         },
         {
@@ -256,14 +281,84 @@
           "cSharpName": "LgWebosTvOled65g4psa2"
         },
         {
-          "id": "media_player.plex_krishna_plex_for_android_tv_shield_android_tv",
-          "friendlyName": "Plex (Plex for Android (TV) - SHIELD Android TV)",
-          "cSharpName": "PlexKrishnaPlexForAndroidTvShieldAndroidTv"
+          "id": "media_player.lg_webos_tv_oled65g4psa_3",
+          "friendlyName": "[LG] webOS TV OLED65G4PSA",
+          "cSharpName": "LgWebosTvOled65g4psa3"
+        },
+        {
+          "id": "media_player.plex_arjun_ja5_plex_for_ios_iphone",
+          "friendlyName": "Plex (arjun.ja5 - Plex for iOS - iPhone)",
+          "cSharpName": "PlexArjunJa5PlexForIosIphone"
+        },
+        {
+          "id": "media_player.plex_arjun_ja5_plex_for_samsung_tv_2018",
+          "friendlyName": "Plex (arjun.ja5 - Plex for Samsung - TV 2018)",
+          "cSharpName": "PlexArjunJa5PlexForSamsungTv2018"
+        },
+        {
+          "id": "media_player.plex_arjun_ja5_plex_for_xbox_xboxone",
+          "friendlyName": "Plex (arjun.ja5 - Plex for Xbox - XBOXONE)",
+          "cSharpName": "PlexArjunJa5PlexForXboxXboxone"
+        },
+        {
+          "id": "media_player.plex_lounge_room_tv",
+          "friendlyName": "Plex Lounge Room TV",
+          "cSharpName": "PlexLoungeRoomTv"
+        },
+        {
+          "id": "media_player.plex_naina_plex_web_chrome_osx",
+          "friendlyName": "Plex (Naina - Plex Web - Chrome - OSX)",
+          "cSharpName": "PlexNainaPlexWebChromeOsx"
         },
         {
           "id": "media_player.plex_plex_for_android_mobile_pixel_7_pro",
           "friendlyName": "Plex (Plex for Android (Mobile) - Pixel 7 Pro)",
           "cSharpName": "PlexPlexForAndroidMobilePixel7Pro"
+        },
+        {
+          "id": "media_player.plex_plex_for_android_tv_aqua_matrixtv_be",
+          "friendlyName": "Plex (Plex for Android (TV) - AQUA MatrixTV BE)",
+          "cSharpName": "PlexPlexForAndroidTvAquaMatrixtvBe"
+        },
+        {
+          "id": "media_player.plex_plex_for_android_tv_aqua_matrixtv_ee",
+          "friendlyName": "Plex (Plex for Android (TV) - AQUA MatrixTV EE)",
+          "cSharpName": "PlexPlexForAndroidTvAquaMatrixtvEe"
+        },
+        {
+          "id": "media_player.plex_plex_for_android_tv_miprojm05",
+          "friendlyName": "Plex (Krishna - Plex for Android (TV) - MiProjM05)",
+          "cSharpName": "PlexPlexForAndroidTvMiprojm05"
+        },
+        {
+          "id": "media_player.plex_plex_for_ios_iphone",
+          "friendlyName": "Plex (Plex for iOS - iPhone)",
+          "cSharpName": "PlexPlexForIosIphone"
+        },
+        {
+          "id": "media_player.plex_plex_for_ios_iphone_2",
+          "friendlyName": "Plex (Plex for iOS - iPhone)",
+          "cSharpName": "PlexPlexForIosIphone2"
+        },
+        {
+          "id": "media_player.plex_plex_for_lg_lg_oled65g4psa_aauqljd",
+          "friendlyName": "Plex (Plex for LG - LG OLED65G4PSA.AAUQLJD)",
+          "cSharpName": "PlexPlexForLgLgOled65g4psaAauqljd"
+        },
+        {
+          "id": "media_player.plex_plex_for_linux_jasonp97_minipc_pn53",
+          "friendlyName": "Plex (Plex for Linux - jasonp97-MINIPC-PN53)",
+          "cSharpName": "PlexPlexForLinuxJasonp97MinipcPn53"
+        },
+        {
+          "id": "media_player.plex_plex_for_samsung_tv_2022",
+          "friendlyName": "Plex (Plex for Samsung - TV 2022)",
+          "cSharpName": "PlexPlexForSamsungTv2022"
+        },
+        {
+          "id": "media_player.plex_plex_for_windows_jason_pc",
+          "friendlyName": "Plex (Plex for Windows - Jason-PC)",
+          "cSharpName": "PlexPlexForWindowsJasonPc"
         },
         {
           "id": "media_player.plex_plex_for_windows_laptop_irmdvafv",
@@ -281,9 +376,49 @@
           "cSharpName": "PlexPlexWebChromeWindows"
         },
         {
+          "id": "media_player.plex_plex_web_chrome_windows_2",
+          "friendlyName": "Plex (Plex Web - Chrome - Windows)",
+          "cSharpName": "PlexPlexWebChromeWindows2"
+        },
+        {
+          "id": "media_player.plex_plex_web_firefox_linux",
+          "friendlyName": "Plex (Plex Web - Firefox - Linux)",
+          "cSharpName": "PlexPlexWebFirefoxLinux"
+        },
+        {
           "id": "media_player.plex_plexamp_android",
           "friendlyName": "Plex (Plexamp - Android)",
           "cSharpName": "PlexPlexampAndroid"
+        },
+        {
+          "id": "media_player.plex_plexamp_iphone",
+          "friendlyName": "Plex (Plexamp - iPhone)",
+          "cSharpName": "PlexPlexampIphone"
+        },
+        {
+          "id": "media_player.plex_plexamp_l04698",
+          "friendlyName": "Plex (Plexamp - L04698)",
+          "cSharpName": "PlexPlexampL04698"
+        },
+        {
+          "id": "media_player.plex_plexamp_laptop_irmdvafv",
+          "friendlyName": "Plex (Plexamp - LAPTOP IRMDVAFV)",
+          "cSharpName": "PlexPlexampLaptopIrmdvafv"
+        },
+        {
+          "id": "media_player.plex_puns_plex_for_ios_iphone",
+          "friendlyName": "Plex (Puns - Plex for iOS - iPhone)",
+          "cSharpName": "PlexPunsPlexForIosIphone"
+        },
+        {
+          "id": "media_player.plex_ria_plex_for_android_tv_xstreamiptv1_vt",
+          "friendlyName": "Plex (Ria - Plex for Android (TV) - XstreamIPTV1-VT)",
+          "cSharpName": "PlexRiaPlexForAndroidTvXstreamiptv1Vt"
+        },
+        {
+          "id": "media_player.plex_sheela_plex_for_android_tv_chromecast_google_tv",
+          "friendlyName": "Plex (Sheela - Plex for Android (TV) - Chromecast Google TV)",
+          "cSharpName": "PlexSheelaPlexForAndroidTvChromecastGoogleTv"
         },
         {
           "id": "media_player.plex_udita_pradhan_plex_for_ios_ipad",
@@ -291,14 +426,24 @@
           "cSharpName": "PlexUditaPradhanPlexForIosIpad"
         },
         {
+          "id": "media_player.plex_udita_pradhan_plex_for_ios_iphone",
+          "friendlyName": "Plex (Udita Pradhan - Plex for iOS - iPhone)",
+          "cSharpName": "PlexUditaPradhanPlexForIosIphone"
+        },
+        {
           "id": "media_player.shield",
-          "friendlyName": "SHIELD",
+          "friendlyName": null,
           "cSharpName": "Shield"
         },
         {
           "id": "media_player.shield_2",
           "friendlyName": "SHIELD",
           "cSharpName": "Shield2"
+        },
+        {
+          "id": "media_player.shield_3",
+          "friendlyName": "SHIELD",
+          "cSharpName": "Shield3"
         }
       ],
       "attributes": [
@@ -493,6 +638,11 @@
           "cSharpName": "BackyardLightOverheated"
         },
         {
+          "id": "binary_sensor.battery_2003025b090201_schedule_configured",
+          "friendlyName": "Solar Battery Schedule Configured",
+          "cSharpName": "Battery2003025b090201ScheduleConfigured"
+        },
+        {
           "id": "binary_sensor.bedroom_smart_hub_cloud_connection",
           "friendlyName": "Bedroom Smart Hub Cloud connection",
           "cSharpName": "BedroomSmartHubCloudConnection"
@@ -516,6 +666,11 @@
           "id": "binary_sensor.dining_room_motion_sensor_cloud_connection",
           "friendlyName": "Living Room Motion Sensor Cloud connection",
           "cSharpName": "DiningRoomMotionSensorCloudConnection"
+        },
+        {
+          "id": "binary_sensor.dining_room_smart_button_battery_low",
+          "friendlyName": "Dining Room Smart Button Battery",
+          "cSharpName": "DiningRoomSmartButtonBatteryLow"
         },
         {
           "id": "binary_sensor.dining_room_smart_button_cloud_connection",
@@ -608,6 +763,11 @@
           "cSharpName": "JasonSBedroomTemperatureAndHumiditySensorCloudConnection"
         },
         {
+          "id": "binary_sensor.jason_s_iphone_focus",
+          "friendlyName": "Jason\u0027s iPhone Focus",
+          "cSharpName": "JasonSIphoneFocus"
+        },
+        {
           "id": "binary_sensor.kitchen_motion_sensor_cloud_connection",
           "friendlyName": "Kitchen Motion Sensor Cloud connection",
           "cSharpName": "KitchenMotionSensorCloudConnection"
@@ -669,12 +829,12 @@
         },
         {
           "id": "binary_sensor.master_bedroom_entry_smart_bulb_cloud_connection",
-          "friendlyName": "Master Bedroom Entry Smart Bulb Cloud connection",
+          "friendlyName": "Cloud connection",
           "cSharpName": "MasterBedroomEntrySmartBulbCloudConnection"
         },
         {
           "id": "binary_sensor.master_bedroom_entry_smart_bulb_overheated",
-          "friendlyName": "Master Bedroom Entry Smart Bulb Overheated",
+          "friendlyName": "Overheated",
           "cSharpName": "MasterBedroomEntrySmartBulbOverheated"
         },
         {
@@ -738,6 +898,26 @@
           "jsonName": "icon",
           "cSharpName": "Icon",
           "clrType": "System.String"
+        },
+        {
+          "jsonName": "raw_schedule",
+          "cSharpName": "RawSchedule",
+          "clrType": "System.Object"
+        },
+        {
+          "jsonName": "formatted_schedule",
+          "cSharpName": "FormattedSchedule",
+          "clrType": "System.Object"
+        },
+        {
+          "jsonName": "pin",
+          "cSharpName": "Pin",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "pout",
+          "cSharpName": "Pout",
+          "clrType": "System.Double"
         }
       ]
     },
@@ -815,6 +995,21 @@
           "id": "conversation.home_assistant",
           "friendlyName": "Home Assistant",
           "cSharpName": "HomeAssistant"
+        },
+        {
+          "id": "conversation.ollama_conversation",
+          "friendlyName": null,
+          "cSharpName": "OllamaConversation"
+        },
+        {
+          "id": "conversation.ollama_conversation_2",
+          "friendlyName": null,
+          "cSharpName": "OllamaConversation2"
+        },
+        {
+          "id": "conversation.openai_conversation",
+          "friendlyName": "OpenAI Conversation",
+          "cSharpName": "OpenaiConversation"
         }
       ],
       "attributes": [
@@ -827,6 +1022,11 @@
           "jsonName": "supported_features",
           "cSharpName": "SupportedFeatures",
           "clrType": "System.Double"
+        },
+        {
+          "jsonName": "restored",
+          "cSharpName": "Restored",
+          "clrType": "System.Boolean"
         }
       ]
     },
@@ -896,6 +1096,11 @@
           "cSharpName": "BackyardLightLightPreset"
         },
         {
+          "id": "select.battery_2003025b090201_work_mode",
+          "friendlyName": "Solar Battery Work mode",
+          "cSharpName": "Battery2003025b090201WorkMode"
+        },
+        {
           "id": "select.bedroom_smart_hub_alarm_sound",
           "friendlyName": "Bedroom Smart Hub Alarm sound",
           "cSharpName": "BedroomSmartHubAlarmSound"
@@ -914,6 +1119,66 @@
           "id": "select.dining_secondary_smart_bulb_light_preset",
           "friendlyName": "Dining Secondary Smart Bulb Light preset",
           "cSharpName": "DiningSecondarySmartBulbLightPreset"
+        },
+        {
+          "id": "select.home_assistant_voice_0a140b_assistant",
+          "friendlyName": "Home Assistant Voice Jason\u0027s Bedroom Assistant",
+          "cSharpName": "HomeAssistantVoice0a140bAssistant"
+        },
+        {
+          "id": "select.home_assistant_voice_0a140b_finished_speaking_detection",
+          "friendlyName": "Home Assistant Voice Jason\u0027s Bedroom Finished speaking detection",
+          "cSharpName": "HomeAssistantVoice0a140bFinishedSpeakingDetection"
+        },
+        {
+          "id": "select.home_assistant_voice_0a140b_wake_word",
+          "friendlyName": "Home Assistant Voice Jason\u0027s Bedroom Wake word",
+          "cSharpName": "HomeAssistantVoice0a140bWakeWord"
+        },
+        {
+          "id": "select.home_assistant_voice_0a140b_wake_word_sensitivity",
+          "friendlyName": "Home Assistant Voice Jason\u0027s Bedroom Wake word sensitivity",
+          "cSharpName": "HomeAssistantVoice0a140bWakeWordSensitivity"
+        },
+        {
+          "id": "select.home_assistant_voice_0a2ae7_assistant",
+          "friendlyName": "Home Assistant Voice Kitchen Assistant",
+          "cSharpName": "HomeAssistantVoice0a2ae7Assistant"
+        },
+        {
+          "id": "select.home_assistant_voice_0a2ae7_finished_speaking_detection",
+          "friendlyName": "Home Assistant Voice Kitchen Finished speaking detection",
+          "cSharpName": "HomeAssistantVoice0a2ae7FinishedSpeakingDetection"
+        },
+        {
+          "id": "select.home_assistant_voice_0a2ae7_wake_word",
+          "friendlyName": "Home Assistant Voice Kitchen Wake word",
+          "cSharpName": "HomeAssistantVoice0a2ae7WakeWord"
+        },
+        {
+          "id": "select.home_assistant_voice_0a2ae7_wake_word_sensitivity",
+          "friendlyName": "Home Assistant Voice Kitchen Wake word sensitivity",
+          "cSharpName": "HomeAssistantVoice0a2ae7WakeWordSensitivity"
+        },
+        {
+          "id": "select.home_assistant_voice_jason_s_bedroom_assistant_2",
+          "friendlyName": "Home Assistant Voice Jason\u0027s Bedroom Assistant 2",
+          "cSharpName": "HomeAssistantVoiceJasonSBedroomAssistant2"
+        },
+        {
+          "id": "select.home_assistant_voice_jason_s_bedroom_wake_word_2",
+          "friendlyName": "Home Assistant Voice Jason\u0027s Bedroom Wake word 2",
+          "cSharpName": "HomeAssistantVoiceJasonSBedroomWakeWord2"
+        },
+        {
+          "id": "select.home_assistant_voice_kitchen_assistant_2",
+          "friendlyName": "Home Assistant Voice Kitchen Assistant 2",
+          "cSharpName": "HomeAssistantVoiceKitchenAssistant2"
+        },
+        {
+          "id": "select.home_assistant_voice_kitchen_wake_word_2",
+          "friendlyName": "Home Assistant Voice Kitchen Wake word 2",
+          "cSharpName": "HomeAssistantVoiceKitchenWakeWord2"
         },
         {
           "id": "select.jason_s_bedroom_light_light_preset",
@@ -937,13 +1202,18 @@
         },
         {
           "id": "select.master_bedroom_entry_smart_bulb_light_preset",
-          "friendlyName": "Master Bedroom Entry Smart Bulb Light preset",
+          "friendlyName": "Light preset",
           "cSharpName": "MasterBedroomEntrySmartBulbLightPreset"
         },
         {
           "id": "select.master_bedroom_smart_bulb_light_preset",
           "friendlyName": "Master Bedroom Smart Bulb Light preset",
           "cSharpName": "MasterBedroomSmartBulbLightPreset"
+        },
+        {
+          "id": "select.r9493a_clean_mode",
+          "friendlyName": "R9493A Clean mode",
+          "cSharpName": "R9493aCleanMode"
         }
       ],
       "attributes": [
@@ -982,6 +1252,91 @@
     {
       "domain": "sensor",
       "entities": [
+        {
+          "id": "sensor.ai_dongle_lan_wlan_gateway",
+          "friendlyName": "Solar Dongle Gateway",
+          "cSharpName": "AiDongleLanWlanGateway"
+        },
+        {
+          "id": "sensor.ai_dongle_lan_wlan_ip_address",
+          "friendlyName": "Solar Dongle IP address",
+          "cSharpName": "AiDongleLanWlanIpAddress"
+        },
+        {
+          "id": "sensor.ai_dongle_lan_wlan_netmask",
+          "friendlyName": "Solar Dongle Netmask",
+          "cSharpName": "AiDongleLanWlanNetmask"
+        },
+        {
+          "id": "sensor.ai_dongle_lan_wlan_network_mode",
+          "friendlyName": "Solar Dongle Network mode",
+          "cSharpName": "AiDongleLanWlanNetworkMode"
+        },
+        {
+          "id": "sensor.ai_dongle_lan_wlan_warnings",
+          "friendlyName": "Solar Dongle Warnings",
+          "cSharpName": "AiDongleLanWlanWarnings"
+        },
+        {
+          "id": "sensor.ai_dongle_lan_wlan_wifi_ssid",
+          "friendlyName": "Solar Dongle WiFi SSID",
+          "cSharpName": "AiDongleLanWlanWifiSsid"
+        },
+        {
+          "id": "sensor.ai_hb_g2_series_battery_errors",
+          "friendlyName": "Solar Battery Battery errors",
+          "cSharpName": "AiHbG2SeriesBatteryErrors"
+        },
+        {
+          "id": "sensor.ai_hb_g2_series_battery_status",
+          "friendlyName": "Solar Battery Battery status",
+          "cSharpName": "AiHbG2SeriesBatteryStatus"
+        },
+        {
+          "id": "sensor.ai_hb_g2_series_battery_warnings",
+          "friendlyName": "Solar Battery Battery warnings",
+          "cSharpName": "AiHbG2SeriesBatteryWarnings"
+        },
+        {
+          "id": "sensor.ai_hb_g2_series_communication_status",
+          "friendlyName": "Solar Battery Communication status",
+          "cSharpName": "AiHbG2SeriesCommunicationStatus"
+        },
+        {
+          "id": "sensor.asw12kh_t3_error_code",
+          "friendlyName": "Solar Inverter Error code",
+          "cSharpName": "Asw12khT3ErrorCode"
+        },
+        {
+          "id": "sensor.asw12kh_t3_inverter_status",
+          "friendlyName": "Solar Inverter Inverter Status",
+          "cSharpName": "Asw12khT3InverterStatus"
+        },
+        {
+          "id": "sensor.asw12kh_t3_power_factor",
+          "friendlyName": "Solar Inverter Power factor",
+          "cSharpName": "Asw12khT3PowerFactor"
+        },
+        {
+          "id": "sensor.backup_backup_manager_state",
+          "friendlyName": "Backup Backup Manager state",
+          "cSharpName": "BackupBackupManagerState"
+        },
+        {
+          "id": "sensor.backup_last_attempted_automatic_backup",
+          "friendlyName": "Backup Last attempted automatic backup",
+          "cSharpName": "BackupLastAttemptedAutomaticBackup"
+        },
+        {
+          "id": "sensor.backup_last_successful_automatic_backup",
+          "friendlyName": "Backup Last successful automatic backup",
+          "cSharpName": "BackupLastSuccessfulAutomaticBackup"
+        },
+        {
+          "id": "sensor.backup_next_scheduled_automatic_backup",
+          "friendlyName": "Backup Next scheduled automatic backup",
+          "cSharpName": "BackupNextScheduledAutomaticBackup"
+        },
         {
           "id": "sensor.backyard_door_contact_sensor_signal_level",
           "friendlyName": "Backyard Door Contact Sensor Signal level",
@@ -1073,6 +1428,66 @@
           "cSharpName": "JasonSBedroomTemperatureAndHumiditySensorSignalLevel"
         },
         {
+          "id": "sensor.jason_s_iphone_activity",
+          "friendlyName": "Jason\u0027s iPhone Activity",
+          "cSharpName": "JasonSIphoneActivity"
+        },
+        {
+          "id": "sensor.jason_s_iphone_app_version",
+          "friendlyName": "Jason\u0027s iPhone App Version",
+          "cSharpName": "JasonSIphoneAppVersion"
+        },
+        {
+          "id": "sensor.jason_s_iphone_audio_output",
+          "friendlyName": "Jason\u0027s iPhone Audio Output",
+          "cSharpName": "JasonSIphoneAudioOutput"
+        },
+        {
+          "id": "sensor.jason_s_iphone_battery_state",
+          "friendlyName": "Jason\u0027s iPhone Battery State",
+          "cSharpName": "JasonSIphoneBatteryState"
+        },
+        {
+          "id": "sensor.jason_s_iphone_bssid",
+          "friendlyName": "Jason\u0027s iPhone BSSID",
+          "cSharpName": "JasonSIphoneBssid"
+        },
+        {
+          "id": "sensor.jason_s_iphone_connection_type",
+          "friendlyName": "Jason\u0027s iPhone Connection Type",
+          "cSharpName": "JasonSIphoneConnectionType"
+        },
+        {
+          "id": "sensor.jason_s_iphone_geocoded_location",
+          "friendlyName": "Jason\u0027s iPhone Geocoded Location",
+          "cSharpName": "JasonSIphoneGeocodedLocation"
+        },
+        {
+          "id": "sensor.jason_s_iphone_last_update_trigger",
+          "friendlyName": "Jason\u0027s iPhone Last Update Trigger",
+          "cSharpName": "JasonSIphoneLastUpdateTrigger"
+        },
+        {
+          "id": "sensor.jason_s_iphone_location_permission",
+          "friendlyName": "Jason\u0027s iPhone Location permission",
+          "cSharpName": "JasonSIphoneLocationPermission"
+        },
+        {
+          "id": "sensor.jason_s_iphone_sim_1",
+          "friendlyName": "Jason\u0027s iPhone SIM 1",
+          "cSharpName": "JasonSIphoneSim1"
+        },
+        {
+          "id": "sensor.jason_s_iphone_sim_2",
+          "friendlyName": "Jason\u0027s iPhone SIM 2",
+          "cSharpName": "JasonSIphoneSim2"
+        },
+        {
+          "id": "sensor.jason_s_iphone_ssid",
+          "friendlyName": "Jason\u0027s iPhone SSID",
+          "cSharpName": "JasonSIphoneSsid"
+        },
+        {
           "id": "sensor.kitchen_motion_sensor_signal_level",
           "friendlyName": "Kitchen Motion Sensor Signal level",
           "cSharpName": "KitchenMotionSensorSignalLevel"
@@ -1114,7 +1529,7 @@
         },
         {
           "id": "sensor.master_bedroom_entry_smart_bulb_signal_level",
-          "friendlyName": "Master Bedroom Entry Smart Bulb Signal level",
+          "friendlyName": "Signal level",
           "cSharpName": "MasterBedroomEntrySmartBulbSignalLevel"
         },
         {
@@ -1161,6 +1576,16 @@
           "id": "sensor.pixel_7_pro_next_alarm",
           "friendlyName": "Pixel 7 Pro Next alarm",
           "cSharpName": "Pixel7ProNextAlarm"
+        },
+        {
+          "id": "sensor.power_highest_peak_time_today_2",
+          "friendlyName": "Solar production forecast Highest power peak time - today",
+          "cSharpName": "PowerHighestPeakTimeToday2"
+        },
+        {
+          "id": "sensor.power_highest_peak_time_tomorrow_2",
+          "friendlyName": "Solar production forecast Highest power peak time - tomorrow",
+          "cSharpName": "PowerHighestPeakTimeTomorrow2"
         },
         {
           "id": "sensor.puppy_activity",
@@ -1211,6 +1636,16 @@
           "id": "sensor.puppy_ssid",
           "friendlyName": "puppy SSID",
           "cSharpName": "PuppySsid"
+        },
+        {
+          "id": "sensor.r9493a_operational_error",
+          "friendlyName": "R9493A Operational error",
+          "cSharpName": "R9493aOperationalError"
+        },
+        {
+          "id": "sensor.r9493a_operational_state",
+          "friendlyName": "R9493A Operational state",
+          "cSharpName": "R9493aOperationalState"
         },
         {
           "id": "sensor.sun_next_dawn",
@@ -1348,6 +1783,86 @@
           "jsonName": "running",
           "cSharpName": "Running",
           "clrType": "System.Double"
+        },
+        {
+          "jsonName": "Administrative Area",
+          "cSharpName": "AdministrativeArea",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "Areas Of Interest",
+          "cSharpName": "AreasOfInterest",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "Country",
+          "cSharpName": "Country",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "Inland Water",
+          "cSharpName": "InlandWater",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "ISO Country Code",
+          "cSharpName": "ISOCountryCode",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "Locality",
+          "cSharpName": "Locality",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "Location",
+          "cSharpName": "Location",
+          "clrType": "System.Collections.Generic.IReadOnlyList\u00601[System.Double]"
+        },
+        {
+          "jsonName": "Name",
+          "cSharpName": "Name",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "Ocean",
+          "cSharpName": "Ocean",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "Postal Code",
+          "cSharpName": "PostalCode",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "Sub Administrative Area",
+          "cSharpName": "SubAdministrativeArea",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "Sub Locality",
+          "cSharpName": "SubLocality",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "Sub Thoroughfare",
+          "cSharpName": "SubThoroughfare",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "Thoroughfare",
+          "cSharpName": "Thoroughfare",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "Time Zone",
+          "cSharpName": "TimeZone",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "Zones",
+          "cSharpName": "Zones",
+          "clrType": "System.Collections.Generic.IReadOnlyList\u00601[System.String]"
         }
       ]
     },
@@ -1355,6 +1870,326 @@
       "domain": "sensor",
       "isNumeric": true,
       "entities": [
+        {
+          "id": "sensor.ai_dongle_lan_wlan_wifi_signal_strength",
+          "friendlyName": "Solar Dongle WiFi signal strength",
+          "cSharpName": "AiDongleLanWlanWifiSignalStrength"
+        },
+        {
+          "id": "sensor.ai_hb_g2_series_ac_energy_for_charging",
+          "friendlyName": "Solar Battery AC energy for charging",
+          "cSharpName": "AiHbG2SeriesAcEnergyForCharging"
+        },
+        {
+          "id": "sensor.ai_hb_g2_series_ac_energy_for_discharging",
+          "friendlyName": "Solar Battery AC energy for discharging",
+          "cSharpName": "AiHbG2SeriesAcEnergyForDischarging"
+        },
+        {
+          "id": "sensor.ai_hb_g2_series_battery_current",
+          "friendlyName": "Solar Battery Battery current",
+          "cSharpName": "AiHbG2SeriesBatteryCurrent"
+        },
+        {
+          "id": "sensor.ai_hb_g2_series_battery_energy_for_charging",
+          "friendlyName": "Solar Battery Battery energy for charging",
+          "cSharpName": "AiHbG2SeriesBatteryEnergyForCharging"
+        },
+        {
+          "id": "sensor.ai_hb_g2_series_battery_energy_for_discharging",
+          "friendlyName": "Solar Battery Battery energy for discharging",
+          "cSharpName": "AiHbG2SeriesBatteryEnergyForDischarging"
+        },
+        {
+          "id": "sensor.ai_hb_g2_series_battery_power",
+          "friendlyName": "Solar Battery Battery power",
+          "cSharpName": "AiHbG2SeriesBatteryPower"
+        },
+        {
+          "id": "sensor.ai_hb_g2_series_battery_state_of_charge",
+          "friendlyName": "Solar Battery Battery state of charge",
+          "cSharpName": "AiHbG2SeriesBatteryStateOfCharge"
+        },
+        {
+          "id": "sensor.ai_hb_g2_series_battery_state_of_health",
+          "friendlyName": "Solar Battery Battery state of health",
+          "cSharpName": "AiHbG2SeriesBatteryStateOfHealth"
+        },
+        {
+          "id": "sensor.ai_hb_g2_series_battery_temperature",
+          "friendlyName": "Solar Battery Battery temperature",
+          "cSharpName": "AiHbG2SeriesBatteryTemperature"
+        },
+        {
+          "id": "sensor.ai_hb_g2_series_battery_voltage",
+          "friendlyName": "Solar Battery Battery voltage",
+          "cSharpName": "AiHbG2SeriesBatteryVoltage"
+        },
+        {
+          "id": "sensor.ai_hb_g2_series_current_limit_for_charging",
+          "friendlyName": "Solar Battery Current limit for charging",
+          "cSharpName": "AiHbG2SeriesCurrentLimitForCharging"
+        },
+        {
+          "id": "sensor.ai_hb_g2_series_current_limit_for_discharging",
+          "friendlyName": "Solar Battery Current limit for discharging",
+          "cSharpName": "AiHbG2SeriesCurrentLimitForDischarging"
+        },
+        {
+          "id": "sensor.ai_hb_g2_series_eps_current",
+          "friendlyName": "Solar Battery EPS current",
+          "cSharpName": "AiHbG2SeriesEpsCurrent"
+        },
+        {
+          "id": "sensor.ai_hb_g2_series_eps_energy_today",
+          "friendlyName": "Solar Battery EPS energy today",
+          "cSharpName": "AiHbG2SeriesEpsEnergyToday"
+        },
+        {
+          "id": "sensor.ai_hb_g2_series_eps_energy_total",
+          "friendlyName": "Solar Battery EPS energy total",
+          "cSharpName": "AiHbG2SeriesEpsEnergyTotal"
+        },
+        {
+          "id": "sensor.ai_hb_g2_series_eps_frequency",
+          "friendlyName": "Solar Battery EPS frequency",
+          "cSharpName": "AiHbG2SeriesEpsFrequency"
+        },
+        {
+          "id": "sensor.ai_hb_g2_series_eps_phase_1_current",
+          "friendlyName": "Solar Battery EPS phase 1 current",
+          "cSharpName": "AiHbG2SeriesEpsPhase1Current"
+        },
+        {
+          "id": "sensor.ai_hb_g2_series_eps_phase_1_power",
+          "friendlyName": "Solar Battery EPS phase 1 power",
+          "cSharpName": "AiHbG2SeriesEpsPhase1Power"
+        },
+        {
+          "id": "sensor.ai_hb_g2_series_eps_phase_1_reactive_power",
+          "friendlyName": "Solar Battery EPS phase 1 reactive power",
+          "cSharpName": "AiHbG2SeriesEpsPhase1ReactivePower"
+        },
+        {
+          "id": "sensor.ai_hb_g2_series_eps_phase_1_voltage",
+          "friendlyName": "Solar Battery EPS phase 1 voltage",
+          "cSharpName": "AiHbG2SeriesEpsPhase1Voltage"
+        },
+        {
+          "id": "sensor.ai_hb_g2_series_eps_phase_2_current",
+          "friendlyName": "Solar Battery EPS phase 2 current",
+          "cSharpName": "AiHbG2SeriesEpsPhase2Current"
+        },
+        {
+          "id": "sensor.ai_hb_g2_series_eps_phase_2_power",
+          "friendlyName": "Solar Battery EPS phase 2 power",
+          "cSharpName": "AiHbG2SeriesEpsPhase2Power"
+        },
+        {
+          "id": "sensor.ai_hb_g2_series_eps_phase_2_reactive_power",
+          "friendlyName": "Solar Battery EPS phase 2 reactive power",
+          "cSharpName": "AiHbG2SeriesEpsPhase2ReactivePower"
+        },
+        {
+          "id": "sensor.ai_hb_g2_series_eps_phase_2_voltage",
+          "friendlyName": "Solar Battery EPS phase 2 voltage",
+          "cSharpName": "AiHbG2SeriesEpsPhase2Voltage"
+        },
+        {
+          "id": "sensor.ai_hb_g2_series_eps_phase_3_current",
+          "friendlyName": "Solar Battery EPS phase 3 current",
+          "cSharpName": "AiHbG2SeriesEpsPhase3Current"
+        },
+        {
+          "id": "sensor.ai_hb_g2_series_eps_phase_3_power",
+          "friendlyName": "Solar Battery EPS phase 3 power",
+          "cSharpName": "AiHbG2SeriesEpsPhase3Power"
+        },
+        {
+          "id": "sensor.ai_hb_g2_series_eps_phase_3_reactive_power",
+          "friendlyName": "Solar Battery EPS phase 3 reactive power",
+          "cSharpName": "AiHbG2SeriesEpsPhase3ReactivePower"
+        },
+        {
+          "id": "sensor.ai_hb_g2_series_eps_phase_3_voltage",
+          "friendlyName": "Solar Battery EPS phase 3 voltage",
+          "cSharpName": "AiHbG2SeriesEpsPhase3Voltage"
+        },
+        {
+          "id": "sensor.ai_hb_g2_series_eps_power",
+          "friendlyName": "Solar Battery EPS power",
+          "cSharpName": "AiHbG2SeriesEpsPower"
+        },
+        {
+          "id": "sensor.ai_hb_g2_series_eps_reactive_power",
+          "friendlyName": "Solar Battery EPS reactive power",
+          "cSharpName": "AiHbG2SeriesEpsReactivePower"
+        },
+        {
+          "id": "sensor.ai_hb_g2_series_eps_voltage",
+          "friendlyName": "Solar Battery EPS voltage",
+          "cSharpName": "AiHbG2SeriesEpsVoltage"
+        },
+        {
+          "id": "sensor.ai_hb_g2_series_pv_energy_today",
+          "friendlyName": "Solar Battery PV energy today",
+          "cSharpName": "AiHbG2SeriesPvEnergyToday"
+        },
+        {
+          "id": "sensor.ai_hb_g2_series_pv_energy_total",
+          "friendlyName": "Solar Battery PV energy total",
+          "cSharpName": "AiHbG2SeriesPvEnergyTotal"
+        },
+        {
+          "id": "sensor.ai_hb_g2_series_pv_power",
+          "friendlyName": "Solar Battery PV power",
+          "cSharpName": "AiHbG2SeriesPvPower"
+        },
+        {
+          "id": "sensor.asw12kh_t3_ac_phase_1_current",
+          "friendlyName": "Solar Inverter AC phase 1 current",
+          "cSharpName": "Asw12khT3AcPhase1Current"
+        },
+        {
+          "id": "sensor.asw12kh_t3_ac_phase_1_power",
+          "friendlyName": "Solar Inverter AC phase 1 power",
+          "cSharpName": "Asw12khT3AcPhase1Power"
+        },
+        {
+          "id": "sensor.asw12kh_t3_ac_phase_1_reactive_power",
+          "friendlyName": "Solar Inverter AC phase 1 reactive power",
+          "cSharpName": "Asw12khT3AcPhase1ReactivePower"
+        },
+        {
+          "id": "sensor.asw12kh_t3_ac_phase_1_voltage",
+          "friendlyName": "Solar Inverter AC phase 1 voltage",
+          "cSharpName": "Asw12khT3AcPhase1Voltage"
+        },
+        {
+          "id": "sensor.asw12kh_t3_ac_phase_2_current",
+          "friendlyName": "Solar Inverter AC phase 2 current",
+          "cSharpName": "Asw12khT3AcPhase2Current"
+        },
+        {
+          "id": "sensor.asw12kh_t3_ac_phase_2_power",
+          "friendlyName": "Solar Inverter AC phase 2 power",
+          "cSharpName": "Asw12khT3AcPhase2Power"
+        },
+        {
+          "id": "sensor.asw12kh_t3_ac_phase_2_reactive_power",
+          "friendlyName": "Solar Inverter AC phase 2 reactive power",
+          "cSharpName": "Asw12khT3AcPhase2ReactivePower"
+        },
+        {
+          "id": "sensor.asw12kh_t3_ac_phase_2_voltage",
+          "friendlyName": "Solar Inverter AC phase 2 voltage",
+          "cSharpName": "Asw12khT3AcPhase2Voltage"
+        },
+        {
+          "id": "sensor.asw12kh_t3_ac_phase_3_current",
+          "friendlyName": "Solar Inverter AC phase 3 current",
+          "cSharpName": "Asw12khT3AcPhase3Current"
+        },
+        {
+          "id": "sensor.asw12kh_t3_ac_phase_3_power",
+          "friendlyName": "Solar Inverter AC phase 3 power",
+          "cSharpName": "Asw12khT3AcPhase3Power"
+        },
+        {
+          "id": "sensor.asw12kh_t3_ac_phase_3_reactive_power",
+          "friendlyName": "Solar Inverter AC phase 3 reactive power",
+          "cSharpName": "Asw12khT3AcPhase3ReactivePower"
+        },
+        {
+          "id": "sensor.asw12kh_t3_ac_phase_3_voltage",
+          "friendlyName": "Solar Inverter AC phase 3 voltage",
+          "cSharpName": "Asw12khT3AcPhase3Voltage"
+        },
+        {
+          "id": "sensor.asw12kh_t3_apparent_power",
+          "friendlyName": "Solar Inverter Apparent power",
+          "cSharpName": "Asw12khT3ApparentPower"
+        },
+        {
+          "id": "sensor.asw12kh_t3_energy_produced_today",
+          "friendlyName": "Solar Inverter Energy produced today",
+          "cSharpName": "Asw12khT3EnergyProducedToday"
+        },
+        {
+          "id": "sensor.asw12kh_t3_energy_produced_total",
+          "friendlyName": "Solar Inverter Energy produced total",
+          "cSharpName": "Asw12khT3EnergyProducedTotal"
+        },
+        {
+          "id": "sensor.asw12kh_t3_frequency",
+          "friendlyName": "Solar Inverter Frequency",
+          "cSharpName": "Asw12khT3Frequency"
+        },
+        {
+          "id": "sensor.asw12kh_t3_mppt_1_current",
+          "friendlyName": "Solar Inverter MPPT 1 current",
+          "cSharpName": "Asw12khT3Mppt1Current"
+        },
+        {
+          "id": "sensor.asw12kh_t3_mppt_1_power",
+          "friendlyName": "Solar Inverter MPPT 1 power",
+          "cSharpName": "Asw12khT3Mppt1Power"
+        },
+        {
+          "id": "sensor.asw12kh_t3_mppt_1_voltage",
+          "friendlyName": "Solar Inverter MPPT 1 voltage",
+          "cSharpName": "Asw12khT3Mppt1Voltage"
+        },
+        {
+          "id": "sensor.asw12kh_t3_mppt_2_current",
+          "friendlyName": "Solar Inverter MPPT 2 current",
+          "cSharpName": "Asw12khT3Mppt2Current"
+        },
+        {
+          "id": "sensor.asw12kh_t3_mppt_2_power",
+          "friendlyName": "Solar Inverter MPPT 2 power",
+          "cSharpName": "Asw12khT3Mppt2Power"
+        },
+        {
+          "id": "sensor.asw12kh_t3_mppt_2_voltage",
+          "friendlyName": "Solar Inverter MPPT 2 voltage",
+          "cSharpName": "Asw12khT3Mppt2Voltage"
+        },
+        {
+          "id": "sensor.asw12kh_t3_mppt_3_current",
+          "friendlyName": "Solar Inverter MPPT 3 current",
+          "cSharpName": "Asw12khT3Mppt3Current"
+        },
+        {
+          "id": "sensor.asw12kh_t3_mppt_3_power",
+          "friendlyName": "Solar Inverter MPPT 3 power",
+          "cSharpName": "Asw12khT3Mppt3Power"
+        },
+        {
+          "id": "sensor.asw12kh_t3_mppt_3_voltage",
+          "friendlyName": "Solar Inverter MPPT 3 voltage",
+          "cSharpName": "Asw12khT3Mppt3Voltage"
+        },
+        {
+          "id": "sensor.asw12kh_t3_power",
+          "friendlyName": "Solar Inverter Power",
+          "cSharpName": "Asw12khT3Power"
+        },
+        {
+          "id": "sensor.asw12kh_t3_reactive_power",
+          "friendlyName": "Solar Inverter Reactive power",
+          "cSharpName": "Asw12khT3ReactivePower"
+        },
+        {
+          "id": "sensor.asw12kh_t3_temperature",
+          "friendlyName": "Solar Inverter Temperature",
+          "cSharpName": "Asw12khT3Temperature"
+        },
+        {
+          "id": "sensor.asw12kh_t3_total_working_hours",
+          "friendlyName": "Solar Inverter Total working hours",
+          "cSharpName": "Asw12khT3TotalWorkingHours"
+        },
         {
           "id": "sensor.dining_room_temperature_and_humidity_sensor_humidity",
           "friendlyName": "Humidity",
@@ -1364,6 +2199,66 @@
           "id": "sensor.dining_room_temperature_and_humidity_sensor_temperature",
           "friendlyName": "Dining Room Temperature",
           "cSharpName": "DiningRoomTemperatureAndHumiditySensorTemperature"
+        },
+        {
+          "id": "sensor.electricity_maps_co2_intensity",
+          "friendlyName": "Electricity Maps CO\u2082 intensity",
+          "cSharpName": "ElectricityMapsCo2Intensity"
+        },
+        {
+          "id": "sensor.electricity_maps_grid_fossil_fuel_percentage",
+          "friendlyName": "Electricity Maps Grid fossil fuel percentage",
+          "cSharpName": "ElectricityMapsGridFossilFuelPercentage"
+        },
+        {
+          "id": "sensor.energy_current_hour_2",
+          "friendlyName": "Solar production forecast Estimated energy production - this hour",
+          "cSharpName": "EnergyCurrentHour2"
+        },
+        {
+          "id": "sensor.energy_meter_grid_energy_in_today",
+          "friendlyName": "Energy Meter Grid energy in today",
+          "cSharpName": "EnergyMeterGridEnergyInToday"
+        },
+        {
+          "id": "sensor.energy_meter_grid_energy_in_total",
+          "friendlyName": "Energy Meter Grid energy in total",
+          "cSharpName": "EnergyMeterGridEnergyInTotal"
+        },
+        {
+          "id": "sensor.energy_meter_grid_energy_out_today",
+          "friendlyName": "Energy Meter Grid energy out today",
+          "cSharpName": "EnergyMeterGridEnergyOutToday"
+        },
+        {
+          "id": "sensor.energy_meter_grid_energy_out_total",
+          "friendlyName": "Energy Meter Grid energy out total",
+          "cSharpName": "EnergyMeterGridEnergyOutTotal"
+        },
+        {
+          "id": "sensor.energy_meter_grid_power",
+          "friendlyName": "Energy Meter Grid power",
+          "cSharpName": "EnergyMeterGridPower"
+        },
+        {
+          "id": "sensor.energy_next_hour_2",
+          "friendlyName": "Solar production forecast Estimated energy production - next hour",
+          "cSharpName": "EnergyNextHour2"
+        },
+        {
+          "id": "sensor.energy_production_today_2",
+          "friendlyName": "Solar production forecast Estimated energy production - today",
+          "cSharpName": "EnergyProductionToday2"
+        },
+        {
+          "id": "sensor.energy_production_today_remaining_2",
+          "friendlyName": "Solar production forecast Estimated energy production - remaining today",
+          "cSharpName": "EnergyProductionTodayRemaining2"
+        },
+        {
+          "id": "sensor.energy_production_tomorrow_2",
+          "friendlyName": "Solar production forecast Estimated energy production - tomorrow",
+          "cSharpName": "EnergyProductionTomorrow2"
         },
         {
           "id": "sensor.guest_bedroom_temperature_and_humidity_sensor_humidity",
@@ -1396,6 +2291,41 @@
           "cSharpName": "JasonSBedroomTemperatureAndHumiditySensorTemperature"
         },
         {
+          "id": "sensor.jason_s_iphone_average_active_pace",
+          "friendlyName": "Jason\u0027s iPhone Average Active Pace",
+          "cSharpName": "JasonSIphoneAverageActivePace"
+        },
+        {
+          "id": "sensor.jason_s_iphone_battery_level",
+          "friendlyName": "Jason\u0027s iPhone Battery Level",
+          "cSharpName": "JasonSIphoneBatteryLevel"
+        },
+        {
+          "id": "sensor.jason_s_iphone_distance",
+          "friendlyName": "Jason\u0027s iPhone Distance",
+          "cSharpName": "JasonSIphoneDistance"
+        },
+        {
+          "id": "sensor.jason_s_iphone_floors_ascended",
+          "friendlyName": "Jason\u0027s iPhone Floors Ascended",
+          "cSharpName": "JasonSIphoneFloorsAscended"
+        },
+        {
+          "id": "sensor.jason_s_iphone_floors_descended",
+          "friendlyName": "Jason\u0027s iPhone Floors Descended",
+          "cSharpName": "JasonSIphoneFloorsDescended"
+        },
+        {
+          "id": "sensor.jason_s_iphone_steps",
+          "friendlyName": "Jason\u0027s iPhone Steps",
+          "cSharpName": "JasonSIphoneSteps"
+        },
+        {
+          "id": "sensor.jason_s_iphone_storage",
+          "friendlyName": "Jason\u0027s iPhone Storage",
+          "cSharpName": "JasonSIphoneStorage"
+        },
+        {
           "id": "sensor.kitchen_temperature_and_humidity_sensor_humidity",
           "friendlyName": "Humidity",
           "cSharpName": "KitchenTemperatureAndHumiditySensorHumidity"
@@ -1426,36 +2356,6 @@
           "cSharpName": "MasterBedroomTemperatureAndHumiditySensorTemperature"
         },
         {
-          "id": "sensor.pawar_plant_total_energy_today",
-          "friendlyName": "Pawar Plant Total Energy Today",
-          "cSharpName": "PawarPlantTotalEnergyToday"
-        },
-        {
-          "id": "sensor.pawar_plant_total_lifetime_energy_output",
-          "friendlyName": "Pawar Plant Total Lifetime energy output",
-          "cSharpName": "PawarPlantTotalLifetimeEnergyOutput"
-        },
-        {
-          "id": "sensor.pawar_plant_total_maximum_power",
-          "friendlyName": "Pawar Plant Total Maximum power",
-          "cSharpName": "PawarPlantTotalMaximumPower"
-        },
-        {
-          "id": "sensor.pawar_plant_total_money_lifetime",
-          "friendlyName": "Pawar Plant Total Money lifetime",
-          "cSharpName": "PawarPlantTotalMoneyLifetime"
-        },
-        {
-          "id": "sensor.pawar_plant_total_output_power",
-          "friendlyName": "Pawar Plant Total Output Power",
-          "cSharpName": "PawarPlantTotalOutputPower"
-        },
-        {
-          "id": "sensor.pawar_plant_total_total_money_today",
-          "friendlyName": "Pawar Plant Total Total money today",
-          "cSharpName": "PawarPlantTotalTotalMoneyToday"
-        },
-        {
           "id": "sensor.pawar_serve",
           "friendlyName": "pawar-serve",
           "cSharpName": "PawarServe"
@@ -1476,6 +2376,26 @@
           "cSharpName": "Pixel7ProSleepSegment"
         },
         {
+          "id": "sensor.power_production_next_12hours_2",
+          "friendlyName": "Solar production forecast Estimated power production - in 12 hours",
+          "cSharpName": "PowerProductionNext12hours2"
+        },
+        {
+          "id": "sensor.power_production_next_24hours_2",
+          "friendlyName": "Solar production forecast Estimated power production - in 24 hours",
+          "cSharpName": "PowerProductionNext24hours2"
+        },
+        {
+          "id": "sensor.power_production_next_hour_2",
+          "friendlyName": "Solar production forecast Estimated power production - in 1 hour",
+          "cSharpName": "PowerProductionNextHour2"
+        },
+        {
+          "id": "sensor.power_production_now_2",
+          "friendlyName": "Solar production forecast Estimated power production - now",
+          "cSharpName": "PowerProductionNow2"
+        },
+        {
           "id": "sensor.puppy_battery_level",
           "friendlyName": "puppy Battery Level",
           "cSharpName": "PuppyBatteryLevel"
@@ -1484,251 +2404,6 @@
           "id": "sensor.puppy_storage",
           "friendlyName": "puppy Storage",
           "cSharpName": "PuppyStorage"
-        },
-        {
-          "id": "sensor.xtd7a1630f_ac_frequency",
-          "friendlyName": "XTD7A1630F AC frequency",
-          "cSharpName": "Xtd7a1630fAcFrequency"
-        },
-        {
-          "id": "sensor.xtd7a1630f_all_batteries_charged_today",
-          "friendlyName": "XTD7A1630F All batteries charged today",
-          "cSharpName": "Xtd7a1630fAllBatteriesChargedToday"
-        },
-        {
-          "id": "sensor.xtd7a1630f_all_batteries_discharged_today",
-          "friendlyName": "XTD7A1630F All batteries discharged today",
-          "cSharpName": "Xtd7a1630fAllBatteriesDischargedToday"
-        },
-        {
-          "id": "sensor.xtd7a1630f_battery_1_charging_w",
-          "friendlyName": "XTD7A1630F Battery 1 charging W",
-          "cSharpName": "Xtd7a1630fBattery1ChargingW"
-        },
-        {
-          "id": "sensor.xtd7a1630f_battery_1_discharging_w",
-          "friendlyName": "XTD7A1630F Battery 1 discharging W",
-          "cSharpName": "Xtd7a1630fBattery1DischargingW"
-        },
-        {
-          "id": "sensor.xtd7a1630f_battery_2_charging_w",
-          "friendlyName": "XTD7A1630F Battery 2 charging W",
-          "cSharpName": "Xtd7a1630fBattery2ChargingW"
-        },
-        {
-          "id": "sensor.xtd7a1630f_battery_2_discharging_w",
-          "friendlyName": "XTD7A1630F Battery 2 discharging W",
-          "cSharpName": "Xtd7a1630fBattery2DischargingW"
-        },
-        {
-          "id": "sensor.xtd7a1630f_energy_today",
-          "friendlyName": "XTD7A1630F Energy today",
-          "cSharpName": "Xtd7a1630fEnergyToday"
-        },
-        {
-          "id": "sensor.xtd7a1630f_energy_today_input_1",
-          "friendlyName": "XTD7A1630F Energy Today Input 1",
-          "cSharpName": "Xtd7a1630fEnergyTodayInput1"
-        },
-        {
-          "id": "sensor.xtd7a1630f_energy_today_input_2",
-          "friendlyName": "XTD7A1630F Energy Today Input 2",
-          "cSharpName": "Xtd7a1630fEnergyTodayInput2"
-        },
-        {
-          "id": "sensor.xtd7a1630f_energy_today_input_3",
-          "friendlyName": "XTD7A1630F Energy Today Input 3",
-          "cSharpName": "Xtd7a1630fEnergyTodayInput3"
-        },
-        {
-          "id": "sensor.xtd7a1630f_energy_today_input_4",
-          "friendlyName": "XTD7A1630F Energy Today Input 4",
-          "cSharpName": "Xtd7a1630fEnergyTodayInput4"
-        },
-        {
-          "id": "sensor.xtd7a1630f_export_to_grid_today",
-          "friendlyName": "XTD7A1630F Export to grid today",
-          "cSharpName": "Xtd7a1630fExportToGridToday"
-        },
-        {
-          "id": "sensor.xtd7a1630f_input_1_amperage",
-          "friendlyName": "XTD7A1630F Input 1 Amperage",
-          "cSharpName": "Xtd7a1630fInput1Amperage"
-        },
-        {
-          "id": "sensor.xtd7a1630f_input_1_voltage",
-          "friendlyName": "XTD7A1630F Input 1 voltage",
-          "cSharpName": "Xtd7a1630fInput1Voltage"
-        },
-        {
-          "id": "sensor.xtd7a1630f_input_1_wattage",
-          "friendlyName": "XTD7A1630F Input 1 Wattage",
-          "cSharpName": "Xtd7a1630fInput1Wattage"
-        },
-        {
-          "id": "sensor.xtd7a1630f_input_2_amperage",
-          "friendlyName": "XTD7A1630F Input 2 Amperage",
-          "cSharpName": "Xtd7a1630fInput2Amperage"
-        },
-        {
-          "id": "sensor.xtd7a1630f_input_2_voltage",
-          "friendlyName": "XTD7A1630F Input 2 voltage",
-          "cSharpName": "Xtd7a1630fInput2Voltage"
-        },
-        {
-          "id": "sensor.xtd7a1630f_input_2_wattage",
-          "friendlyName": "XTD7A1630F Input 2 Wattage",
-          "cSharpName": "Xtd7a1630fInput2Wattage"
-        },
-        {
-          "id": "sensor.xtd7a1630f_input_3_amperage",
-          "friendlyName": "XTD7A1630F Input 3 Amperage",
-          "cSharpName": "Xtd7a1630fInput3Amperage"
-        },
-        {
-          "id": "sensor.xtd7a1630f_input_3_voltage",
-          "friendlyName": "XTD7A1630F Input 3 voltage",
-          "cSharpName": "Xtd7a1630fInput3Voltage"
-        },
-        {
-          "id": "sensor.xtd7a1630f_input_3_wattage",
-          "friendlyName": "XTD7A1630F Input 3 Wattage",
-          "cSharpName": "Xtd7a1630fInput3Wattage"
-        },
-        {
-          "id": "sensor.xtd7a1630f_input_4_amperage",
-          "friendlyName": "XTD7A1630F Input 4 Amperage",
-          "cSharpName": "Xtd7a1630fInput4Amperage"
-        },
-        {
-          "id": "sensor.xtd7a1630f_input_4_voltage",
-          "friendlyName": "XTD7A1630F Input 4 voltage",
-          "cSharpName": "Xtd7a1630fInput4Voltage"
-        },
-        {
-          "id": "sensor.xtd7a1630f_input_4_wattage",
-          "friendlyName": "XTD7A1630F Input 4 Wattage",
-          "cSharpName": "Xtd7a1630fInput4Wattage"
-        },
-        {
-          "id": "sensor.xtd7a1630f_internal_wattage",
-          "friendlyName": "XTD7A1630F Internal wattage",
-          "cSharpName": "Xtd7a1630fInternalWattage"
-        },
-        {
-          "id": "sensor.xtd7a1630f_lifetime_energy_output",
-          "friendlyName": "XTD7A1630F Lifetime energy output",
-          "cSharpName": "Xtd7a1630fLifetimeEnergyOutput"
-        },
-        {
-          "id": "sensor.xtd7a1630f_lifetime_total_all_batteries_charged",
-          "friendlyName": "XTD7A1630F Lifetime total all batteries charged",
-          "cSharpName": "Xtd7a1630fLifetimeTotalAllBatteriesCharged"
-        },
-        {
-          "id": "sensor.xtd7a1630f_lifetime_total_all_batteries_discharged",
-          "friendlyName": "XTD7A1630F Lifetime total all batteries discharged",
-          "cSharpName": "Xtd7a1630fLifetimeTotalAllBatteriesDischarged"
-        },
-        {
-          "id": "sensor.xtd7a1630f_lifetime_total_battery_1_charged",
-          "friendlyName": "XTD7A1630F Lifetime total battery 1 charged",
-          "cSharpName": "Xtd7a1630fLifetimeTotalBattery1Charged"
-        },
-        {
-          "id": "sensor.xtd7a1630f_lifetime_total_battery_1_discharged",
-          "friendlyName": "XTD7A1630F Lifetime total battery 1 discharged",
-          "cSharpName": "Xtd7a1630fLifetimeTotalBattery1Discharged"
-        },
-        {
-          "id": "sensor.xtd7a1630f_lifetime_total_battery_2_charged",
-          "friendlyName": "XTD7A1630F Lifetime total battery 2 charged",
-          "cSharpName": "Xtd7a1630fLifetimeTotalBattery2Charged"
-        },
-        {
-          "id": "sensor.xtd7a1630f_lifetime_total_battery_2_discharged",
-          "friendlyName": "XTD7A1630F Lifetime total battery 2 discharged",
-          "cSharpName": "Xtd7a1630fLifetimeTotalBattery2Discharged"
-        },
-        {
-          "id": "sensor.xtd7a1630f_lifetime_total_energy_input_1",
-          "friendlyName": "XTD7A1630F Lifetime total energy input 1",
-          "cSharpName": "Xtd7a1630fLifetimeTotalEnergyInput1"
-        },
-        {
-          "id": "sensor.xtd7a1630f_lifetime_total_energy_input_2",
-          "friendlyName": "XTD7A1630F Lifetime total energy input 2",
-          "cSharpName": "Xtd7a1630fLifetimeTotalEnergyInput2"
-        },
-        {
-          "id": "sensor.xtd7a1630f_lifetime_total_energy_input_3",
-          "friendlyName": "XTD7A1630F Lifetime total energy input 3",
-          "cSharpName": "Xtd7a1630fLifetimeTotalEnergyInput3"
-        },
-        {
-          "id": "sensor.xtd7a1630f_lifetime_total_energy_input_4",
-          "friendlyName": "XTD7A1630F Lifetime total energy input 4",
-          "cSharpName": "Xtd7a1630fLifetimeTotalEnergyInput4"
-        },
-        {
-          "id": "sensor.xtd7a1630f_lifetime_total_export_to_grid",
-          "friendlyName": "XTD7A1630F Lifetime total export to grid",
-          "cSharpName": "Xtd7a1630fLifetimeTotalExportToGrid"
-        },
-        {
-          "id": "sensor.xtd7a1630f_lifetime_total_load_consumption",
-          "friendlyName": "XTD7A1630F Lifetime total load consumption",
-          "cSharpName": "Xtd7a1630fLifetimeTotalLoadConsumption"
-        },
-        {
-          "id": "sensor.xtd7a1630f_lifetime_total_solar_energy",
-          "friendlyName": "XTD7A1630F Lifetime total solar energy",
-          "cSharpName": "Xtd7a1630fLifetimeTotalSolarEnergy"
-        },
-        {
-          "id": "sensor.xtd7a1630f_load_consumption_today",
-          "friendlyName": "XTD7A1630F Load consumption today",
-          "cSharpName": "Xtd7a1630fLoadConsumptionToday"
-        },
-        {
-          "id": "sensor.xtd7a1630f_output_power",
-          "friendlyName": "XTD7A1630F Output power",
-          "cSharpName": "Xtd7a1630fOutputPower"
-        },
-        {
-          "id": "sensor.xtd7a1630f_reactive_voltage",
-          "friendlyName": "XTD7A1630F Reactive voltage",
-          "cSharpName": "Xtd7a1630fReactiveVoltage"
-        },
-        {
-          "id": "sensor.xtd7a1630f_statement_of_charge_soc",
-          "friendlyName": "XTD7A1630F Statement of charge (SoC)",
-          "cSharpName": "Xtd7a1630fStatementOfChargeSoc"
-        },
-        {
-          "id": "sensor.xtd7a1630f_temperature_1",
-          "friendlyName": "XTD7A1630F Temperature 1",
-          "cSharpName": "Xtd7a1630fTemperature1"
-        },
-        {
-          "id": "sensor.xtd7a1630f_temperature_2",
-          "friendlyName": "XTD7A1630F Temperature 2",
-          "cSharpName": "Xtd7a1630fTemperature2"
-        },
-        {
-          "id": "sensor.xtd7a1630f_temperature_3",
-          "friendlyName": "XTD7A1630F Temperature 3",
-          "cSharpName": "Xtd7a1630fTemperature3"
-        },
-        {
-          "id": "sensor.xtd7a1630f_temperature_4",
-          "friendlyName": "XTD7A1630F Temperature 4",
-          "cSharpName": "Xtd7a1630fTemperature4"
-        },
-        {
-          "id": "sensor.xtd7a1630f_temperature_5",
-          "friendlyName": "XTD7A1630F Temperature 5",
-          "cSharpName": "Xtd7a1630fTemperature5"
         }
       ],
       "attributes": [
@@ -1811,6 +2486,16 @@
           "jsonName": "status",
           "cSharpName": "Status",
           "clrType": "System.String"
+        },
+        {
+          "jsonName": "country_code",
+          "cSharpName": "CountryCode",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "attribution",
+          "cSharpName": "Attribution",
+          "clrType": "System.String"
         }
       ]
     },
@@ -1818,9 +2503,19 @@
       "domain": "stt",
       "entities": [
         {
+          "id": "stt.faster_whisper_2",
+          "friendlyName": "faster-whisper",
+          "cSharpName": "FasterWhisper2"
+        },
+        {
           "id": "stt.home_assistant_cloud",
           "friendlyName": "Home Assistant Cloud",
           "cSharpName": "HomeAssistantCloud"
+        },
+        {
+          "id": "stt.openai_stt",
+          "friendlyName": "OpenAI STT",
+          "cSharpName": "OpenaiStt"
         }
       ],
       "attributes": [
@@ -1828,6 +2523,16 @@
           "jsonName": "friendly_name",
           "cSharpName": "FriendlyName",
           "clrType": "System.String"
+        },
+        {
+          "jsonName": "restored",
+          "cSharpName": "Restored",
+          "clrType": "System.Boolean"
+        },
+        {
+          "jsonName": "supported_features",
+          "cSharpName": "SupportedFeatures",
+          "clrType": "System.Double"
         }
       ]
     },
@@ -1897,13 +2602,28 @@
       "domain": "switch",
       "entities": [
         {
+          "id": "switch.asw12kh_t3_oe012k5sz25c0269_power",
+          "friendlyName": "Solar Inverter Power",
+          "cSharpName": "Asw12khT3Oe012k5sz25c0269Power"
+        },
+        {
           "id": "switch.backyard_light_auto_update_enabled",
-          "friendlyName": "Backyard Light Auto update enabled",
+          "friendlyName": "Backyard Light Auto-update enabled",
           "cSharpName": "BackyardLightAutoUpdateEnabled"
         },
         {
+          "id": "switch.battery_2003025b090201_power",
+          "friendlyName": "Solar Battery Power",
+          "cSharpName": "Battery2003025b090201Power"
+        },
+        {
+          "id": "switch.battery_2003025b090201_sleep",
+          "friendlyName": "Solar Battery Sleep",
+          "cSharpName": "Battery2003025b090201Sleep"
+        },
+        {
           "id": "switch.bedroom_smart_hub_auto_update_enabled",
-          "friendlyName": "Bedroom Smart Hub Auto update enabled",
+          "friendlyName": "Bedroom Smart Hub Auto-update enabled",
           "cSharpName": "BedroomSmartHubAutoUpdateEnabled"
         },
         {
@@ -1913,22 +2633,42 @@
         },
         {
           "id": "switch.dining_room_lamp_auto_update_enabled",
-          "friendlyName": "Dining Room Lamp Auto update enabled",
+          "friendlyName": "Dining Room Lamp Auto-update enabled",
           "cSharpName": "DiningRoomLampAutoUpdateEnabled"
         },
         {
           "id": "switch.dining_secondary_smart_bulb_auto_update_enabled",
-          "friendlyName": "Dining Secondary Smart Bulb Auto update enabled",
+          "friendlyName": "Dining Secondary Smart Bulb Auto-update enabled",
           "cSharpName": "DiningSecondarySmartBulbAutoUpdateEnabled"
         },
         {
+          "id": "switch.home_assistant_voice_0a140b_mute",
+          "friendlyName": "Home Assistant Voice Jason\u0027s Bedroom Mute",
+          "cSharpName": "HomeAssistantVoice0a140bMute"
+        },
+        {
+          "id": "switch.home_assistant_voice_0a140b_wake_sound",
+          "friendlyName": "Home Assistant Voice Jason\u0027s Bedroom Wake sound",
+          "cSharpName": "HomeAssistantVoice0a140bWakeSound"
+        },
+        {
+          "id": "switch.home_assistant_voice_0a2ae7_mute",
+          "friendlyName": "Home Assistant Voice Kitchen Mute",
+          "cSharpName": "HomeAssistantVoice0a2ae7Mute"
+        },
+        {
+          "id": "switch.home_assistant_voice_0a2ae7_wake_sound",
+          "friendlyName": "Home Assistant Voice Kitchen Wake sound",
+          "cSharpName": "HomeAssistantVoice0a2ae7WakeSound"
+        },
+        {
           "id": "switch.jason_s_bedroom_light_auto_update_enabled",
-          "friendlyName": "Jason\u0027s Bedroom Light Auto update enabled",
+          "friendlyName": "Jason\u0027s Bedroom Light Auto-update enabled",
           "cSharpName": "JasonSBedroomLightAutoUpdateEnabled"
         },
         {
           "id": "switch.lounge_room_smart_hub_auto_update_enabled",
-          "friendlyName": "Lounge Room Smart Hub Auto update enabled",
+          "friendlyName": "Lounge Room Smart Hub Auto-update enabled",
           "cSharpName": "LoungeRoomSmartHubAutoUpdateEnabled"
         },
         {
@@ -1938,17 +2678,17 @@
         },
         {
           "id": "switch.lounge_smart_bulb_auto_update_enabled",
-          "friendlyName": "Lounge Smart Bulb Auto update enabled",
+          "friendlyName": "Lounge Smart Bulb Auto-update enabled",
           "cSharpName": "LoungeSmartBulbAutoUpdateEnabled"
         },
         {
           "id": "switch.master_bedroom_entry_smart_bulb_auto_update_enabled",
-          "friendlyName": "Master Bedroom Entry Smart Bulb Auto update enabled",
+          "friendlyName": "Auto-update enabled",
           "cSharpName": "MasterBedroomEntrySmartBulbAutoUpdateEnabled"
         },
         {
           "id": "switch.master_bedroom_smart_bulb_auto_update_enabled",
-          "friendlyName": "Master Bedroom Smart Bulb Auto update enabled",
+          "friendlyName": "Master Bedroom Smart Bulb Auto-update enabled",
           "cSharpName": "MasterBedroomSmartBulbAutoUpdateEnabled"
         }
       ],
@@ -1967,6 +2707,11 @@
           "jsonName": "supported_features",
           "cSharpName": "SupportedFeatures",
           "clrType": "System.Double"
+        },
+        {
+          "jsonName": "icon",
+          "cSharpName": "Icon",
+          "clrType": "System.String"
         }
       ]
     },
@@ -2004,6 +2749,16 @@
           "id": "tts.home_assistant_cloud",
           "friendlyName": "Home Assistant Cloud",
           "cSharpName": "HomeAssistantCloud"
+        },
+        {
+          "id": "tts.openai_tts",
+          "friendlyName": "OpenAI TTS",
+          "cSharpName": "OpenaiTts"
+        },
+        {
+          "id": "tts.piper",
+          "friendlyName": "piper",
+          "cSharpName": "Piper"
         }
       ],
       "attributes": [
@@ -2018,23 +2773,13 @@
       "domain": "update",
       "entities": [
         {
-          "id": "update.dual_smart_thermostat_update",
-          "friendlyName": "Dual Smart Thermostat update",
-          "cSharpName": "DualSmartThermostatUpdate"
-        },
-        {
-          "id": "update.echonetlite_platform_update",
-          "friendlyName": "ECHONETLite Platform update",
-          "cSharpName": "EchonetlitePlatformUpdate"
-        },
-        {
           "id": "update.get_hacs_update",
           "friendlyName": "Get HACS Update",
           "cSharpName": "GetHacsUpdate"
         },
         {
           "id": "update.hacs_update",
-          "friendlyName": "HACS update",
+          "friendlyName": "HACS Update",
           "cSharpName": "HacsUpdate"
         },
         {
@@ -2053,6 +2798,16 @@
           "cSharpName": "HomeAssistantSupervisorUpdate"
         },
         {
+          "id": "update.home_assistant_voice_0a140b",
+          "friendlyName": "Home Assistant Voice Jason\u0027s Bedroom",
+          "cSharpName": "HomeAssistantVoice0a140b"
+        },
+        {
+          "id": "update.home_assistant_voice_0a2ae7",
+          "friendlyName": "Home Assistant Voice Kitchen",
+          "cSharpName": "HomeAssistantVoice0a2ae7"
+        },
+        {
           "id": "update.matter_server_update",
           "friendlyName": "Matter Server Update",
           "cSharpName": "MatterServerUpdate"
@@ -2063,14 +2818,24 @@
           "cSharpName": "NetdaemonV5Net9Update"
         },
         {
+          "id": "update.piper_update",
+          "friendlyName": "Piper Update",
+          "cSharpName": "PiperUpdate"
+        },
+        {
           "id": "update.plex_media_server_pawar_serve",
-          "friendlyName": "Plex Media Server (pawar-serve)",
+          "friendlyName": "pawar-serve Update",
           "cSharpName": "PlexMediaServerPawarServe"
         },
         {
           "id": "update.samba_share_update",
           "friendlyName": "Samba share Update",
           "cSharpName": "SambaShareUpdate"
+        },
+        {
+          "id": "update.solplanet_update",
+          "friendlyName": "Solplanet Update",
+          "cSharpName": "SolplanetUpdate"
         }
       ],
       "attributes": [
@@ -2427,6 +3192,11 @@
       "isNumeric": true,
       "entities": [
         {
+          "id": "input_number.aclog_aggressiveness",
+          "friendlyName": "AcLog_Aggressiveness",
+          "cSharpName": "AclogAggressiveness"
+        },
+        {
           "id": "input_number.dining_room_set_temperature",
           "friendlyName": "Dining Room Set Temperature",
           "cSharpName": "DiningRoomSetTemperature"
@@ -2514,6 +3284,11 @@
       "domain": "device_tracker",
       "entities": [
         {
+          "id": "device_tracker.jason_s_iphone",
+          "friendlyName": "Jason\u0027s iPhone",
+          "cSharpName": "JasonSIphone"
+        },
+        {
           "id": "device_tracker.pixel_7_pro",
           "friendlyName": "Pixel 7 Pro",
           "cSharpName": "Pixel7Pro"
@@ -2569,6 +3344,11 @@
           "jsonName": "friendly_name",
           "cSharpName": "FriendlyName",
           "clrType": "System.String"
+        },
+        {
+          "jsonName": "battery_level",
+          "cSharpName": "BatteryLevel",
+          "clrType": "System.Double"
         }
       ]
     },
@@ -2581,9 +3361,24 @@
           "cSharpName": "BackyardDoorLightsOn"
         },
         {
+          "id": "automation.detect_motion",
+          "friendlyName": "Detect motion",
+          "cSharpName": "DetectMotion"
+        },
+        {
+          "id": "automation.detect_solar_trip",
+          "friendlyName": "Detect Solar Trip",
+          "cSharpName": "DetectSolarTrip"
+        },
+        {
           "id": "automation.dining_room_motion_lights",
-          "friendlyName": "Dining Room Motion Lights",
+          "friendlyName": "Night - Dining Motion Lights",
           "cSharpName": "DiningRoomMotionLights"
+        },
+        {
+          "id": "automation.dining_room_night_motion_lights",
+          "friendlyName": "Late Night - Dining Motion Lights",
+          "cSharpName": "DiningRoomNightMotionLights"
         },
         {
           "id": "automation.disabled_enabled_at_night",
@@ -2596,23 +3391,58 @@
           "cSharpName": "DoorbellPressed"
         },
         {
+          "id": "automation.enable_enabled_at_late_night",
+          "friendlyName": "Enable \u0027Enabled at Late Night\u0027",
+          "cSharpName": "EnableEnabledAtLateNight"
+        },
+        {
+          "id": "automation.jason_s_bedroom_ac_adjustment_day",
+          "friendlyName": "Jason\u0027s Bedroom AC Adjustment Day",
+          "cSharpName": "JasonSBedroomAcAdjustmentDay"
+        },
+        {
+          "id": "automation.jason_s_bedroom_ac_adjustment_night",
+          "friendlyName": "Jason\u0027s Bedroom AC Adjustment Night",
+          "cSharpName": "JasonSBedroomAcAdjustmentNight"
+        },
+        {
           "id": "automation.jason_s_bedroom_motions_lights",
           "friendlyName": "Jason\u0027s Bedroom Motions Lights",
           "cSharpName": "JasonSBedroomMotionsLights"
         },
         {
           "id": "automation.kitchen_motion_lights",
-          "friendlyName": "Kitchen Motion Lights",
+          "friendlyName": "Night - Kitchen Motion Lights",
           "cSharpName": "KitchenMotionLights"
         },
         {
+          "id": "automation.late_night_kitchen_motion_lights",
+          "friendlyName": "Late Night - Kitchen Motion Lights",
+          "cSharpName": "LateNightKitchenMotionLights"
+        },
+        {
+          "id": "automation.late_night_living_room_motion_lights",
+          "friendlyName": "Late Night - Living Room Motion Lights",
+          "cSharpName": "LateNightLivingRoomMotionLights"
+        },
+        {
+          "id": "automation.late_night_lounge_motion_lights",
+          "friendlyName": "Late Night - Lounge Motion Lights",
+          "cSharpName": "LateNightLoungeMotionLights"
+        },
+        {
+          "id": "automation.late_night_tv_playing_lights",
+          "friendlyName": "Late Night - TV Playing Lights",
+          "cSharpName": "LateNightTvPlayingLights"
+        },
+        {
           "id": "automation.living_room_motion_lights",
-          "friendlyName": "Living Room Motion Lights",
+          "friendlyName": "Night - Living Room Motion Lights",
           "cSharpName": "LivingRoomMotionLights"
         },
         {
           "id": "automation.lounge_motion_lights",
-          "friendlyName": "Lounge Motion Lights",
+          "friendlyName": "Night - Lounge Motion Lights",
           "cSharpName": "LoungeMotionLights"
         },
         {
@@ -2622,12 +3452,12 @@
         },
         {
           "id": "automation.sunset_lights",
-          "friendlyName": "Enabled \u0027Enabled at Night\u0027",
+          "friendlyName": "Enable \u0027Enabled at Night\u0027",
           "cSharpName": "SunsetLights"
         },
         {
           "id": "automation.tv_playing_lights",
-          "friendlyName": "TV Playing Lights",
+          "friendlyName": "Night - TV Playing Lights",
           "cSharpName": "TvPlayingLights"
         }
       ],
@@ -2663,6 +3493,26 @@
       "domain": "button",
       "entities": [
         {
+          "id": "button.ai_dongle_lan_wlan_ba100d5c002c_reboot",
+          "friendlyName": "Solar Dongle Reboot",
+          "cSharpName": "AiDongleLanWlanBa100d5c002cReboot"
+        },
+        {
+          "id": "button.ai_dongle_lan_wlan_ba100d5c002c_sync_time",
+          "friendlyName": "Solar Dongle Sync time",
+          "cSharpName": "AiDongleLanWlanBa100d5c002cSyncTime"
+        },
+        {
+          "id": "button.bedroom_smart_hub_pair_new_device",
+          "friendlyName": "Bedroom Smart Hub Pair new device",
+          "cSharpName": "BedroomSmartHubPairNewDevice"
+        },
+        {
+          "id": "button.lounge_room_smart_hub_pair_new_device",
+          "friendlyName": "Lounge Room Smart Hub Pair new device",
+          "cSharpName": "LoungeRoomSmartHubPairNewDevice"
+        },
+        {
           "id": "button.pawar_serve_scan_clients",
           "friendlyName": "pawar-serve Scan clients",
           "cSharpName": "PawarServeScanClients"
@@ -2672,6 +3522,11 @@
         {
           "jsonName": "friendly_name",
           "cSharpName": "FriendlyName",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "icon",
+          "cSharpName": "Icon",
           "clrType": "System.String"
         }
       ]
@@ -2758,6 +3613,26 @@
           "cSharpName": "BackyardLightSmoothOn"
         },
         {
+          "id": "number.battery_2003025b090201_schedule_input_power",
+          "friendlyName": "Solar Battery Schedule Input Power",
+          "cSharpName": "Battery2003025b090201ScheduleInputPower"
+        },
+        {
+          "id": "number.battery_2003025b090201_schedule_output_power",
+          "friendlyName": "Solar Battery Schedule Output Power",
+          "cSharpName": "Battery2003025b090201ScheduleOutputPower"
+        },
+        {
+          "id": "number.battery_2003025b090201_soc_max",
+          "friendlyName": "Solar Battery SOC max",
+          "cSharpName": "Battery2003025b090201SocMax"
+        },
+        {
+          "id": "number.battery_2003025b090201_soc_min",
+          "friendlyName": "Solar Battery SOC min",
+          "cSharpName": "Battery2003025b090201SocMin"
+        },
+        {
           "id": "number.dining_room_lamp_smooth_off",
           "friendlyName": "Dining Room Lamp Smooth off",
           "cSharpName": "DiningRoomLampSmoothOff"
@@ -2799,12 +3674,12 @@
         },
         {
           "id": "number.master_bedroom_entry_smart_bulb_smooth_off",
-          "friendlyName": "Master Bedroom Entry Smart Bulb Smooth off",
+          "friendlyName": "Smooth off",
           "cSharpName": "MasterBedroomEntrySmartBulbSmoothOff"
         },
         {
           "id": "number.master_bedroom_entry_smart_bulb_smooth_on",
-          "friendlyName": "Master Bedroom Entry Smart Bulb Smooth on",
+          "friendlyName": "Smooth on",
           "cSharpName": "MasterBedroomEntrySmartBulbSmoothOn"
         },
         {
@@ -2853,6 +3728,16 @@
           "jsonName": "supported_features",
           "cSharpName": "SupportedFeatures",
           "clrType": "System.Double"
+        },
+        {
+          "jsonName": "unit_of_measurement",
+          "cSharpName": "UnitOfMeasurement",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "icon",
+          "cSharpName": "Icon",
+          "clrType": "System.String"
         }
       ]
     },
@@ -2880,6 +3765,11 @@
           "jsonName": "supported_features",
           "cSharpName": "SupportedFeatures",
           "clrType": "System.Double"
+        },
+        {
+          "jsonName": "available_tones",
+          "cSharpName": "AvailableTones",
+          "clrType": "System.Collections.Generic.IReadOnlyList\u00601[System.String]"
         }
       ]
     },
@@ -2966,6 +3856,11 @@
       "domain": "event",
       "entities": [
         {
+          "id": "event.backup_automatic_backup",
+          "friendlyName": "Backup Automatic backup",
+          "cSharpName": "BackupAutomaticBackup"
+        },
+        {
           "id": "event.front_door_doorbell_chime",
           "friendlyName": "Front door doorbell Chime",
           "cSharpName": "FrontDoorDoorbellChime"
@@ -2974,6 +3869,16 @@
           "id": "event.front_door_doorbell_motion",
           "friendlyName": "Front door doorbell Motion",
           "cSharpName": "FrontDoorDoorbellMotion"
+        },
+        {
+          "id": "event.home_assistant_voice_0a140b_button_press",
+          "friendlyName": "Home Assistant Voice Jason\u0027s Bedroom Button press",
+          "cSharpName": "HomeAssistantVoice0a140bButtonPress"
+        },
+        {
+          "id": "event.home_assistant_voice_0a2ae7_button_press",
+          "friendlyName": "Home Assistant Voice Kitchen Button press",
+          "cSharpName": "HomeAssistantVoice0a2ae7ButtonPress"
         }
       ],
       "attributes": [
@@ -3001,6 +3906,107 @@
           "jsonName": "friendly_name",
           "cSharpName": "FriendlyName",
           "clrType": "System.String"
+        },
+        {
+          "jsonName": "backup_stage",
+          "cSharpName": "BackupStage",
+          "clrType": null
+        },
+        {
+          "jsonName": "failed_reason",
+          "cSharpName": "FailedReason",
+          "clrType": null
+        },
+        {
+          "jsonName": "icon",
+          "cSharpName": "Icon",
+          "clrType": "System.String"
+        }
+      ]
+    },
+    {
+      "domain": "ai_task",
+      "entities": [
+        {
+          "id": "ai_task.ollama_ai_task",
+          "friendlyName": null,
+          "cSharpName": "OllamaAiTask"
+        },
+        {
+          "id": "ai_task.openai_ai_task",
+          "friendlyName": "OpenAI AI Task",
+          "cSharpName": "OpenaiAiTask"
+        }
+      ],
+      "attributes": [
+        {
+          "jsonName": "friendly_name",
+          "cSharpName": "FriendlyName",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "supported_features",
+          "cSharpName": "SupportedFeatures",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "restored",
+          "cSharpName": "Restored",
+          "clrType": "System.Boolean"
+        }
+      ]
+    },
+    {
+      "domain": "assist_satellite",
+      "entities": [
+        {
+          "id": "assist_satellite.home_assistant_voice_0a140b_assist_satellite",
+          "friendlyName": "Assist satellite",
+          "cSharpName": "HomeAssistantVoice0a140bAssistSatellite"
+        },
+        {
+          "id": "assist_satellite.home_assistant_voice_0a2ae7_assist_satellite",
+          "friendlyName": "Assist satellite",
+          "cSharpName": "HomeAssistantVoice0a2ae7AssistSatellite"
+        }
+      ],
+      "attributes": [
+        {
+          "jsonName": "restored",
+          "cSharpName": "Restored",
+          "clrType": "System.Boolean"
+        },
+        {
+          "jsonName": "friendly_name",
+          "cSharpName": "FriendlyName",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "supported_features",
+          "cSharpName": "SupportedFeatures",
+          "clrType": "System.Double"
+        }
+      ]
+    },
+    {
+      "domain": "vacuum",
+      "entities": [
+        {
+          "id": "vacuum.r9493a",
+          "friendlyName": "R9493A",
+          "cSharpName": "R9493a"
+        }
+      ],
+      "attributes": [
+        {
+          "jsonName": "friendly_name",
+          "cSharpName": "FriendlyName",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "supported_features",
+          "cSharpName": "SupportedFeatures",
+          "clrType": "System.Double"
         }
       ]
     }

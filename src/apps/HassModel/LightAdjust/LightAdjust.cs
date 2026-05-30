@@ -29,9 +29,9 @@ public class LightAdjust
                     scheduledChange.Transition,
                     scheduledChange.Kelvin, scheduledChange.BrightnessPct);
                 stateChange.Entity.TurnOn(
-                    scheduledChange.Transition,
-                    kelvin: scheduledChange.Kelvin,
-                    brightnessPct: scheduledChange.BrightnessPct);
+                    (long)scheduledChange.Transition,
+                    colorTempKelvin: scheduledChange.Kelvin,
+                    brightnessPct: (long)scheduledChange.BrightnessPct);
                 _scheduledChanges.Remove(stateChange.Entity.EntityId);
             });
             foreach (var adjustment in adjustmentGroup.Adjustments)
@@ -64,8 +64,8 @@ public class LightAdjust
                 light.Attributes?.FriendlyName ?? light.EntityId, light.Registration?.Area?.Name,
                 adjustment.Transition,
                 adjustment.Kelvin, adjustment.BrightnessPct);
-            light.TurnOn(adjustment.Transition, kelvin: adjustment.Kelvin,
-                brightnessPct: adjustment.BrightnessPct);
+            light.TurnOn((long)adjustment.Transition, colorTempKelvin: adjustment.Kelvin,
+                brightnessPct: (long)adjustment.BrightnessPct);
         }
         else
         {
