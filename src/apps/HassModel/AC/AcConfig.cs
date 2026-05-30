@@ -14,6 +14,8 @@ public class AcConfig
     public InputBooleanEntity AcOnLogEntity { get; set; }
     public InputSelectEntity AcModeLogEntity { get; set; }
     public InputNumberEntity AcAggressivenessLogEntity { get; set; }
+    public SensorEntity SolarBatteryStateOfChargeEntity { get; set; }
+    public IEnumerable<SocAdjustConfig> SocAdjusts { get; set; }
 }
 
 public class AcProfileConfig
@@ -23,6 +25,14 @@ public class AcProfileConfig
     public decimal OnTolerance { get; set; } = 1M;
     public decimal OffTolerance { get; set; } = 0.5M;
     public decimal WeatherOffset { get; set; } = 3M;
+}
+
+public class SocAdjustConfig
+{
+    public int ProfileModifier { get; set; } = 0;
+    public int SocMin { get; set; }
+    public int SocMax { get; set; }
+    public int Tolerance { get; set; }
 }
 
 public class AcRoomConfig

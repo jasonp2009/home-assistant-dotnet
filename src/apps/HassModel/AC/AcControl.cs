@@ -19,6 +19,7 @@ public class AcControl : IAsyncInitializable
     private readonly ILogger<AcControl> _logger;
     private readonly IMitsubishiClient _mitsubishiClient;
     private readonly Dictionary<int, DateTime> _tempLastChangedDict = new();
+    private int _curSocModifier = 0;
 
     public AcControl(IHaContext ha, INetDaemonScheduler scheduler, IAppConfig<AcConfig> config,
         ILogger<AcControl> logger, IMitsubishiClient mitsubishiClient)
@@ -81,6 +82,7 @@ public class AcControl : IAsyncInitializable
         }
 
         _forecastHome.StateChanges().SubscribeAsync(_ => HandleChange(), _logger);
+        _config.Value.SolarBatteryStateOfChargeEntity.StateChanges().SubscribeAsync(_ => HandleSocChange(), _logger);
 
         scheduler.RunEvery(TimeSpan.FromSeconds(60), () =>
         {
@@ -98,6 +100,7 @@ public class AcControl : IAsyncInitializable
         await _mitsubishiClient.Login(cancellationToken);
         _logger.LogInformation("Successfully logged in to mitsubishi client");
 
+        await HandleSocChange(cancellationToken);
         await HandleChange(cancellationToken);
     }
 
@@ -186,9 +189,8 @@ public class AcControl : IAsyncInitializable
         var isCooling = mode is AcMode.Cool;
         if (!room.IsOn || room.SetTemperature is null || room.CurrentTemperate is null) return false;
 
-        var profile =
-            _config.Value.Profiles.FirstOrDefault(profile => profile.Name == room.AcProfileSelectEntity?.State)
-            ?? _config.Value.DefaultProfile;
+        var profile = GetEffectiveProfile(room.AcProfileSelectEntity?.State);
+        if (profile is null) return false;
 
         var forcePoint = room.SetTemperature.Value + (isCooling ? profile.ForceTolerance : -profile.ForceTolerance);
         var onPoint = room.SetTemperature.Value + (isCooling ? profile.OnTolerance : -profile.OnTolerance);
@@ -211,6 +213,41 @@ public class AcControl : IAsyncInitializable
         }
 
         return _mitsubishiClient.State.IsZoneOn(room.ZoneId) && mode == _mitsubishiClient.State.SetMode;
+    }
+
+    private AcProfileConfig? GetEffectiveProfile(string? setProfileName)
+    {
+        var currentProfile = _config.Value.Profiles.FirstOrDefault(profile => profile.Name == setProfileName) ?? _config.Value.DefaultProfile;
+        var profilesWithIndex = _config.Value.Profiles.Index().ToList();
+        var currentProfileIndex = profilesWithIndex.FirstOrDefault(profileWithIndex => profileWithIndex.Item.Name == currentProfile.Name).Index;
+        var desiredIndex = currentProfileIndex - _curSocModifier;
+        if (desiredIndex <= 0)
+        {
+            return _config.Value.Profiles.FirstOrDefault();
+        }
+
+        if (desiredIndex >= _config.Value.Profiles.Count())
+        {
+            return null;
+        }
+        return profilesWithIndex.FirstOrDefault(profileWithIndex => profileWithIndex.Index == desiredIndex).Item;
+    }
+
+    private async Task HandleSocChange(CancellationToken cancellationToken = default)
+    {
+        int curSoc = Convert.ToInt32(_config.Value.SolarBatteryStateOfChargeEntity.State);
+        var curSocAdjust =
+            _config.Value.SocAdjusts.FirstOrDefault(socAdjust => socAdjust.ProfileModifier == _curSocModifier);
+        if ((curSocAdjust.SocMin - curSocAdjust.Tolerance) < curSoc &&
+            curSoc < (curSocAdjust.SocMax + curSocAdjust.Tolerance))
+        {
+            return;
+        }
+
+        var newSocAdjust = _config.Value.SocAdjusts.FirstOrDefault(socAdjust =>
+            socAdjust.SocMin < curSoc && curSoc <= socAdjust.SocMax);
+        if (newSocAdjust is null) return;
+        _curSocModifier = newSocAdjust.ProfileModifier;
     }
 
     private bool CheckContactAndMotion(AcRoomConfig room)
