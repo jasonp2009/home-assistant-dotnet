@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using src.apps.HassModel.AC;
+using src.apps.HassModel.Battery.ForecastSolarClient;
 
 namespace src;
 
@@ -9,6 +10,7 @@ public static class DependencyInjection
     public static IServiceCollection AddServices(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddMitsubishiClient(configuration);
+        services.AddForecastSolarClient(configuration);
         return services;
     }
 }

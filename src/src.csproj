@@ -29,6 +29,10 @@
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
             <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
         </None>
+        <None Update="apps\HassModel\BatteryControl\AcControl.yaml">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+          <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        </None>
     </ItemGroup>
 
     <Target Name="nd-codegen" BeforeTargets="BeforeBuild" Condition="'$(Configuration)' == 'Debug'">
