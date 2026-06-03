@@ -63,8 +63,8 @@ public class AlarmLight
                 "Settings lights for {GroupName} to temperature: {TemperaturePct}% and brightness: {BrightnessPct}%",
                 schedule.Group.Name, temperaturePct, brightnessPct);
             foreach (var light in schedule.Group.Lights)
-                light.TurnOn(kelvin: light.PercentageToKelvin(temperaturePct),
-                    brightnessPct: brightnessPct.CleanPercentage());
+                light.TurnOn(colorTempKelvin: light.PercentageToKelvin(temperaturePct),
+                    brightnessPct: (long)brightnessPct.CleanPercentage());
             if (alarmOffset >= TimeSpan.FromMinutes(30)) completedSchedules.Add(schedule);
         }
 

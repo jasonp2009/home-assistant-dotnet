@@ -31,9 +31,9 @@ public class LightSync
                             secondaryLight.TurnOff();
                     else
                         foreach (var secondaryLight in secondaryLightGroup.Lights)
-                            secondaryLight.TurnOn(kelvin: secondaryLight.PercentageToKelvin(
+                            secondaryLight.TurnOn(colorTempKelvin: secondaryLight.PercentageToKelvin(
                                     zone.PrimaryLight.GetTemperaturePercentage()),
-                                brightness: zone.PrimaryLight.Attributes?.Brightness);
+                                brightness: (long?)zone.PrimaryLight.Attributes?.Brightness);
             });
     }
 }

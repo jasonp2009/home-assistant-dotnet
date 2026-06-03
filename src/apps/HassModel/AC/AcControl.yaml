@@ -26,9 +26,28 @@
       OnTolerance: 3
       OffTolerance: 2
       WeatherOffset: 1
+  SocAdjusts:
+    - ProfileModifier: 1
+      SocMin: 90
+      SocMax: 100
+      Tolerance: 2
+    - ProfileModifier: 0
+      SocMin: 50
+      SocMax: 90
+      Tolerance: 2
+    - ProfileModifier: -1
+      SocMin: 30
+      SocMax: 50
+      Tolerance: 2
+    - ProfileModifier: -2
+      SocMin: 0
+      SocMax: 30
+      Tolerance: 2
   AcOnLogEntity: input_boolean.aclog_ison
   AcModeLogEntity: input_select.aclog_mode
   AcAggressivenessLogEntity: input_number.aclog_aggressiveness
+  SocModifierLogEntity: input_number.aclog_socmodifier
+  SolarBatteryStateOfChargeEntity: sensor.ai_hb_g2_series_battery_state_of_charge
   Rooms:
     - Name: JasonsBedroom
       ZoneId: 7
