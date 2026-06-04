@@ -2,6 +2,9 @@
 
 public class EnergySegment
 {
-    public decimal BatteryChargeKwh { get; set; }
-    public bool IsChargeFromGrid { get; set; }
+    public required TimeSpan Duration { get; set; }
+    public required DateTime StartUtc { get; set; }
+    public DateTime EndUtc => StartUtc.Add(Duration);
+    public required decimal EstimatedBatteryChargeKwh { get; set; }
+    public bool IsChargeFromGrid { get; set; } = false;
 }

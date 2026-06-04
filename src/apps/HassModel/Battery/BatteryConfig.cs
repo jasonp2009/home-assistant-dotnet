@@ -12,4 +12,6 @@ public class BatteryConfig
     public decimal BatteryCapacity { get; set; }
     public decimal MinCapacity { get; set; }
     public decimal MaxCapacity { get; set; }
+    public int SegmentSizeMins { get; set; }
+    public TimeSpan SegmentSize => TimeSpan.FromMinutes(SegmentSizeMins);
 }

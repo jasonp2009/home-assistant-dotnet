@@ -7,3 +7,4 @@
   BatteryCapacity: 53
   MinCapacity: 10
   MaxCapacity: 45
+  SegmentSizeMins: 30

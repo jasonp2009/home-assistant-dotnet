@@ -7857,5 +7857,44 @@
         "optional": false
       }
     }
+  },
+  "utility_meter": {
+    "reset": {
+      "fields": {},
+      "target": {
+        "entity": [
+          {
+            "domain": [
+              "select"
+            ],
+            "integration": "utility_meter"
+          }
+        ]
+      }
+    },
+    "calibrate": {
+      "fields": {
+        "value": {
+          "example": "100",
+          "required": true,
+          "selector": {
+            "text": {
+              "multiple": false,
+              "multiline": false
+            }
+          }
+        }
+      },
+      "target": {
+        "entity": [
+          {
+            "domain": [
+              "sensor"
+            ],
+            "integration": "utility_meter"
+          }
+        ]
+      }
+    }
   }
 }
