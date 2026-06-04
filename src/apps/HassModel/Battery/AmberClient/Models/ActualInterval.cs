@@ -1,0 +1,7 @@
+﻿namespace src.apps.HassModel.Battery.AmberClient.Models;
+
+public class ActualInterval : BaseInterval
+{
+    public Range Range { get; set; }
+    public AdvancedPrice AdvancedPrice { get; set; }
+}

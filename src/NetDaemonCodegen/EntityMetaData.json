@@ -3614,6 +3614,11 @@
           "cSharpName": "AclogZoneonMasterbedroom"
         },
         {
+          "id": "input_boolean.dev_netdaemon_app_model_hello_yaml_app",
+          "friendlyName": "dev_netdaemon_app_model_hello_yaml_app",
+          "cSharpName": "DevNetdaemonAppModelHelloYamlApp"
+        },
+        {
           "id": "input_boolean.dev_netdaemon_extensions_scheduling_scheduling_app",
           "friendlyName": "dev_netdaemon_extensions_scheduling_scheduling_app",
           "cSharpName": "DevNetdaemonExtensionsSchedulingSchedulingApp"
@@ -3627,6 +3632,16 @@
           "id": "input_boolean.dev_netdaemon_hass_model_light_on_movement",
           "friendlyName": "dev_netdaemon_hass_model_light_on_movement",
           "cSharpName": "DevNetdaemonHassModelLightOnMovement"
+        },
+        {
+          "id": "input_boolean.dev_netdaemon_src_apps_hass_model_ac_ac_control",
+          "friendlyName": "dev_netdaemon_src_apps_hass_model_ac_ac_control",
+          "cSharpName": "DevNetdaemonSrcAppsHassModelAcAcControl"
+        },
+        {
+          "id": "input_boolean.dev_netdaemon_src_apps_hass_model_alarm_light_alarm_light",
+          "friendlyName": "dev_netdaemon_src_apps_hass_model_alarm_light_alarm_light",
+          "cSharpName": "DevNetdaemonSrcAppsHassModelAlarmLightAlarmLight"
         },
         {
           "id": "input_boolean.dev_netdaemon_src_apps_hass_model_battery_battery_control",

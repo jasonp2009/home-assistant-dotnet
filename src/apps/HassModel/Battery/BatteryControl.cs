@@ -12,12 +12,14 @@ public class BatteryControl
 {
     private BatteryConfig _config;
     private ForecastSolarClient.ForecastSolarClient _forecastSolarClient;
+    private AmberClient.AmberClient _amberClient;
     
     public BatteryControl(IHaContext ha, INetDaemonScheduler scheduler, IAppConfig<BatteryConfig> config,
-        ILogger<BatteryControl> logger, ForecastSolarClient.ForecastSolarClient forecastSolarClient)
+        ILogger<BatteryControl> logger, ForecastSolarClient.ForecastSolarClient forecastSolarClient, AmberClient.AmberClient amberClient)
     {
         _config = config.Value;
         _forecastSolarClient = forecastSolarClient;
+        _amberClient = amberClient;
         ShouldChargeFromGridAsync().Wait();
     }
 
