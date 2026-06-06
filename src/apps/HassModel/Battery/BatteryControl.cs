@@ -21,39 +21,42 @@ public class BatteryControl
     private readonly ForecastSolarClient _forecastSolarClient;
     private readonly ILogger<BatteryControl> _logger;
 
-    public BatteryControl(IHaContext ha, IScheduler scheduler, IAppConfig<BatteryConfig> config,
+    public BatteryControl(IHaContext ha, INetDaemonScheduler scheduler, IAppConfig<BatteryConfig> config,
         ILogger<BatteryControl> logger, ForecastSolarClient forecastSolarClient, AmberClient amberClient)
     {
         _config = config.Value;
         _logger = logger;
         _forecastSolarClient = forecastSolarClient;
         _amberClient = amberClient;
-        scheduler.ScheduleCron("5 * * * *", async () =>
-        {
-            var currentAction = EnergySegmentAction.None;
-            try
-            {
-                currentAction = await GetCurrentActionAsync();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError("Error getting current battery action {Message}", ex.Message);
-            }
-            try
-            {
-                _config.BatteryModeSelectEntity.SelectOption(currentAction switch
-                {
-                    EnergySegmentAction.Buy => _config.BatteryChargeMode,
-                    EnergySegmentAction.Sell => _config.BatteryDischargeMode,
-                    _ => _config.BatteryNoneMode
-                });
+        var nextRun = GetCurrentSegmentStart();
+        scheduler.RunEvery(_config.SegmentSize, nextRun, () => Task.Run(async () => await CheckAndUpdateBatteryModeAsync()));
+    }
 
-            }
-            catch (Exception ex)
+    private async Task CheckAndUpdateBatteryModeAsync()
+    {
+        var currentAction = EnergySegmentAction.None;
+        try
+        {
+            currentAction = await GetCurrentActionAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("Error getting current battery action {Message}", ex.Message);
+        }
+        try
+        {
+            _config.BatteryModeSelectEntity.SelectOption(currentAction switch
             {
-                _logger.LogError("Error setting battery mode {Action} {Message}", currentAction, ex.Message);
-            }
-        });
+                EnergySegmentAction.Buy => _config.BatteryChargeMode,
+                EnergySegmentAction.Sell => _config.BatteryDischargeMode,
+                _ => _config.BatteryNoneMode
+            });
+            _logger.LogInformation("Succesfully set battery mode to {Action}", currentAction);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("Error setting battery mode {Action} {Message}", currentAction, ex.Message);
+        }
     }
 
     private async Task<EnergySegmentAction> GetCurrentActionAsync()

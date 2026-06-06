@@ -3729,6 +3729,11 @@
           "cSharpName": "NetdaemonSrcAppsHassModelAlarmLightAlarmLight"
         },
         {
+          "id": "input_boolean.netdaemon_src_apps_hass_model_battery_battery_control",
+          "friendlyName": "netdaemon_src_apps_hass_model_battery_battery_control",
+          "cSharpName": "NetdaemonSrcAppsHassModelBatteryBatteryControl"
+        },
+        {
           "id": "input_boolean.netdaemon_src_apps_hass_model_light_adjust_light_adjust",
           "friendlyName": "netdaemon_src_apps_hass_model_light_adjust_light_adjust",
           "cSharpName": "NetdaemonSrcAppsHassModelLightAdjustLightAdjust"
