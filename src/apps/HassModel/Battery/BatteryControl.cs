@@ -28,7 +28,7 @@ public class BatteryControl
         _logger = logger;
         _forecastSolarClient = forecastSolarClient;
         _amberClient = amberClient;
-        var nextRun = GetCurrentSegmentStart();
+        var nextRun = GetCurrentSegmentStart() + _config.SegmentSize;
         scheduler.RunEvery(_config.SegmentSize, nextRun, () => Task.Run(async () => await CheckAndUpdateBatteryModeAsync()));
     }
 
