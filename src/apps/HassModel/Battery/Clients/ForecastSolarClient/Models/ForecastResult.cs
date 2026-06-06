@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace src.apps.HassModel.Battery.ForecastSolarClient.Models;
+namespace src.apps.HassModel.Battery.Clients.ForecastSolarClient.Models;
 
 public class ForecastResult
 {

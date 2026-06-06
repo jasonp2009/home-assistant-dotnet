@@ -5,9 +5,9 @@ using System.Net.Http.Json;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using src.apps.HassModel.Battery.AmberClient.Models;
+using src.apps.HassModel.Battery.Clients.AmberClient.Models;
 
-namespace src.apps.HassModel.Battery.AmberClient;
+namespace src.apps.HassModel.Battery.Clients.AmberClient;
 
 public class AmberClient
 {

@@ -1,8 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using src.apps.HassModel.Battery.AmberClient.Enums;
-using src.apps.HassModel.Battery.AmberClient.Extensions;
-using src.apps.HassModel.Battery.AmberClient.Models;
+using src.apps.HassModel.Battery.Clients.AmberClient.Enums;
+using src.apps.HassModel.Battery.Clients.AmberClient.Extensions;
+using src.apps.HassModel.Battery.Clients.AmberClient.Models;
+using src.apps.HassModel.Battery.Models;
 
 namespace src.apps.HassModel.Battery.Extensions;
 

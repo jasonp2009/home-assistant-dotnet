@@ -52,4 +52,8 @@
         <PackageReference Include="NetDaemon.Extensions.Logging" Version="26.21.0" />
         <PackageReference Include="NetDaemon.Extensions.Tts" Version="26.21.0" />
     </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="apps\HassModel\Battery\Clients\" />
+    </ItemGroup>
 </Project>

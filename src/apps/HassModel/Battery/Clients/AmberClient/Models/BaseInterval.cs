@@ -1,7 +1,7 @@
 ﻿using System.Text.Json.Serialization;
-using src.apps.HassModel.Battery.AmberClient.Enums;
+using src.apps.HassModel.Battery.Clients.AmberClient.Enums;
 
-namespace src.apps.HassModel.Battery.AmberClient.Models;
+namespace src.apps.HassModel.Battery.Clients.AmberClient.Models;
 
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
 [JsonDerivedType(typeof(ActualInterval), typeDiscriminator: nameof(ActualInterval))]

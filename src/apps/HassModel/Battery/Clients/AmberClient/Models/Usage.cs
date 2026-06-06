@@ -1,6 +1,6 @@
-﻿using src.apps.HassModel.Battery.AmberClient.Enums;
+﻿using src.apps.HassModel.Battery.Clients.AmberClient.Enums;
 
-namespace src.apps.HassModel.Battery.AmberClient.Models;
+namespace src.apps.HassModel.Battery.Clients.AmberClient.Models;
 
 public class Usage : BaseInterval
 {

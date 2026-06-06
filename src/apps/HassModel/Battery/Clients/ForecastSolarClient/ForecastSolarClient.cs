@@ -5,9 +5,9 @@ using System.Net.Http.Json;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using src.apps.HassModel.Battery.ForecastSolarClient.Models;
+using src.apps.HassModel.Battery.Clients.ForecastSolarClient.Models;
 
-namespace src.apps.HassModel.Battery.ForecastSolarClient;
+namespace src.apps.HassModel.Battery.Clients.ForecastSolarClient;
 
 public class ForecastSolarClient
 {

@@ -1,6 +1,6 @@
-﻿using src.apps.HassModel.Battery.AmberClient.Models;
+﻿using src.apps.HassModel.Battery.Clients.AmberClient.Models;
 
-namespace src.apps.HassModel.Battery.AmberClient.Extensions;
+namespace src.apps.HassModel.Battery.Clients.AmberClient.Extensions;
 
 public static class BaseIntervalExtensions
 {

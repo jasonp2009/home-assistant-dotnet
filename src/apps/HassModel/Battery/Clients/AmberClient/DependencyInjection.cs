@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace src.apps.HassModel.Battery.AmberClient;
+namespace src.apps.HassModel.Battery.Clients.AmberClient;
 
 public static class DependencyInjection
 {

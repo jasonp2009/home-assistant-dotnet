@@ -1,4 +1,4 @@
-﻿namespace src.apps.HassModel.Battery.ForecastSolarClient;
+﻿namespace src.apps.HassModel.Battery.Clients.ForecastSolarClient;
 
 public class ForecastSolarClientSettings
 {

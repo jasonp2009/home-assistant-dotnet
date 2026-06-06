@@ -1,4 +1,4 @@
-﻿namespace src.apps.HassModel.Battery;
+﻿namespace src.apps.HassModel.Battery.Models;
 
 public class EnergySegment
 {

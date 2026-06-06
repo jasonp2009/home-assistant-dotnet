@@ -1,4 +1,4 @@
-﻿namespace src.apps.HassModel.Battery.AmberClient;
+﻿namespace src.apps.HassModel.Battery.Clients.AmberClient;
 
 public class AmberClientSettings
 {

@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace src.apps.HassModel.Battery.ForecastSolarClient;
+namespace src.apps.HassModel.Battery.Clients.ForecastSolarClient;
 
 public static class DependencyInjection
 {

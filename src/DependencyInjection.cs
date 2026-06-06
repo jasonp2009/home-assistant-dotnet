@@ -1,8 +1,8 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using src.apps.HassModel.AC;
-using src.apps.HassModel.Battery.AmberClient;
-using src.apps.HassModel.Battery.ForecastSolarClient;
+using src.apps.HassModel.Battery.Clients.AmberClient;
+using src.apps.HassModel.Battery.Clients.ForecastSolarClient;
 
 namespace src;
 

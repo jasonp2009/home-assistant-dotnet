@@ -4,7 +4,10 @@ using System.Threading.Tasks;
 using HomeAssistantGenerated;
 using Microsoft.Extensions.Logging;
 using NetDaemon.Extensions.Scheduler;
+using src.apps.HassModel.Battery.Clients.AmberClient;
+using src.apps.HassModel.Battery.Clients.ForecastSolarClient;
 using src.apps.HassModel.Battery.Extensions;
+using src.apps.HassModel.Battery.Models;
 
 namespace src.apps.HassModel.Battery;
 
@@ -12,11 +15,11 @@ namespace src.apps.HassModel.Battery;
 public class BatteryControl
 {
     private BatteryConfig _config;
-    private ForecastSolarClient.ForecastSolarClient _forecastSolarClient;
-    private AmberClient.AmberClient _amberClient;
+    private ForecastSolarClient _forecastSolarClient;
+    private AmberClient _amberClient;
     
     public BatteryControl(IHaContext ha, INetDaemonScheduler scheduler, IAppConfig<BatteryConfig> config,
-        ILogger<BatteryControl> logger, ForecastSolarClient.ForecastSolarClient forecastSolarClient, AmberClient.AmberClient amberClient)
+        ILogger<BatteryControl> logger, ForecastSolarClient forecastSolarClient, AmberClient amberClient)
     {
         _config = config.Value;
         _forecastSolarClient = forecastSolarClient;
