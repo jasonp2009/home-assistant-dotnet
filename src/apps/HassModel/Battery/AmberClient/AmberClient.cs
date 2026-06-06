@@ -27,12 +27,12 @@ public class AmberClient
         _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _settings.ApiKey);
     }
 
-    public async Task<List<BaseInterval>?> GetCurrentPriceAsync(int forecastCount = 10)
+    public async Task<List<BaseInterval>?> GetCurrentPriceAsync(int forecastCount = 2048)
     {
         try
         {
             var response = await _httpClient.GetFromJsonAsync<List<BaseInterval>>(
-                $"/v1/sites/{_settings.SiteId}/prices/current?next={forecastCount}");
+                $"/v1/sites/{_settings.SiteId}/prices/current?next={forecastCount}&resolution=5");
             return response;
         }
         catch (Exception ex)

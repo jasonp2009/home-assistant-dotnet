@@ -3,5 +3,5 @@
 public partial class ForecastInterval : BaseInterval
 {
     public Range Range { get; set; }
-    public AdvancedPrice AdvancedPrice { get; set; }
+    public AdvancedPrice? AdvancedPrice { get; set; }
 }

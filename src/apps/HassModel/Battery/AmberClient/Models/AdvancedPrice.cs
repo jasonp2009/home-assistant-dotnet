@@ -2,7 +2,7 @@
 
 public class AdvancedPrice
 {
-    public double Low { get; set; }
-    public double Predicted { get; set; }
-    public double High { get; set; }
+    public decimal Low { get; set; }
+    public decimal Predicted { get; set; }
+    public decimal High { get; set; }
 }

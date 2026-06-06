@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using HomeAssistantGenerated;
 using Microsoft.Extensions.Logging;
 using NetDaemon.Extensions.Scheduler;
+using src.apps.HassModel.Battery.Extensions;
 
 namespace src.apps.HassModel.Battery;
 
@@ -31,20 +32,24 @@ public class BatteryControl
 
     private async Task<List<EnergySegment>> InitialiseEnergySegmentsAsync()
     {
-        var averageHalfHourUsage = GetAverageHalfAnHourUsage();
+        var averageHalfHourUsage = GetAverageSegmentUsage();
         var currentBatteryChargeKwh = GetCurrentBatteryChargeKwh();
         var startUtc = GetCurrentSegmentStart();
-        var solarForecast = await _forecastSolarClient.GetForecastAsync();
+        var solarForecastTask = _forecastSolarClient.GetForecastAsync();
+        var amberPricesTask = _amberClient.GetCurrentPriceAsync();
+        await Task.WhenAll(solarForecastTask, amberPricesTask);
+        var solarForecast = solarForecastTask.Result;
+        var amberPrices = amberPricesTask.Result;
         var curEnergySegment = new EnergySegment
         {
             EstimatedBatteryChargeKwh = currentBatteryChargeKwh,
             Duration = _config.SegmentSize,
             StartUtc = startUtc
         };
-        curEnergySegment.EstimatedBatteryChargeKwh +=
-            GetSolarForecastForPeriod(solarForecast, curEnergySegment.StartUtc, curEnergySegment.EndUtc);
+        curEnergySegment.ApplySolarForecast(solarForecast);
+        curEnergySegment.ApplyPrice(amberPrices);
         var energySegments = new List<EnergySegment> {curEnergySegment};
-        while (curEnergySegment.EstimatedBatteryChargeKwh > _config.MinCapacity)
+        while (curEnergySegment.BuyPricePerKw is not null && curEnergySegment.SellPricePerKw is not null)
         {
             curEnergySegment = new EnergySegment
             {
@@ -52,14 +57,14 @@ public class BatteryControl
                 Duration = _config.SegmentSize,
                 StartUtc = curEnergySegment.StartUtc + _config.SegmentSize
             };
-            curEnergySegment.EstimatedBatteryChargeKwh +=
-                GetSolarForecastForPeriod(solarForecast, curEnergySegment.StartUtc, curEnergySegment.EndUtc);
+            curEnergySegment.ApplySolarForecast(solarForecast);
+            curEnergySegment.ApplyPrice(amberPrices);
             energySegments.Add(curEnergySegment);
         }
         return energySegments;
     }
 
-    private decimal GetAverageHalfAnHourUsage()
+    private decimal GetAverageSegmentUsage()
     {
         var gridIn3Days = Convert.ToDecimal(_config.GridIn3DaysEntity.State);
         var gridOut3Days = Convert.ToDecimal(_config.GridOut3DaysEntity.State);
@@ -67,7 +72,8 @@ public class BatteryControl
         var batteryChargeDiff3Days = Convert.ToDecimal(_config.BatteryChargeDiff3DaysEntity.State);
         var batteryUsage = ((batteryChargeDiff3Days / 100) * _config.BatteryCapacity);
         var usage3Days = gridIn3Days - gridOut3Days + solarProduction3Days - batteryUsage;
-        return usage3Days / (3 * 24 * 2);
+        var segmentsIn3Days = Convert.ToDecimal(TimeSpan.FromDays(3) / _config.SegmentSize);
+        return usage3Days / segmentsIn3Days;
     }
 
     private decimal GetCurrentBatteryChargeKwh()
@@ -83,14 +89,5 @@ public class BatteryControl
         var remainderTicks = now.Ticks % segmentTicks;
         var timeIntoInterval = TimeSpan.FromTicks(remainderTicks);
         return now - timeIntoInterval;
-    }
-    
-    private decimal GetSolarForecastForPeriod(Dictionary<DateTime, int>? solarForecast, DateTime startUtc, DateTime endUtc)
-    {
-        if (solarForecast is null) return 0;
-        var solarForecastWatts = Convert.ToDecimal(solarForecast
-            .Where(pair => startUtc <= pair.Key && pair.Key < endUtc)
-            .Sum(pair => pair.Value));
-        return solarForecastWatts / 1000;
     }
 }

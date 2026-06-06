@@ -2451,6 +2451,11 @@
           "cSharpName": "PawarPlantTotalLifetimeEnergyOutput"
         },
         {
+          "id": "sensor.pawar_plant_total_lifetime_energy_output_persisted",
+          "friendlyName": "Pawar Plant Total Lifetime Energy Output Persisted",
+          "cSharpName": "PawarPlantTotalLifetimeEnergyOutputPersisted"
+        },
+        {
           "id": "sensor.pawar_plant_total_maximum_power",
           "friendlyName": "Pawar Plant Total Maximum power",
           "cSharpName": "PawarPlantTotalMaximumPower"
@@ -2467,7 +2472,7 @@
         },
         {
           "id": "sensor.pawar_plant_total_solar_production_3_days",
-          "friendlyName": "Pawar Plant Total Solar production 3 days",
+          "friendlyName": "Pawar Plant Total Solar Production 3 days",
           "cSharpName": "PawarPlantTotalSolarProduction3Days"
         },
         {

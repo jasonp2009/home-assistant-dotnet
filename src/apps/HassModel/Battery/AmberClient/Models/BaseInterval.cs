@@ -11,13 +11,13 @@ namespace src.apps.HassModel.Battery.AmberClient.Models;
 public class BaseInterval
 {
     public IntervalDuration Duration { get; set; }
-    public double SpotPerKwh { get; set; }
-    public double PerKwh { get; set; }
-    public DateTimeOffset Date { get; set; }
-    public DateTimeOffset NemTime { get; set; }
-    public DateTimeOffset StartTime { get; set; }
-    public DateTimeOffset EndTime { get; set; }
-    public double Renewables { get; set; }
+    public decimal SpotPerKwh { get; set; }
+    public decimal PerKwh { get; set; }
+    public DateTime Date { get; set; }
+    public DateTime NemTime { get; set; }
+    public DateTime StartTime { get; set; }
+    public DateTime EndTime { get; set; }
+    public decimal Renewables { get; set; }
     public ChannelType ChannelType { get; set; }
     public TariffInformation TariffInformation { get; set; }
     public SpikeStatus SpikeStatus { get; set; }
