@@ -76,7 +76,7 @@ public class BatteryControl
                     break;
                 var maxPriceSegmentIndex = energySegments.IndexOf(maxPriceSegment);
                 maxPriceSegment.Action = EnergySegmentAction.Sell;
-                for (var i = maxPriceSegmentIndex; i <= boundaryResult.IndexOfBoundaryCrossing; i++)
+                for (var i = maxPriceSegmentIndex; i < energySegments.Count; i++)
                 {
                     energySegments[i].EstimatedBatteryChargeKwh -= _config.SegmentChargeAmountKwh;
                 }
@@ -93,7 +93,7 @@ public class BatteryControl
                     break;
                 var lowestPriceSegmentIndex = energySegments.IndexOf(lowestPriceSegment);
                 lowestPriceSegment.Action = EnergySegmentAction.Buy;
-                for (var i = lowestPriceSegmentIndex; i <= boundaryResult.IndexOfBoundaryCrossing; i++)
+                for (var i = lowestPriceSegmentIndex; i < energySegments.Count; i++)
                 {
                     energySegments[i].EstimatedBatteryChargeKwh += _config.SegmentChargeAmountKwh;
                 }
