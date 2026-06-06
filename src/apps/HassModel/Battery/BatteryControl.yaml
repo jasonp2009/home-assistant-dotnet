@@ -6,5 +6,7 @@
   BatteryChargeDiff3DaysEntity: sensor.solar_battery_battery_diff_3_days
   BatteryCapacity: 53
   MinCapacity: 10
-  MaxCapacity: 45
+  MaxCapacity: 50
   SegmentSizeMins: 5
+  ChargeRateKw: 12
+  DischargeRateKw: 12

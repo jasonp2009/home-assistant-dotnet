@@ -35,6 +35,7 @@ public static class EnergySegmentExtensions
         {
             var buyIntervalWithOverlap= buyIntervals?.MaxBy(intervalWithOverlap => intervalWithOverlap.Item1);
             segment.BuyPricePerKw = buyIntervalWithOverlap?.interval.GetPrice();
+            segment.IsDemandWindow = buyIntervalWithOverlap?.interval?.TariffInformation?.DemandWindow ?? false;
         }
         
         var sellIntervals = priceIntervals
