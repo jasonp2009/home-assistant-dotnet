@@ -22,4 +22,6 @@ public class BatteryConfig
     public decimal SegmentChargeAmountKwh => ChargeRateKw * Convert.ToDecimal(SegmentSize.TotalHours);
     public decimal DischargeRateKw { get; set; }
     public decimal SegmentDischargeAmountKwh => DischargeRateKw * Convert.ToDecimal(SegmentSize.TotalHours);
+    public InputSelectEntity NextActionLog { get; set; }
+    public InputDatetimeEntity NextActionAtLog { get; set; }
 }

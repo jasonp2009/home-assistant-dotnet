@@ -100,6 +100,16 @@ public class BatteryControl
             }
             boundaryResult = CalculateBoundaryResult(energySegments);
         }
+        var nextAction = energySegments.FirstOrDefault(segment => segment.Action is not EnergySegmentAction.None);
+        if (nextAction is null)
+        {
+            _config.NextActionLog.SelectOption(EnergySegmentAction.None.ToString());
+        }
+        else
+        {
+            _config.NextActionLog.SelectOption(nextAction.Action.ToString());
+            _config.NextActionAtLog.SetDatetime(datetime: nextAction.StartUtc.ToString("yyyy-MM-dd HH:mm:ss"));
+        }
         return energySegments.First().Action;
     }
 

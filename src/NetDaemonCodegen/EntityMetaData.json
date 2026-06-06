@@ -3619,51 +3619,6 @@
           "cSharpName": "AclogZoneonMasterbedroom"
         },
         {
-          "id": "input_boolean.dev_netdaemon_app_model_hello_yaml_app",
-          "friendlyName": "dev_netdaemon_app_model_hello_yaml_app",
-          "cSharpName": "DevNetdaemonAppModelHelloYamlApp"
-        },
-        {
-          "id": "input_boolean.dev_netdaemon_extensions_scheduling_scheduling_app",
-          "friendlyName": "dev_netdaemon_extensions_scheduling_scheduling_app",
-          "cSharpName": "DevNetdaemonExtensionsSchedulingSchedulingApp"
-        },
-        {
-          "id": "input_boolean.dev_netdaemon_hass_model_hello_world_app",
-          "friendlyName": "dev_netdaemon_hass_model_hello_world_app",
-          "cSharpName": "DevNetdaemonHassModelHelloWorldApp"
-        },
-        {
-          "id": "input_boolean.dev_netdaemon_hass_model_light_on_movement",
-          "friendlyName": "dev_netdaemon_hass_model_light_on_movement",
-          "cSharpName": "DevNetdaemonHassModelLightOnMovement"
-        },
-        {
-          "id": "input_boolean.dev_netdaemon_src_apps_hass_model_ac_ac_control",
-          "friendlyName": "dev_netdaemon_src_apps_hass_model_ac_ac_control",
-          "cSharpName": "DevNetdaemonSrcAppsHassModelAcAcControl"
-        },
-        {
-          "id": "input_boolean.dev_netdaemon_src_apps_hass_model_alarm_light_alarm_light",
-          "friendlyName": "dev_netdaemon_src_apps_hass_model_alarm_light_alarm_light",
-          "cSharpName": "DevNetdaemonSrcAppsHassModelAlarmLightAlarmLight"
-        },
-        {
-          "id": "input_boolean.dev_netdaemon_src_apps_hass_model_battery_battery_control",
-          "friendlyName": "dev_netdaemon_src_apps_hass_model_battery_battery_control",
-          "cSharpName": "DevNetdaemonSrcAppsHassModelBatteryBatteryControl"
-        },
-        {
-          "id": "input_boolean.dev_netdaemon_src_apps_hass_model_light_adjust_light_adjust",
-          "friendlyName": "dev_netdaemon_src_apps_hass_model_light_adjust_light_adjust",
-          "cSharpName": "DevNetdaemonSrcAppsHassModelLightAdjustLightAdjust"
-        },
-        {
-          "id": "input_boolean.dev_netdaemon_src_apps_hass_model_light_sync_light_sync",
-          "friendlyName": "dev_netdaemon_src_apps_hass_model_light_sync_light_sync",
-          "cSharpName": "DevNetdaemonSrcAppsHassModelLightSyncLightSync"
-        },
-        {
           "id": "input_boolean.dining_room_ac_switch",
           "friendlyName": "Dining Room AC Switch",
           "cSharpName": "DiningRoomAcSwitch"
@@ -4158,6 +4113,11 @@
           "id": "input_select.master_bedroom_ac_mode",
           "friendlyName": "AC Mode",
           "cSharpName": "MasterBedroomAcMode"
+        },
+        {
+          "id": "input_select.next_action_battery_log",
+          "friendlyName": "Next Action - Battery Log",
+          "cSharpName": "NextActionBatteryLog"
         }
       ],
       "attributes": [
@@ -4592,6 +4552,73 @@
           "jsonName": "supported_features",
           "cSharpName": "SupportedFeatures",
           "clrType": "System.Double"
+        }
+      ]
+    },
+    {
+      "domain": "input_datetime",
+      "entities": [
+        {
+          "id": "input_datetime.next_action_at_battery_log",
+          "friendlyName": "Next Action At - Battery Log",
+          "cSharpName": "NextActionAtBatteryLog"
+        }
+      ],
+      "attributes": [
+        {
+          "jsonName": "has_date",
+          "cSharpName": "HasDate",
+          "clrType": "System.Boolean"
+        },
+        {
+          "jsonName": "has_time",
+          "cSharpName": "HasTime",
+          "clrType": "System.Boolean"
+        },
+        {
+          "jsonName": "editable",
+          "cSharpName": "Editable",
+          "clrType": "System.Boolean"
+        },
+        {
+          "jsonName": "year",
+          "cSharpName": "Year",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "month",
+          "cSharpName": "Month",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "day",
+          "cSharpName": "Day",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "hour",
+          "cSharpName": "Hour",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "minute",
+          "cSharpName": "Minute",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "second",
+          "cSharpName": "Second",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "timestamp",
+          "cSharpName": "Timestamp",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "friendly_name",
+          "cSharpName": "FriendlyName",
+          "clrType": "System.String"
         }
       ]
     }
