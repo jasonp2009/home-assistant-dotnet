@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Reactive.Concurrency;
 using System.Threading.Tasks;
 using HomeAssistantGenerated;
 using Microsoft.Extensions.Logging;
@@ -15,17 +16,44 @@ namespace src.apps.HassModel.Battery;
 [NetDaemonApp]
 public class BatteryControl
 {
-    private BatteryConfig _config;
-    private ForecastSolarClient _forecastSolarClient;
-    private AmberClient _amberClient;
-    
-    public BatteryControl(IHaContext ha, INetDaemonScheduler scheduler, IAppConfig<BatteryConfig> config,
+    private readonly AmberClient _amberClient;
+    private readonly BatteryConfig _config;
+    private readonly ForecastSolarClient _forecastSolarClient;
+    private readonly ILogger<BatteryControl> _logger;
+
+    public BatteryControl(IHaContext ha, IScheduler scheduler, IAppConfig<BatteryConfig> config,
         ILogger<BatteryControl> logger, ForecastSolarClient forecastSolarClient, AmberClient amberClient)
     {
         _config = config.Value;
+        _logger = logger;
         _forecastSolarClient = forecastSolarClient;
         _amberClient = amberClient;
-        GetCurrentActionAsync().Wait();
+        scheduler.ScheduleCron("5 * * * *", async () =>
+        {
+            var currentAction = EnergySegmentAction.None;
+            try
+            {
+                currentAction = await GetCurrentActionAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error getting current battery action {Message}", ex.Message);
+            }
+            try
+            {
+                _config.BatteryModeSelectEntity.SelectOption(currentAction switch
+                {
+                    EnergySegmentAction.Buy => _config.BatteryChargeMode,
+                    EnergySegmentAction.Sell => _config.BatteryDischargeMode,
+                    _ => _config.BatteryNoneMode
+                });
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error setting battery mode {Action} {Message}", currentAction, ex.Message);
+            }
+        });
     }
 
     private async Task<EnergySegmentAction> GetCurrentActionAsync()
@@ -91,7 +119,10 @@ public class BatteryControl
         };
         curEnergySegment.ApplySolarForecast(solarForecast);
         curEnergySegment.ApplyPrice(amberPrices);
-        var energySegments = new List<EnergySegment> {curEnergySegment};
+        var energySegments = new List<EnergySegment>
+        {
+            curEnergySegment
+        };
         while (curEnergySegment.BuyPricePerKw is not null && curEnergySegment.SellPricePerKw is not null)
         {
             curEnergySegment = new EnergySegment
@@ -113,7 +144,7 @@ public class BatteryControl
         var gridOut3Days = Convert.ToDecimal(_config.GridOut3DaysEntity.State);
         var solarProduction3Days = Convert.ToDecimal(_config.SolarProduction3DaysEntity.State);
         var batteryChargeDiff3Days = Convert.ToDecimal(_config.BatteryChargeDiff3DaysEntity.State);
-        var batteryUsage = ((batteryChargeDiff3Days / 100) * _config.BatteryCapacity);
+        var batteryUsage = batteryChargeDiff3Days / 100 * _config.BatteryCapacity;
         var usage3Days = gridIn3Days - gridOut3Days + solarProduction3Days - batteryUsage;
         var segmentsIn3Days = Convert.ToDecimal(TimeSpan.FromDays(3) / _config.SegmentSize);
         return usage3Days / segmentsIn3Days;
@@ -121,14 +152,14 @@ public class BatteryControl
 
     private decimal GetCurrentBatteryChargeKwh()
     {
-        return (Convert.ToDecimal(_config.SolarBatteryStateOfChargeEntity.State) / 100) * _config.BatteryCapacity;
+        return Convert.ToDecimal(_config.SolarBatteryStateOfChargeEntity.State) / 100 * _config.BatteryCapacity;
     }
 
     private DateTime GetCurrentSegmentStart()
     {
         var now = DateTime.UtcNow;
 
-        var segmentTicks = _config.SegmentSize.Ticks; 
+        var segmentTicks = _config.SegmentSize.Ticks;
         var remainderTicks = now.Ticks % segmentTicks;
         var timeIntoInterval = TimeSpan.FromTicks(remainderTicks);
         return now - timeIntoInterval;

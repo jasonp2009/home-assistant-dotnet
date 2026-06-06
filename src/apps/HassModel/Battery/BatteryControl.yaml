@@ -1,5 +1,9 @@
 ﻿src.apps.HassModel.Battery.BatteryConfig:
   SolarBatteryStateOfChargeEntity: sensor.ai_hb_g2_series_battery_state_of_charge
+  BatteryModeSelectEntity: select.battery_2003025b090201_work_mode
+  BatteryNoneMode: Self-consumption mode
+  BatteryChargeMode: Reserve power mode
+  BatteryDischargeMode: Custom mode
   GridIn3DaysEntity: sensor.energy_meter_grid_in_3_days
   GridOut3DaysEntity: sensor.energy_meter_grid_out_3_days
   SolarProduction3DaysEntity: sensor.pawar_plant_total_solar_production_3_days

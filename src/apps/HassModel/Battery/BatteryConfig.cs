@@ -9,6 +9,10 @@ public class BatteryConfig
     public SensorEntity GridOut3DaysEntity { get; set; }
     public SensorEntity SolarProduction3DaysEntity { get; set; }
     public SensorEntity BatteryChargeDiff3DaysEntity { get; set; }
+    public SelectEntity BatteryModeSelectEntity { get; set; }
+    public string BatteryNoneMode { get; set; }
+    public string BatteryChargeMode { get; set; }
+    public string BatteryDischargeMode { get; set; }
     public decimal BatteryCapacity { get; set; }
     public decimal MinCapacity { get; set; }
     public decimal MaxCapacity { get; set; }
