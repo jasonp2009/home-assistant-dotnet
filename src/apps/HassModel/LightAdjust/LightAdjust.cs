@@ -23,7 +23,7 @@ public class LightAdjust
             {
                 if (!_scheduledChanges.TryGetValue(stateChange.Entity.EntityId, out var scheduledChange)) return;
 
-                logger.LogInformation(
+                logger.LogDebug(
                     "Adjusting light {Light} in {Room} to Transition: {Transition} Kelvin: {Kelvin} BrightnessPct: {BrightnessPct}",
                     light.Attributes?.FriendlyName ?? light.EntityId, light.Registration?.Area?.Name,
                     scheduledChange.Transition,
@@ -59,7 +59,7 @@ public class LightAdjust
     {
         if (light.IsOn())
         {
-            _logger.LogInformation(
+            _logger.LogDebug(
                 "Adjusting light {Light} in {Room} to Transition: {Transition} Kelvin: {Kelvin} BrightnessPct: {BrightnessPct}",
                 light.Attributes?.FriendlyName ?? light.EntityId, light.Registration?.Area?.Name,
                 adjustment.Transition,
@@ -69,7 +69,7 @@ public class LightAdjust
         }
         else
         {
-            _logger.LogInformation(
+            _logger.LogDebug(
                 "Light {Light} in {Room} is off, will adjust on next state change to Transition: {Transition} Kelvin: {Kelvin} BrightnessPct: {BrightnessPct}",
                 light.Attributes?.FriendlyName ?? light.EntityId, light.Registration?.Area?.Name,
                 adjustment.Transition,

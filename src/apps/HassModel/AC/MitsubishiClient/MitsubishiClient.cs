@@ -38,7 +38,7 @@ public class MitsubishiClient : IMitsubishiClient
         isOn ??= !zone.IsOn;
         if (zone.IsOn == isOn) return;
 
-        _logger.LogInformation("Toggling zone {ZoneId} to {IsOn}", zoneId, isOn);
+        _logger.LogDebug("Toggling zone {ZoneId} to {IsOn}", zoneId, isOn);
 
         await SendUnitCommand($"Z{zoneId}{Convert.ToInt32(isOn)}", cancellationToken);
     }
@@ -49,7 +49,7 @@ public class MitsubishiClient : IMitsubishiClient
             Convert.ToInt32(State.SetMode == AcMode.Heat ? Math.Ceiling(temperature) : Math.Floor(temperature));
         if (State.SetTemp == intTemp) return;
 
-        _logger.LogInformation("Setting temperature {Temperature}", temperature);
+        _logger.LogDebug("Setting temperature {Temperature}", temperature);
 
         await SendUnitCommand($"TS{intTemp}", cancellationToken);
     }
@@ -58,7 +58,7 @@ public class MitsubishiClient : IMitsubishiClient
     {
         if ((mode == AcMode.Auto && State.AutoMode) || mode == State.SetMode) return;
 
-        _logger.LogInformation("Setting mode {Mode}", mode);
+        _logger.LogDebug("Setting mode {Mode}", mode);
 
         await SendUnitCommand($"MD{Convert.ToInt32(mode)}", cancellationToken);
     }
@@ -67,7 +67,7 @@ public class MitsubishiClient : IMitsubishiClient
     {
         if (fanMode == State.SetFan) return;
 
-        _logger.LogInformation("Setting fan mode {FanMode}", fanMode);
+        _logger.LogDebug("Setting fan mode {FanMode}", fanMode);
 
         await SendUnitCommand($"FS{Convert.ToInt32(fanMode)}", cancellationToken);
     }
@@ -77,7 +77,7 @@ public class MitsubishiClient : IMitsubishiClient
         isOn ??= State.Power;
         if (State.Power == isOn) return;
 
-        _logger.LogInformation("Toggling AC {IsOn}", isOn);
+        _logger.LogDebug("Toggling AC {IsOn}", isOn);
 
         await SendUnitCommand($"PW{Convert.ToInt32(isOn)}", cancellationToken);
     }

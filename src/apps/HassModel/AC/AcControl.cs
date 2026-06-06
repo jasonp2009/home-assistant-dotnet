@@ -35,7 +35,7 @@ public class AcControl : IAsyncInitializable
             room.AcToggleEntity.StateChanges()
                 .SubscribeAsync(acToggleEvent =>
                 {
-                    _logger.LogInformation("AC Toggled to {IsOn} for {Area}",
+                    _logger.LogDebug("AC Toggled to {IsOn} for {Area}",
                         acToggleEvent.Entity.IsOn(),
                         acToggleEvent.Entity.Area);
                     return HandleChange();
@@ -43,7 +43,7 @@ public class AcControl : IAsyncInitializable
             room.SetTemperatureEntity.StateChanges()
                 .SubscribeAsync(setTemperatureEvent =>
                 {
-                    _logger.LogInformation("Temperature set to {Temperature} for {Area}",
+                    _logger.LogDebug("Temperature set to {Temperature} for {Area}",
                         setTemperatureEvent.Entity.State,
                         setTemperatureEvent.Entity.Area);
                     return HandleChange();
@@ -51,7 +51,7 @@ public class AcControl : IAsyncInitializable
             room.TemperatureSensorEntity.StateChanges()
                 .SubscribeAsync(temperatureChangedEvent =>
                 {
-                    _logger.LogInformation("Temperature changed to {Temperature} for {Area}",
+                    _logger.LogDebug("Temperature changed to {Temperature} for {Area}",
                         temperatureChangedEvent.Entity.State,
                         temperatureChangedEvent.Entity.Area);
                     if (temperatureChangedEvent?.New?.State is not null &&
@@ -70,7 +70,7 @@ public class AcControl : IAsyncInitializable
             room.AcProfileSelectEntity.StateChanges()
                 .SubscribeAsync(acModeChangedEvent =>
                 {
-                    _logger.LogInformation("AC Mode changed to {AcMode} for {Area}",
+                    _logger.LogDebug("AC Mode changed to {AcMode} for {Area}",
                         acModeChangedEvent.Entity.State,
                         acModeChangedEvent.Entity.Area);
                     return HandleChange();
@@ -96,9 +96,9 @@ public class AcControl : IAsyncInitializable
 
     public async Task InitializeAsync(CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Attempting to login to mitsubishi client");
+        _logger.LogDebug("Attempting to login to mitsubishi client");
         await _mitsubishiClient.Login(cancellationToken);
-        _logger.LogInformation("Successfully logged in to mitsubishi client");
+        _logger.LogDebug("Successfully logged in to mitsubishi client");
 
         await HandleSocChange(cancellationToken);
         await HandleChange(cancellationToken);
