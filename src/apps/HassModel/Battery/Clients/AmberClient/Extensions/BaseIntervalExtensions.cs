@@ -13,4 +13,12 @@ public static class BaseIntervalExtensions
             _ => interval.PerKwh
         };
     }
+    public static bool IsEstimate(this BaseInterval interval)
+    {
+        return interval switch
+        {
+            CurrentInterval currentInterval => currentInterval.Estimate,
+            _ => true
+        };
+    }
 }

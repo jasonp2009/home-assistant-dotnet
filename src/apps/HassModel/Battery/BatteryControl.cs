@@ -62,10 +62,11 @@ public class BatteryControl
     {
         var energySegments = await InitialiseEnergySegmentsAsync();
         _logger.LogInformation(
-            "Initialised segments with {SegmentCount} {SegmentStart} - {SegmentEnd}",
+            "Initialised segments with {SegmentCount} {SegmentStart} - {SegmentEnd} First segment is estimate: {IsEstimate}",
             energySegments.Count,
             energySegments.First().StartUtc.ToLocalTime().ToString(),
-            energySegments.Last().StartUtc.ToLocalTime().ToString());
+            energySegments.Last().StartUtc.ToLocalTime().ToString(),
+            energySegments.First().IsEstimatedPrice);
         var boundaryResult = CalculateBoundaryResult(energySegments);
         var loopCount = 0;
         while (boundaryResult.IsOutOfBounds && loopCount < energySegments.Count)

@@ -13,6 +13,7 @@ public class EnergySegment
     public bool IsDemandWindow { get; set; }
     public decimal? BuyPricePerKw { get; set; }
     public decimal? SellPricePerKw { get; set; }
+    public bool IsEstimatedPrice { get; set; } = true;
     public EnergySegmentAction Action { get; set; } = EnergySegmentAction.None;
 
     public override string ToString()
