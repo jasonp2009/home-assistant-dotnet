@@ -67,8 +67,10 @@ public class BatteryControl
             energySegments.First().StartUtc.ToLocalTime().ToString(),
             energySegments.Last().StartUtc.ToLocalTime().ToString());
         var boundaryResult = CalculateBoundaryResult(energySegments);
-        while (boundaryResult.IsOutOfBounds && energySegments.First().Action is EnergySegmentAction.None)
+        var loopCount = 0;
+        while (boundaryResult.IsOutOfBounds && loopCount < energySegments.Count)
         {
+            loopCount++;
             if (boundaryResult.IsMax == true)
             {
                 var maxPriceSegment = energySegments
