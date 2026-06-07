@@ -117,7 +117,6 @@ public class BatteryControl
     {
         var averageHalfHourUsage = GetAverageSegmentUsage();
         var currentBatteryChargeKwh = GetCurrentBatteryChargeKwh();
-        currentBatteryChargeKwh = 30;
         var startUtc = GetCurrentSegmentStart();
         var solarForecastTask = _forecastSolarClient.GetForecastAsync();
         var amberPricesTask = _amberClient.GetCurrentPriceAsync();
