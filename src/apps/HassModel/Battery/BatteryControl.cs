@@ -104,6 +104,7 @@ public class BatteryControl
         var currentActionEnd = energySegments.FirstOrDefault(segment => segment.Action != currentAction);
         if (currentActionEnd is not null)
         {
+            _config.CurrentActionEndLog.SetDatetime(datetime: currentActionEnd.StartUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss"));
             var currentActionEndIndex = energySegments.IndexOf(currentActionEnd);
             var nextAction = energySegments
                 .Select((segment, index) => (segment, index))
