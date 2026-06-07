@@ -119,8 +119,8 @@ public class BatteryControl
                 _config.NextActionLog.SelectOption(nextAction.Action.ToString());
                 _config.NextActionPriceLog.SetValue(nextAction.Action switch
                 {
-                    EnergySegmentAction.Buy => Convert.ToDouble(nextAction.BuyPricePerKw),
-                    EnergySegmentAction.Sell => Convert.ToDouble(nextAction.SellPricePerKw),
+                    EnergySegmentAction.Buy => Convert.ToDouble(nextAction.BuyPricePerKw/100),
+                    EnergySegmentAction.Sell => Convert.ToDouble(nextAction.SellPricePerKw/100),
                     _ => 0
                 });
                 _config.NextActionAtLog.SetDatetime(datetime: nextAction.StartUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss"));
