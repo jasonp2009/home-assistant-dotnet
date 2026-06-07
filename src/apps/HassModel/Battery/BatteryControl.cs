@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using System.Reactive.Concurrency;
 using System.Threading.Tasks;
 using HomeAssistantGenerated;
 using Microsoft.Extensions.Logging;
@@ -100,17 +99,39 @@ public class BatteryControl
             }
             boundaryResult = CalculateBoundaryResult(energySegments);
         }
-        var nextAction = energySegments.FirstOrDefault(segment => segment.Action is not EnergySegmentAction.None);
-        if (nextAction is null)
+        var currentAction = energySegments.First().Action;
+        _config.CurrentActionLog.SelectOption(currentAction.ToString());
+        var currentActionEnd = energySegments.FirstOrDefault(segment => segment.Action != currentAction);
+        if (currentActionEnd is not null)
         {
-            _config.NextActionLog.SelectOption(EnergySegmentAction.None.ToString());
+            var currentActionEndIndex = energySegments.IndexOf(currentActionEnd);
+            var nextAction = energySegments
+                .Select((segment, index) => (segment, index))
+                .FirstOrDefault(pair => pair.index >= currentActionEndIndex && pair.segment.Action is not EnergySegmentAction.None)
+                .segment;
+            if (nextAction is null)
+            {
+                _config.NextActionLog.SelectOption(EnergySegmentAction.None.ToString());
+                _config.NextActionPriceLog.SetValue(0);
+            }
+            else
+            {
+                _config.NextActionLog.SelectOption(nextAction.Action.ToString());
+                _config.NextActionPriceLog.SetValue(nextAction.Action switch
+                {
+                    EnergySegmentAction.Buy => Convert.ToDouble(nextAction.BuyPricePerKw),
+                    EnergySegmentAction.Sell => Convert.ToDouble(nextAction.SellPricePerKw),
+                    _ => 0
+                });
+                _config.NextActionAtLog.SetDatetime(datetime: nextAction.StartUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss"));
+            }
         }
         else
         {
-            _config.NextActionLog.SelectOption(nextAction.Action.ToString());
-            _config.NextActionAtLog.SetDatetime(datetime: nextAction.StartUtc.ToString("yyyy-MM-dd HH:mm:ss"));
+            _config.NextActionLog.SelectOption(EnergySegmentAction.None.ToString());
+            _config.NextActionPriceLog.SetValue(0);
         }
-        return energySegments.First().Action;
+        return currentAction;
     }
 
     private async Task<List<EnergySegment>> InitialiseEnergySegmentsAsync()

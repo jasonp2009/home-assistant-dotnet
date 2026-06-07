@@ -8,7 +8,9 @@
   GridOut3DaysEntity: sensor.energy_meter_grid_out_3_days
   SolarProduction3DaysEntity: sensor.pawar_plant_total_solar_production_3_days
   BatteryChargeDiff3DaysEntity: sensor.solar_battery_battery_diff_3_days
+  CurrentActionLog: input_select.current_action_battery_log
   NextActionLog: input_select.next_action_battery_log
+  NextActionPriceLog: input_number.next_action_price_battery_log
   NextActionAtLog: input_datetime.next_action_at_battery_log
   BatteryCapacity: 53
   MinCapacity: 10
