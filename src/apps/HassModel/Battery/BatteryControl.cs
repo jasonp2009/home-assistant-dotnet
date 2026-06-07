@@ -61,7 +61,11 @@ public class BatteryControl
     private async Task<EnergySegmentAction> GetCurrentActionAsync()
     {
         var energySegments = await InitialiseEnergySegmentsAsync();
-        _logger.LogInformation("Initialised segments with {SegmentCount}", energySegments.Count);
+        _logger.LogInformation(
+            "Initialised segments with {SegmentCount} {SegmentStart} - {SegmentEnd}",
+            energySegments.Count,
+            energySegments.First().StartUtc.ToLocalTime().ToString(),
+            energySegments.Last().StartUtc.ToLocalTime().ToString());
         var boundaryResult = CalculateBoundaryResult(energySegments);
         while (boundaryResult.IsOutOfBounds && energySegments.First().Action is EnergySegmentAction.None)
         {
