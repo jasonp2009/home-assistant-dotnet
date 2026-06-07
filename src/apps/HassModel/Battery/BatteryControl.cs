@@ -165,7 +165,7 @@ public class BatteryControl
         {
             curEnergySegment
         };
-        while (curEnergySegment.BuyPricePerKw is not null && curEnergySegment.SellPricePerKw is not null)
+        while (curEnergySegment.BuyPricePerKw is not null || curEnergySegment.SellPricePerKw is not null)
         {
             curEnergySegment = new EnergySegment
             {
