@@ -19,5 +19,7 @@
   MaxCapacity: 50
   SegmentSizeMins: 5
   MinForecastHours: 72
+  MaxPriceLockInWaitSecs: 30
+  MaxPriceLockInRetryDelaySecs: 2
   ChargeRateKw: 12
   DischargeRateKw: 12

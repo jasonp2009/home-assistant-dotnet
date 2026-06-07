@@ -5,6 +5,7 @@ using HomeAssistantGenerated;
 using Microsoft.Extensions.Logging;
 using NetDaemon.Extensions.Scheduler;
 using src.apps.HassModel.Battery.Clients.AmberClient;
+using src.apps.HassModel.Battery.Clients.AmberClient.Extensions;
 using src.apps.HassModel.Battery.Clients.ForecastSolarClient;
 using src.apps.HassModel.Battery.Enums;
 using src.apps.HassModel.Battery.Extensions;
@@ -161,7 +162,13 @@ public class BatteryControl
         var amberPricesTask = _amberClient.GetCurrentPriceAsync();
         await Task.WhenAll(solarForecastTask, amberPricesTask);
         var solarForecast = solarForecastTask.Result;
-        var amberPrices = amberPricesTask.Result;
+        var amberPrices = amberPricesTask.Result ?? [];
+        while (amberPrices.IsEstimate() &&
+               DateTime.UtcNow < startUtc + TimeSpan.FromSeconds(_config.MaxPriceLockInWaitSecs))
+        {
+            await Task.Delay(TimeSpan.FromSeconds(_config.MaxPriceLockInRetryDelaySecs));
+            amberPrices = await _amberClient.GetCurrentPriceAsync() ?? [];
+        }
         var curEnergySegment = new EnergySegment
         {
             EstimatedBatteryChargeKwh = currentBatteryChargeKwh,
