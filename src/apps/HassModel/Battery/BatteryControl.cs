@@ -62,11 +62,12 @@ public class BatteryControl
     {
         var energySegments = await InitialiseEnergySegmentsAsync();
         _logger.LogInformation(
-            "Initialised segments with {SegmentCount} {SegmentStart} - {SegmentEnd} First segment is estimate: {IsEstimate}",
+            "Initialised segments with {SegmentCount} {SegmentStart} - {SegmentEnd} First segment is estimate: {IsEstimate} Hourly usage estimate: {HourlyUsageEstimate}",
             energySegments.Count,
             energySegments.First().StartUtc.ToLocalTime().ToString(),
             energySegments.Last().StartUtc.ToLocalTime().ToString(),
-            energySegments.First().IsEstimatedPrice);
+            energySegments.First().IsEstimatedPrice,
+            GetAverageSegmentUsage() * Convert.ToDecimal(TimeSpan.FromHours(1)/_config.SegmentSize));
         var boundaryResult = CalculateBoundaryResult(energySegments);
         var loopCount = 0;
         while (boundaryResult.IsOutOfBounds && loopCount < energySegments.Count)
@@ -189,7 +190,7 @@ public class BatteryControl
         var batteryUsage = batteryChargeDiff3Days / 100 * _config.BatteryCapacity;
         var usage3Days = gridIn3Days - gridOut3Days + solarProduction3Days - batteryUsage;
         var segmentsIn3Days = Convert.ToDecimal(TimeSpan.FromDays(3) / _config.SegmentSize);
-        return usage3Days / segmentsIn3Days;
+        return usage3Days * _config.EstimatedUsageMultiplier / segmentsIn3Days;
     }
 
     private decimal GetCurrentBatteryChargeKwh()
