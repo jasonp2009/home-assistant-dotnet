@@ -18,5 +18,6 @@
   MinCapacity: 10
   MaxCapacity: 50
   SegmentSizeMins: 5
+  MinForecastHours: 72
   ChargeRateKw: 12
   DischargeRateKw: 12

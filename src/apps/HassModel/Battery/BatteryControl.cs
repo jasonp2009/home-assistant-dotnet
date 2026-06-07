@@ -69,6 +69,7 @@ public class BatteryControl
             energySegments.First().IsEstimatedPrice,
             GetAverageSegmentUsage() * Convert.ToDecimal(TimeSpan.FromHours(1)/_config.SegmentSize));
         var boundaryResult = CalculateBoundaryResult(energySegments);
+        var fromIndex = 0;
         var loopCount = 0;
         while (boundaryResult.IsOutOfBounds && loopCount < energySegments.Count)
         {
@@ -78,6 +79,7 @@ public class BatteryControl
                 var maxPriceSegment = energySegments
                     .Where((segment, index) =>
                         segment.Action is EnergySegmentAction.None &&
+                        fromIndex < index &&
                         index <= boundaryResult.IndexOfBoundaryCrossing)
                     .MaxBy(segment => segment.SellPricePerKw ?? decimal.MinValue);
                 if (maxPriceSegment is null)
@@ -94,6 +96,7 @@ public class BatteryControl
                 var lowestPriceSegment = energySegments
                     .Where((segment, index) =>
                         segment.Action is EnergySegmentAction.None &&
+                        fromIndex < index &&
                         index <= boundaryResult.IndexOfBoundaryCrossing &&
                         !segment.IsDemandWindow)
                     .MinBy(segment => segment.BuyPricePerKw ?? decimal.MaxValue);
@@ -106,7 +109,12 @@ public class BatteryControl
                     energySegments[i].EstimatedBatteryChargeKwh += _config.SegmentChargeAmountKwh;
                 }
             }
-            boundaryResult = CalculateBoundaryResult(energySegments);
+            var newBoundaryResult = CalculateBoundaryResult(energySegments);
+            if (newBoundaryResult.IsOutOfBounds && boundaryResult.IsMax != newBoundaryResult.IsMax)
+            {
+                fromIndex = boundaryResult.IndexOfBoundaryCrossing!.Value;
+            }
+            boundaryResult = newBoundaryResult;
         }
         var currentAction = energySegments.First().Action;
         _config.CurrentActionLog.SelectOption(currentAction.ToString());
@@ -166,7 +174,9 @@ public class BatteryControl
         {
             curEnergySegment
         };
-        while (curEnergySegment.BuyPricePerKw is not null || curEnergySegment.SellPricePerKw is not null)
+        while (curEnergySegment.BuyPricePerKw is not null ||
+               curEnergySegment.SellPricePerKw is not null ||
+               curEnergySegment.StartUtc < startUtc + TimeSpan.FromHours(_config.MinForecastHours))
         {
             curEnergySegment = new EnergySegment
             {

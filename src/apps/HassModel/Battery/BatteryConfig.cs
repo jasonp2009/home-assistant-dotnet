@@ -19,6 +19,7 @@ public class BatteryConfig
     public decimal MaxCapacity { get; set; }
     public int SegmentSizeMins { get; set; }
     public TimeSpan SegmentSize => TimeSpan.FromMinutes(SegmentSizeMins);
+    public int MinForecastHours { get; set; }
     public decimal ChargeRateKw { get; set; }
     public decimal SegmentChargeAmountKwh => ChargeRateKw * Convert.ToDecimal(SegmentSize.TotalHours);
     public decimal DischargeRateKw { get; set; }
