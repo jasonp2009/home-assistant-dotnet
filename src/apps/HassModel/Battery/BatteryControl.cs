@@ -80,6 +80,7 @@ public class BatteryControl
                 var maxPriceSegment = energySegments
                     .Where((segment, index) =>
                         segment.Action is EnergySegmentAction.None &&
+                        _config.MinCapacity <= segment.EstimatedBatteryChargeKwh &&
                         fromIndex <= index &&
                         index <= boundaryResult.IndexOfBoundaryCrossing)
                     .MaxBy(segment => segment.SellPricePerKw ?? decimal.MinValue);
@@ -97,6 +98,7 @@ public class BatteryControl
                 var lowestPriceSegment = energySegments
                     .Where((segment, index) =>
                         segment.Action is EnergySegmentAction.None &&
+                        segment.EstimatedBatteryChargeKwh <= _config.MaxCapacity &&
                         fromIndex <= index &&
                         index <= boundaryResult.IndexOfBoundaryCrossing &&
                         !segment.IsDemandWindow)
