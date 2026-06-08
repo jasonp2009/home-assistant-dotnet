@@ -69,6 +69,8 @@ public class BatteryControl
             energySegments.Last().StartUtc.ToLocalTime().ToString(),
             energySegments.First().IsEstimatedPrice,
             GetAverageSegmentUsage() * Convert.ToDecimal(TimeSpan.FromHours(1) / _config.SegmentSize));
+        _config.BatteryUntilLog.SetDatetime(datetime: GetBatteryUntil(energySegments).ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss"));
+        
         var boundaryResult = CalculateBoundaryResult(energySegments);
         var loopCount = 0;
         while (boundaryResult.IsOutOfBounds && loopCount < energySegments.Count)
@@ -257,6 +259,11 @@ public class BatteryControl
             IsMax = null,
             IndexOfBoundaryCrossing = null
         };
+    }
+
+    public DateTime GetBatteryUntil(List<EnergySegment> energySegments)
+    {
+        return energySegments.FirstOrDefault(segment => segment.EstimatedBatteryChargeKwh < _config.MinCapacity)?.StartUtc ?? DateTime.MaxValue;
     }
 
     private int GetPreviousBoundaryCrossingIndex(List<EnergySegment> energySegments, BoundaryResult boundaryResult)
