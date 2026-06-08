@@ -13,12 +13,14 @@ public class ForecastSolarClient
 {
     private readonly HttpClient _httpClient = new()
     {
-        BaseAddress = new Uri("https://api.forecast.solar/")
+        BaseAddress = new Uri("https://api.forecast.solar/"),
+        Timeout = TimeSpan.FromSeconds(10)
     };
 
     private readonly ILogger<ForecastSolarClient> _logger;
 
     private readonly ForecastSolarClientSettings _settings;
+    private Dictionary<DateTime, int>? _cachedForecast;
 
     public ForecastSolarClient(IOptions<ForecastSolarClientSettings> settings, ILogger<ForecastSolarClient> logger)
     {
@@ -33,12 +35,13 @@ public class ForecastSolarClient
         {
             var response = await _httpClient.GetFromJsonAsync<ForecastResult>(
                 $"/{_settings.ApiKey}/estimate/watthours/period/{_settings.Latitude}/{_settings.Longitude}/{_settings.Declination}/{_settings.Azimuth}/{_settings.Kilowatts}?time=utc");
-            return response?.Result.ToDictionary(v => DateTime.Parse(v.Key).ToUniversalTime(), v => v.Value);
+            _cachedForecast = response?.Result.ToDictionary(v => DateTime.Parse(v.Key).ToUniversalTime(), v => v.Value);
+            return _cachedForecast;
         }
         catch (Exception ex)
         {
-            _logger.LogError("Failed to get solar forecast: {Message} {@Exception}", ex.Message, ex);
-            return null;
+            _logger.LogError("Failed to get solar forecast: {Message}", ex.Message);
+            return _cachedForecast;
         }
     }
 }
