@@ -80,7 +80,7 @@ public class BatteryControl
                 var maxPriceSegment = energySegments
                     .Where((segment, index) =>
                         segment.Action is EnergySegmentAction.None &&
-                        fromIndex < index &&
+                        fromIndex <= index &&
                         index <= boundaryResult.IndexOfBoundaryCrossing)
                     .MaxBy(segment => segment.SellPricePerKw ?? decimal.MinValue);
                 if (maxPriceSegment is null)
@@ -97,7 +97,7 @@ public class BatteryControl
                 var lowestPriceSegment = energySegments
                     .Where((segment, index) =>
                         segment.Action is EnergySegmentAction.None &&
-                        fromIndex < index &&
+                        fromIndex <= index &&
                         index <= boundaryResult.IndexOfBoundaryCrossing &&
                         !segment.IsDemandWindow)
                     .MinBy(segment => segment.BuyPricePerKw ?? decimal.MaxValue);
@@ -227,7 +227,9 @@ public class BatteryControl
 
     private BoundaryResult CalculateBoundaryResult(List<EnergySegment> energySegments)
     {
-        var minBoundaryCrossingSegment = energySegments.FirstOrDefault(segment => segment.EstimatedBatteryChargeKwh < _config.MinCapacity);
+        var minBoundaryCrossingSegment = energySegments.FirstOrDefault(segment =>
+            segment.Action == EnergySegmentAction.None &&
+            segment.EstimatedBatteryChargeKwh < _config.MinCapacity);
         if (minBoundaryCrossingSegment is not null)
         {
             return new BoundaryResult
@@ -237,7 +239,9 @@ public class BatteryControl
                 IndexOfBoundaryCrossing = energySegments.IndexOf(minBoundaryCrossingSegment)
             };
         }
-        var maxBoundaryCrossingSegment = energySegments.FirstOrDefault(segment => _config.MaxCapacity < segment.EstimatedBatteryChargeKwh);
+        var maxBoundaryCrossingSegment = energySegments.FirstOrDefault(segment => 
+            segment.Action == EnergySegmentAction.None &&
+            _config.MaxCapacity < segment.EstimatedBatteryChargeKwh);
         if (maxBoundaryCrossingSegment is not null)
         {
             return new BoundaryResult
