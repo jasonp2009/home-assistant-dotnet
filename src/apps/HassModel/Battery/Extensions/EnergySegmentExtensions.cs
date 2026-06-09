@@ -21,7 +21,7 @@ public static class EnergySegmentExtensions
         segment.EstimatedBatteryChargeKwh += solarForecastKwh;
     }
 
-    public static void ApplyPrice(this EnergySegment segment, List<BaseInterval>? priceIntervals)
+    public static void ApplyPrice(this EnergySegment segment, List<BaseInterval>? priceIntervals, decimal advancedPriceWeight)
     {
         if (priceIntervals is null) return;
         
@@ -35,6 +35,7 @@ public static class EnergySegmentExtensions
         {
             var buyIntervalWithOverlap= buyIntervals?.MaxBy(intervalWithOverlap => intervalWithOverlap.Item1);
             segment.BuyPricePerKw = buyIntervalWithOverlap?.interval.GetPrice();
+            segment.WeightedBuyPricePerKw = buyIntervalWithOverlap?.interval.GetWeightedPrice(advancedPriceWeight);
             segment.IsDemandWindow = buyIntervalWithOverlap?.interval?.TariffInformation?.DemandWindow ?? false;
             segment.IsEstimatedPrice = buyIntervalWithOverlap?.interval?.IsEstimate() ?? true;
         }
@@ -49,6 +50,7 @@ public static class EnergySegmentExtensions
         {
             var sellIntervalWithOverlap= sellIntervals?.MaxBy(intervalWithOverlap => intervalWithOverlap.Item1);
             segment.SellPricePerKw = -sellIntervalWithOverlap?.interval.GetPrice();
+            segment.WeightedSellPricePerKw = -sellIntervalWithOverlap?.interval.GetWeightedPrice(advancedPriceWeight);
             segment.IsEstimatedPrice = sellIntervalWithOverlap?.interval?.IsEstimate() ?? true;
         }
     }

@@ -12,7 +12,9 @@ public class EnergySegment
     public decimal SolarForecastKwh { get; set; }
     public bool IsDemandWindow { get; set; }
     public decimal? BuyPricePerKw { get; set; }
+    public decimal? WeightedBuyPricePerKw { get; set; }
     public decimal? SellPricePerKw { get; set; }
+    public decimal? WeightedSellPricePerKw { get; set; }
     public bool IsEstimatedPrice { get; set; } = true;
     public EnergySegmentAction Action { get; set; } = EnergySegmentAction.None;
 

@@ -1027,9 +1027,9 @@
           "cSharpName": "OllamaConversation2"
         },
         {
-          "id": "conversation.openai_conversation",
+          "id": "conversation.openai_conversation_2",
           "friendlyName": "OpenAI Conversation",
-          "cSharpName": "OpenaiConversation"
+          "cSharpName": "OpenaiConversation2"
         }
       ],
       "attributes": [
@@ -1368,6 +1368,11 @@
           "cSharpName": "BackyardLightSignalLevel"
         },
         {
+          "id": "sensor.battery_until_time_until_battery_log",
+          "friendlyName": "Battery Until Time Until - Battery Log",
+          "cSharpName": "BatteryUntilTimeUntilBatteryLog"
+        },
+        {
           "id": "sensor.bedroom_smart_hub_alarm_source",
           "friendlyName": "Bedroom Smart Hub Alarm source",
           "cSharpName": "BedroomSmartHubAlarmSource"
@@ -1376,6 +1381,11 @@
           "id": "sensor.bedroom_smart_hub_signal_level",
           "friendlyName": "Bedroom Smart Hub Signal level",
           "cSharpName": "BedroomSmartHubSignalLevel"
+        },
+        {
+          "id": "sensor.current_action_end_time_until_battery_log",
+          "friendlyName": "Current Action End Time Until - Battery Log",
+          "cSharpName": "CurrentActionEndTimeUntilBatteryLog"
         },
         {
           "id": "sensor.dining_room_lamp_signal_level",
@@ -1576,6 +1586,11 @@
           "id": "sensor.master_bedroom_temperature_and_humidity_sensor_signal_level",
           "friendlyName": "Master Bedroom Temperature and Humidity Sensor Signal level",
           "cSharpName": "MasterBedroomTemperatureAndHumiditySensorSignalLevel"
+        },
+        {
+          "id": "sensor.next_action_at_time_until_battery_log",
+          "friendlyName": "Next Action At Time Until - Battery Log",
+          "cSharpName": "NextActionAtTimeUntilBatteryLog"
         },
         {
           "id": "sensor.office_motion_sensor_signal_level",
@@ -2262,7 +2277,7 @@
         },
         {
           "id": "sensor.energy_meter_grid_energy_in_total_cost",
-          "friendlyName": "Energy Meter Grid energy in total Cost",
+          "friendlyName": "sensor Cost",
           "cSharpName": "EnergyMeterGridEnergyInTotalCost"
         },
         {
@@ -2277,7 +2292,7 @@
         },
         {
           "id": "sensor.energy_meter_grid_energy_out_total_compensation",
-          "friendlyName": "Energy Meter Grid energy out total Compensation",
+          "friendlyName": "sensor Compensation",
           "cSharpName": "EnergyMeterGridEnergyOutTotalCompensation"
         },
         {
@@ -3038,9 +3053,9 @@
           "cSharpName": "HomeAssistantCloud"
         },
         {
-          "id": "stt.openai_stt",
+          "id": "stt.openai_stt_2",
           "friendlyName": "OpenAI STT",
-          "cSharpName": "OpenaiStt"
+          "cSharpName": "OpenaiStt2"
         }
       ],
       "attributes": [
@@ -3276,9 +3291,9 @@
           "cSharpName": "HomeAssistantCloud"
         },
         {
-          "id": "tts.openai_tts",
+          "id": "tts.openai_tts_2",
           "friendlyName": "OpenAI TTS",
-          "cSharpName": "OpenaiTts"
+          "cSharpName": "OpenaiTts2"
         },
         {
           "id": "tts.piper",
@@ -3619,6 +3634,36 @@
           "cSharpName": "AclogZoneonMasterbedroom"
         },
         {
+          "id": "input_boolean.dev_netdaemon_extensions_scheduling_scheduling_app",
+          "friendlyName": "dev_netdaemon_extensions_scheduling_scheduling_app",
+          "cSharpName": "DevNetdaemonExtensionsSchedulingSchedulingApp"
+        },
+        {
+          "id": "input_boolean.dev_netdaemon_hass_model_hello_world_app",
+          "friendlyName": "dev_netdaemon_hass_model_hello_world_app",
+          "cSharpName": "DevNetdaemonHassModelHelloWorldApp"
+        },
+        {
+          "id": "input_boolean.dev_netdaemon_hass_model_light_on_movement",
+          "friendlyName": "dev_netdaemon_hass_model_light_on_movement",
+          "cSharpName": "DevNetdaemonHassModelLightOnMovement"
+        },
+        {
+          "id": "input_boolean.dev_netdaemon_src_apps_hass_model_battery_battery_control",
+          "friendlyName": "dev_netdaemon_src_apps_hass_model_battery_battery_control",
+          "cSharpName": "DevNetdaemonSrcAppsHassModelBatteryBatteryControl"
+        },
+        {
+          "id": "input_boolean.dev_netdaemon_src_apps_hass_model_light_adjust_light_adjust",
+          "friendlyName": "dev_netdaemon_src_apps_hass_model_light_adjust_light_adjust",
+          "cSharpName": "DevNetdaemonSrcAppsHassModelLightAdjustLightAdjust"
+        },
+        {
+          "id": "input_boolean.dev_netdaemon_src_apps_hass_model_light_sync_light_sync",
+          "friendlyName": "dev_netdaemon_src_apps_hass_model_light_sync_light_sync",
+          "cSharpName": "DevNetdaemonSrcAppsHassModelLightSyncLightSync"
+        },
+        {
           "id": "input_boolean.dining_room_ac_switch",
           "friendlyName": "Dining Room AC Switch",
           "cSharpName": "DiningRoomAcSwitch"
@@ -3936,6 +3981,11 @@
           "cSharpName": "EnableEnabledAtLateNight"
         },
         {
+          "id": "automation.growatt_refresh",
+          "friendlyName": "Growatt Refresh",
+          "cSharpName": "GrowattRefresh"
+        },
+        {
           "id": "automation.jason_s_bedroom_ac_adjustment_day",
           "friendlyName": "Jason\u0027s Bedroom AC Adjustment Day",
           "cSharpName": "JasonSBedroomAcAdjustmentDay"
@@ -4128,6 +4178,11 @@
           "id": "input_select.next_action_battery_log",
           "friendlyName": "Next Action - Battery Log",
           "cSharpName": "NextActionBatteryLog"
+        },
+        {
+          "id": "input_select.time_display",
+          "friendlyName": "Time Display",
+          "cSharpName": "TimeDisplay"
         }
       ],
       "attributes": [
@@ -4488,9 +4543,9 @@
           "cSharpName": "OllamaAiTask"
         },
         {
-          "id": "ai_task.openai_ai_task",
+          "id": "ai_task.openai_ai_task_2",
           "friendlyName": "OpenAI AI Task",
-          "cSharpName": "OpenaiAiTask"
+          "cSharpName": "OpenaiAiTask2"
         }
       ],
       "attributes": [
@@ -4568,6 +4623,11 @@
     {
       "domain": "input_datetime",
       "entities": [
+        {
+          "id": "input_datetime.battery_until_battery_log",
+          "friendlyName": "Battery Until - Battery Log",
+          "cSharpName": "BatteryUntilBatteryLog"
+        },
         {
           "id": "input_datetime.current_action_end_battery_log",
           "friendlyName": "Current Action End - Battery Log",

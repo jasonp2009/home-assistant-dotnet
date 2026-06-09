@@ -82,11 +82,11 @@ public class BatteryControl
                 var maxPriceSegment = energySegments
                     .Where((segment, index) =>
                         segment.Action is EnergySegmentAction.None &&
-                        segment.SellPricePerKw is not null &&
+                        segment.WeightedSellPricePerKw is not null &&
                         _config.MinCapacity <= (segment.EstimatedBatteryChargeKwh - _config.SegmentDischargeAmountKwh) &&
                         previousBoundaryCrossingIndex <= index &&
                         index <= boundaryResult.IndexOfBoundaryCrossing)
-                    .MaxBy(segment => segment.SellPricePerKw ?? decimal.MinValue);
+                    .MaxBy(segment => segment.WeightedSellPricePerKw ?? decimal.MinValue);
                 if (maxPriceSegment is null)
                     break;
                 var maxPriceSegmentIndex = energySegments.IndexOf(maxPriceSegment);
@@ -101,12 +101,12 @@ public class BatteryControl
                 var lowestPriceSegment = energySegments
                     .Where((segment, index) =>
                         segment.Action is EnergySegmentAction.None &&
-                        segment.BuyPricePerKw is not null &&
+                        segment.WeightedBuyPricePerKw is not null &&
                         (segment.EstimatedBatteryChargeKwh + _config.SegmentChargeAmountKwh) <= _config.MaxCapacity &&
                         previousBoundaryCrossingIndex <= index &&
                         index <= boundaryResult.IndexOfBoundaryCrossing &&
                         !segment.IsDemandWindow)
-                    .MinBy(segment => segment.BuyPricePerKw ?? decimal.MaxValue);
+                    .MinBy(segment => segment.WeightedBuyPricePerKw ?? decimal.MaxValue);
                 if (lowestPriceSegment is null)
                     break;
                 var lowestPriceSegmentIndex = energySegments.IndexOf(lowestPriceSegment);
@@ -177,7 +177,7 @@ public class BatteryControl
             StartUtc = startUtc
         };
         curEnergySegment.ApplySolarForecast(solarForecast);
-        curEnergySegment.ApplyPrice(amberPrices);
+        curEnergySegment.ApplyPrice(amberPrices, _config.AdvancedPriceWeight);
         var energySegments = new List<EnergySegment>
         {
             curEnergySegment
@@ -193,7 +193,7 @@ public class BatteryControl
                 StartUtc = curEnergySegment.StartUtc + _config.SegmentSize
             };
             curEnergySegment.ApplySolarForecast(solarForecast);
-            curEnergySegment.ApplyPrice(amberPrices);
+            curEnergySegment.ApplyPrice(amberPrices, _config.AdvancedPriceWeight);
             energySegments.Add(curEnergySegment);
         }
         return energySegments;
