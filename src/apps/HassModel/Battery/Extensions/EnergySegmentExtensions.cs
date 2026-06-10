@@ -76,49 +76,22 @@ public static class EnergySegmentExtensions
         var capacityDiff = config.MaxCapacity - config.MinCapacity;
         var batteryMidpointKwh = (config.MaxCapacity + config.MinCapacity) / 2;
         var advancedPriceWeightMultiplier = (segment.EstimatedBatteryChargeKwh - batteryMidpointKwh)*2/capacityDiff;
-        var advancedPriceWeight = - advancedPriceWeightMultiplier * config.AdvancedPriceWeight;
+        var advancedPriceWeight = advancedPriceWeightMultiplier * config.AdvancedPriceWeight;
+        if (isBuy) advancedPriceWeight = -advancedPriceWeight;
         
-        if (isBuy)
-        {
-            if (!segment.IsBuyEstimate)
-            {
-                return segment.BuyPricePerKw ?? decimal.MaxValue;
-            }
-            if (segment.AdvancedBuyPrice is null)
-            {
-                return segment.BuyPricePerKw * (1 + Math.Max(0, advancedPriceWeight)) ?? decimal.MaxValue;
-            }
-            if (advancedPriceWeight == 0)
-            {
-                return segment.AdvancedBuyPrice.Predicted;
-            }
-            if (advancedPriceWeight > 0)
-            {
-                return segment.AdvancedBuyPrice.Predicted * (1 - advancedPriceWeight) +
-                       segment.AdvancedBuyPrice.High * advancedPriceWeight;
-            }
-            return segment.AdvancedBuyPrice.Predicted * (1 + advancedPriceWeight) +
-                   segment.AdvancedBuyPrice.Low * - advancedPriceWeight;
-        }
-        if (!segment.IsSellEstimate)
-        {
-            return segment.SellPricePerKw ?? decimal.MinValue;
-        }
-        if (segment.AdvancedSellPrice is null)
-        {
-            return segment.SellPricePerKw * (1 - Math.Max(0, advancedPriceWeight)) ?? decimal.MinValue;
-        }
-        if (advancedPriceWeight == 0)
-        {
-            return -segment.AdvancedSellPrice.Predicted;
-        }
-        if (advancedPriceWeight < 0)
-        {
-            return -segment.AdvancedSellPrice.Predicted * (1 + advancedPriceWeight) +
-                   -segment.AdvancedSellPrice.High * -advancedPriceWeight;
-        }
-        return -segment.AdvancedSellPrice.Predicted * (1 - advancedPriceWeight) +
-               -segment.AdvancedSellPrice.Low * advancedPriceWeight;
+        if (isBuy && !segment.IsBuyEstimate) return segment.BuyPricePerKw ?? decimal.MaxValue;
+        if (!isBuy && !segment.IsSellEstimate) return segment.SellPricePerKw ?? decimal.MinValue;
+        var advancedPrice = isBuy ? segment.AdvancedBuyPrice : segment.AdvancedSellPrice;
+        if (advancedPrice is null) return isBuy
+            ? segment.BuyPricePerKw * (1 + Math.Max(0, advancedPriceWeight)) ?? decimal.MaxValue
+            : segment.SellPricePerKw * (1 - Math.Max(0, -advancedPriceWeight)) ?? decimal.MinValue;
+        var predicted = isBuy ? advancedPrice.Predicted : -advancedPrice.Predicted;
+        var high = isBuy ? advancedPrice.High : -advancedPrice.High;
+        var low = isBuy ? advancedPrice.Low : -advancedPrice.Low;
+        
+        var advancedPriceAdjustor = advancedPriceWeight > 0 ? high : low;
+        return predicted * (1 - Math.Abs(advancedPriceWeight)) +
+               advancedPriceAdjustor * Math.Abs(advancedPriceWeight);
     }
     
     public static decimal GetWeightedPrice(this BaseInterval interval, decimal advancedPriceWeight)
