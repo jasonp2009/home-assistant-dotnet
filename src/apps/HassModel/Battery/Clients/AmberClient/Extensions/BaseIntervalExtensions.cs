@@ -11,25 +11,6 @@ public static class BaseIntervalExtensions
     {
         return interval.GetAdvancedPrice()?.Predicted ?? interval.PerKwh;
     }
-    
-    public static decimal GetWeightedPrice(this BaseInterval interval, decimal advancedPriceWeight)
-    {
-        var advancedPrice = interval.GetAdvancedPrice();
-        if (advancedPrice is not null)
-        {
-            return advancedPrice.Predicted * (1 - advancedPriceWeight) +
-                   (interval.ChannelType is ChannelType.FeedIn ? advancedPrice.Low : advancedPrice.High) * advancedPriceWeight;
-        }
-        if (!interval.IsEstimate())
-        {
-            return interval.GetPrice();
-        }
-        if (interval.ChannelType is ChannelType.FeedIn)
-        {
-            return interval.GetPrice() * (1 - advancedPriceWeight / 2);
-        }
-        return interval.GetPrice() * (1 + advancedPriceWeight);
-    }
 
     public static AdvancedPrice? GetAdvancedPrice(this BaseInterval interval)
     {

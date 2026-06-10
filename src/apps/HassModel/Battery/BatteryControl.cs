@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using HomeAssistantGenerated;
@@ -67,7 +67,7 @@ public class BatteryControl
             energySegments.Count,
             energySegments.First().StartUtc.ToLocalTime().ToString(),
             energySegments.Last().StartUtc.ToLocalTime().ToString(),
-            energySegments.First().IsEstimatedPrice,
+            energySegments.First().IsBuyEstimate,
             GetAverageSegmentUsage() * Convert.ToDecimal(TimeSpan.FromHours(1) / _config.SegmentSize));
         _config.BatteryUntilLog.SetDatetime(datetime: GetBatteryUntil(energySegments).ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss"));
         
@@ -82,11 +82,10 @@ public class BatteryControl
                 var maxPriceSegment = energySegments
                     .Where((segment, index) =>
                         segment.Action is EnergySegmentAction.None &&
-                        segment.WeightedSellPricePerKw is not null &&
                         _config.MinCapacity <= (segment.EstimatedBatteryChargeKwh - _config.SegmentDischargeAmountKwh) &&
                         previousBoundaryCrossingIndex <= index &&
                         index <= boundaryResult.IndexOfBoundaryCrossing)
-                    .MaxBy(segment => segment.WeightedSellPricePerKw ?? decimal.MinValue);
+                    .MaxBy(segment => segment.GetWeightedPrice(false, _config));
                 if (maxPriceSegment is null)
                     break;
                 var maxPriceSegmentIndex = energySegments.IndexOf(maxPriceSegment);
@@ -101,12 +100,11 @@ public class BatteryControl
                 var lowestPriceSegment = energySegments
                     .Where((segment, index) =>
                         segment.Action is EnergySegmentAction.None &&
-                        segment.WeightedBuyPricePerKw is not null &&
                         (segment.EstimatedBatteryChargeKwh + _config.SegmentChargeAmountKwh) <= _config.MaxCapacity &&
                         previousBoundaryCrossingIndex <= index &&
                         index <= boundaryResult.IndexOfBoundaryCrossing &&
                         !segment.IsDemandWindow)
-                    .MinBy(segment => segment.WeightedBuyPricePerKw ?? decimal.MaxValue);
+                    .MinBy(segment => segment.GetWeightedPrice(true, _config));
                 if (lowestPriceSegment is null)
                     break;
                 var lowestPriceSegmentIndex = energySegments.IndexOf(lowestPriceSegment);
