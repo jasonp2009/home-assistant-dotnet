@@ -76,15 +76,14 @@ public static class EnergySegmentExtensions
         var capacityDiff = config.MaxCapacity - config.MinCapacity;
         var batteryMidpointKwh = (config.MaxCapacity + config.MinCapacity) / 2;
         var advancedPriceWeightMultiplier = (segment.EstimatedBatteryChargeKwh - batteryMidpointKwh)*2/capacityDiff;
-        var advancedPriceWeight = advancedPriceWeightMultiplier * config.AdvancedPriceWeight;
-        if (isBuy) advancedPriceWeight = -advancedPriceWeight;
+        var advancedPriceWeight = -advancedPriceWeightMultiplier * config.AdvancedPriceWeight;
         
         if (isBuy && !segment.IsBuyEstimate) return segment.BuyPricePerKw ?? decimal.MaxValue;
         if (!isBuy && !segment.IsSellEstimate) return segment.SellPricePerKw ?? decimal.MinValue;
         var advancedPrice = isBuy ? segment.AdvancedBuyPrice : segment.AdvancedSellPrice;
         if (advancedPrice is null) return isBuy
             ? segment.BuyPricePerKw * (1 + Math.Max(0, advancedPriceWeight)) ?? decimal.MaxValue
-            : segment.SellPricePerKw * (1 - Math.Max(0, -advancedPriceWeight)) ?? decimal.MinValue;
+            : segment.SellPricePerKw * (1 - Math.Max(0, advancedPriceWeight)) ?? decimal.MinValue;
         var predicted = isBuy ? advancedPrice.Predicted : -advancedPrice.Predicted;
         var high = isBuy ? advancedPrice.High : -advancedPrice.High;
         var low = isBuy ? advancedPrice.Low : -advancedPrice.Low;
@@ -92,24 +91,5 @@ public static class EnergySegmentExtensions
         var advancedPriceAdjustor = advancedPriceWeight > 0 ? high : low;
         return predicted * (1 - Math.Abs(advancedPriceWeight)) +
                advancedPriceAdjustor * Math.Abs(advancedPriceWeight);
-    }
-    
-    public static decimal GetWeightedPrice(this BaseInterval interval, decimal advancedPriceWeight)
-    {
-        var advancedPrice = interval.GetAdvancedPrice();
-        if (advancedPrice is not null)
-        {
-            return advancedPrice.Predicted * (1 - advancedPriceWeight) +
-                   (interval.ChannelType is ChannelType.FeedIn ? advancedPrice.Low : advancedPrice.High) * advancedPriceWeight;
-        }
-        if (!interval.IsEstimate())
-        {
-            return interval.GetPrice();
-        }
-        if (interval.ChannelType is ChannelType.FeedIn)
-        {
-            return interval.GetPrice() * (1 - advancedPriceWeight / 2);
-        }
-        return interval.GetPrice() * (1 + advancedPriceWeight);
     }
 }
