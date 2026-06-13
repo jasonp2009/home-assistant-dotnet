@@ -23,6 +23,8 @@ hours-to-empty = (charge − MinCapacity) / hourlyUsage.
 - Over-charge relief discharges at the highest feed-in segment within the window.
 - Pessimism still picks the cheapest *certain* price (doesn't overpay when a cheaper locked price exists).
 - Deep depletion needing ~3 kWh buys at the three cheapest segments.
+- Battery starting below the reserve → charges immediately (current action = Buy).
+- Short runway prefers a tighter-band estimate over a wider-band one with a slightly lower predicted price.
 - Over-charge relief discharges at the **highest** feed-in price (most profitable). *Initially looked like a
   bug, but was a false alarm from inverted test sign — confirmed correct.*
 - High solar keeps the battery within MaxCapacity by discharging. *Initially "failed" only due to a decimal
@@ -76,5 +78,17 @@ overshoot that immediately plateaus is never flagged.
   and are caught) — but the detection is brittle.
 - Fix direction: flag any segment whose projected charge is simply outside [Min, Max], rather than only a
   "still-moving" crossing.
+
+### 6. Over-charge relief reaches back and discharges a far-from-full segment early
+`FutureOvercharge_DoesNotDischargeFarFromFullSegment` — with the battery at 40 kWh now and a solar-driven
+over-charge projected several segments out, the sell window spans `[0, crossing]`, so the solver discharges
+the segment with the best feed-in anywhere in that span — here the current 40 kWh segment (feed-in 30c),
+dropping it to 39 before solar refills it.
+- Why: `GetPreviousBoundaryCrossingIndex` only walks back to where discharging would hit Min, so the sell
+  window can be very wide; selection is purely by feed-in price within it.
+- Severity: nuanced — this is often *good* arbitrage (sell high now, refill free from solar later), but it
+  discharges early based on a forecast and could deplete reserve if the solar forecast under-delivers.
+- Fix direction: confirm whether early discharge-for-arbitrage is intended; if not, constrain the sell window
+  closer to the actual over-charge, or only discharge segments whose own projected charge is near Max.
 
 <!-- More findings appended below as scenario batches complete. -->
