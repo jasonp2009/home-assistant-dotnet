@@ -12,15 +12,16 @@ hours-to-empty = (charge − MinCapacity) / hourlyUsage.
 
 ## TL;DR
 
-77 tests total: **69 pass, 8 fail**. All 8 failures are intentional `KnownIssue` probes (green subset
-`dotnet test --filter "Category!=KnownIssue"` is 69/69). After owner triage:
+80 tests total: **70 pass, 10 fail**. All 10 failures are intentional `KnownIssue` probes (green subset
+`dotnet test --filter "Category!=KnownIssue"` is 70/70). After owner triage:
 
 | # | Issue | Severity | Status |
 |---|-------|----------|--------|
 | 2 | Optimism skips a certain good price when runway is deep | Medium | **Open** |
 | 3 | Discharges to relieve an over-charge regardless of economics (negative feed-in, or no feed-in data) | Medium | **Open** |
 | 6 | Over-charge relief can discharge a far-from-full segment early (wide sell window) | Low | Open / nuanced |
-| 5 | Boundary detection misses a single-step jump past a limit that then plateaus | Low | Open / edge |
+| 5 | Boundary detection misses a single-step jump past a limit (also: induced over-charge / steep decline) | Low | Open / edge |
+| 7 | Charge/discharge step (12×5/60) isn't exactly 1 kWh, nudging detection at the threshold | Low | Open / cleanup |
 | 4 | No proactive arbitrage (won't charge at cheap/negative prices) | High | Accepted gap — to add later |
 | 1 | No charging during demand windows | — | Intentional — not a bug (grid covers it) |
 
@@ -42,6 +43,7 @@ None of the open items were fixed — they're for review.
 - Battery starting below the reserve → charges immediately (current action = Buy).
 - Short runway prefers a tighter-band estimate over a wider-band one with a slightly lower predicted price.
 - End-to-end (BuildSegments → ApplyPrice → OptimiseSegments): charges at the cheap current segment.
+- Estimate-sell sign handling: among uncertain feed-in estimates it discharges at the highest *expected* earning.
 - Over-charge relief discharges at the **highest** feed-in price (most profitable). *Initially looked like a
   bug, but was a false alarm from inverted test sign — confirmed correct.*
 - High solar keeps the battery within MaxCapacity by discharging. *Initially "failed" only due to a decimal
@@ -97,6 +99,19 @@ overshoot that immediately plateaus is never flagged.
   and are caught) — but the detection is brittle.
 - Fix direction: flag any segment whose projected charge is simply outside [Min, Max], rather than only a
   "still-moving" crossing.
+- Same root cause, two more manifestations:
+  - `BuyToFixMin_InducesUndetectedOvercharge` — a forced buy pushes seg6 to ~51, but the prior segment sits
+    at ~Max so the crossing is missed and the over-charge is left unrelieved.
+  - `DeepDepletion_SteepDecline_LeavesSegmentBelowMin` — a >1 kWh/segment decline leaves a residual sub-Min
+    dip after partial buys (prior segment already raised above Min). Edge: real usage/segment ≪ charge rate.
+
+### 7. Charge/discharge step size isn't exactly 1 kWh
+`SegmentChargeAmountKwh`/`SegmentDischargeAmountKwh` = `RateKw × Convert.ToDecimal(SegmentSize.TotalHours)`,
+and `12 × (5/60)` evaluates to ~`0.99999999999999996`, not `1.0`.
+- Impact: charge accounting drifts by ~1e-15 per segment (negligible), but right at a Min/Max threshold it can
+  flip a boundary comparison (contributes to finding #5's induced-overcharge case, where seg5 lands at
+  ~49.9999 instead of 50 and the crossing is missed).
+- Fix direction: compute the step exactly in decimal, e.g. `RateKw * SegmentSizeMins / 60m`.
 
 ### 6. Over-charge relief reaches back and discharges a far-from-full segment early
 `FutureOvercharge_DoesNotDischargeFarFromFullSegment` — with the battery at 40 kWh now and a solar-driven
