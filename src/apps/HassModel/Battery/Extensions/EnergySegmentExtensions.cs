@@ -22,7 +22,7 @@ public static class EnergySegmentExtensions
         segment.EstimatedBatteryChargeKwh += solarForecastKwh;
     }
 
-    public static void ApplyPrice(this EnergySegment segment, List<BaseInterval>? priceIntervals, decimal advancedPriceWeight)
+    public static void ApplyPrice(this EnergySegment segment, List<BaseInterval>? priceIntervals)
     {
         if (priceIntervals is null) return;
         

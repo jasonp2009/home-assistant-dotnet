@@ -68,7 +68,7 @@ public class BatteryControl
             energySegments.First().StartUtc.ToLocalTime().ToString(),
             energySegments.Last().StartUtc.ToLocalTime().ToString(),
             energySegments.First().IsBuyEstimate,
-            GetAverageSegmentUsage() * Convert.ToDecimal(TimeSpan.FromHours(1) / _config.SegmentSize));
+            GetHourlyUsage());
         _config.BatteryUntilLog.SetDatetime(datetime: GetBatteryUntil(energySegments).ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss"));
         
         var boundaryResult = CalculateBoundaryResult(energySegments);
@@ -175,7 +175,7 @@ public class BatteryControl
             StartUtc = startUtc
         };
         curEnergySegment.ApplySolarForecast(solarForecast);
-        curEnergySegment.ApplyPrice(amberPrices, _config.AdvancedPriceWeight);
+        curEnergySegment.ApplyPrice(amberPrices);
         var energySegments = new List<EnergySegment>
         {
             curEnergySegment
@@ -191,7 +191,7 @@ public class BatteryControl
                 StartUtc = curEnergySegment.StartUtc + _config.SegmentSize
             };
             curEnergySegment.ApplySolarForecast(solarForecast);
-            curEnergySegment.ApplyPrice(amberPrices, _config.AdvancedPriceWeight);
+            curEnergySegment.ApplyPrice(amberPrices);
             energySegments.Add(curEnergySegment);
         }
         return energySegments;
@@ -207,6 +207,11 @@ public class BatteryControl
         var usage3Days = gridIn3Days - gridOut3Days + solarProduction3Days - batteryUsage;
         var segmentsIn3Days = Convert.ToDecimal(TimeSpan.FromDays(3) / _config.SegmentSize);
         return usage3Days * _config.EstimatedUsageMultiplier / segmentsIn3Days;
+    }
+
+    private decimal GetHourlyUsage()
+    {
+        return GetAverageSegmentUsage() * Convert.ToDecimal(TimeSpan.FromHours(1) / _config.SegmentSize);
     }
 
     private decimal GetCurrentBatteryChargeKwh()
