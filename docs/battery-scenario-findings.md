@@ -12,19 +12,19 @@ hours-to-empty = (charge − MinCapacity) / hourlyUsage.
 
 ## TL;DR
 
-77 tests total: **68 pass, 9 fail**. All 9 failures are intentional `KnownIssue` probes (the green subset
-`dotnet test --filter "Category!=KnownIssue"` is 68/68). The 9 failures group into 6 issues, roughly by impact:
+77 tests total: **69 pass, 8 fail**. All 8 failures are intentional `KnownIssue` probes (green subset
+`dotnet test --filter "Category!=KnownIssue"` is 69/69). After owner triage:
 
-| # | Issue | Severity | Kind |
-|---|-------|----------|------|
-| 4 | No proactive charging at cheap/negative prices (only acts on capacity crossings) | High | Design limitation |
-| 1 | Demand-window-only periods deplete below the minimum reserve | Med–High | Bug/safety |
-| 2 | Optimism skips a certain good price when runway is deep | Medium | Weighting gap |
-| 3 | Discharges to relieve an over-charge regardless of economics (negative feed-in, or no feed-in data) | Medium | Modelling |
-| 6 | Over-charge relief can discharge a far-from-full segment early (wide sell window) | Low | Nuanced/arguably-good |
-| 5 | Boundary detection misses a single-step jump past a limit that then plateaus | Low | Brittle edge |
+| # | Issue | Severity | Status |
+|---|-------|----------|--------|
+| 2 | Optimism skips a certain good price when runway is deep | Medium | **Open** |
+| 3 | Discharges to relieve an over-charge regardless of economics (negative feed-in, or no feed-in data) | Medium | **Open** |
+| 6 | Over-charge relief can discharge a far-from-full segment early (wide sell window) | Low | Open / nuanced |
+| 5 | Boundary detection misses a single-step jump past a limit that then plateaus | Low | Open / edge |
+| 4 | No proactive arbitrage (won't charge at cheap/negative prices) | High | Accepted gap — to add later |
+| 1 | No charging during demand windows | — | Intentional — not a bug (grid covers it) |
 
-Everything else behaves as intended (see passing list). None of these were fixed — they're for review.
+None of the open items were fixed — they're for review.
 
 ## Verified-correct behaviour (passing scenarios)
 - Buys at the cheapest segment when depletion forces a buy.
@@ -49,14 +49,11 @@ Everything else behaves as intended (see passing list). None of these were fixed
 
 ## Confirmed issues (failing probes — for discussion)
 
-### 1. Demand-window-only periods deplete below the minimum reserve
-`DemandWindowOnly_ShouldNotLeaveBatteryBelowMinReserve` — when every buy candidate before a min-crossing is
-in a demand window, the buy filter (`!segment.IsDemandWindow`) excludes them all, `MinBy` returns null, the
-loop `break`s, and the projected charge is left below `MinCapacity`.
-- Why: avoiding demand-window charging is hard-coded with no emergency override.
-- Fix direction: allow buying in a demand window as a last resort when the battery would otherwise drop
-  below the reserve (e.g. retry the buy selection without the demand-window exclusion if the first pass finds
-  nothing).
+### 1. No charging during demand windows — INTENTIONAL (not a bug)
+`DemandWindowOnly_DoesNotBuy_ReliesOnGrid` (now a passing test). The planner never charges during a demand
+window; if the whole pre-depletion window is demand-windowed it buys nothing and the home draws from the
+grid. Confirmed by the owner as intended — demand windows carry excess usage charges, so grid import there is
+expected. No change needed.
 
 ### 2. Optimism skips a certain good price when runway is deep
 `DeepRunway_DoesNotSkipCertainPrice_ForOptimisticEstimate` — with lots of runway early in the buy window, the
@@ -79,6 +76,8 @@ instead of paying to export.
   placed anyway). Same root cause: over-charge relief ignores whether discharging is economic.
 
 ### 4. No proactive arbitrage — won't charge at cheap (or negative) prices unless forced
+**Status: ACCEPTED GAP** — the app doesn't do arbitrage yet; owner plans to add it later (will pair on it).
+The two probes below stay red as a spec for that future work.
 `Arbitrage_BuysCheapNowWhenNoBoundaryCrossing`, `NegativePrice_ChargesWhenPaidToConsume` — with the battery
 mid-range and no capacity-limit crossing, an exceptionally cheap (2c) or even negative (−10c, paid to consume)
 price produces NO buy. The planner is purely boundary-driven.
