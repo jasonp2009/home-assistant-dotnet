@@ -70,53 +70,10 @@ public class BatteryControl
             energySegments.Last().StartUtc.ToLocalTime().ToString(),
             energySegments.First().IsBuyEstimate,
             hourlyUsage);
-        _config.BatteryUntilLog.SetDatetime(datetime: GetBatteryUntil(energySegments).ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss"));
-        
-        var boundaryResult = CalculateBoundaryResult(energySegments);
-        var loopCount = 0;
-        while (boundaryResult.IsOutOfBounds && loopCount < energySegments.Count)
-        {
-            var previousBoundaryCrossingIndex = GetPreviousBoundaryCrossingIndex(energySegments, boundaryResult);
-            loopCount++;
-            if (boundaryResult.IsMax == true)
-            {
-                var maxPriceSegment = energySegments
-                    .Where((segment, index) =>
-                        segment.Action is EnergySegmentAction.None &&
-                        _config.MinCapacity <= (segment.EstimatedBatteryChargeKwh - _config.SegmentDischargeAmountKwh) &&
-                        previousBoundaryCrossingIndex <= index &&
-                        index <= boundaryResult.IndexOfBoundaryCrossing)
-                    .MaxBy(segment => segment.GetWeightedPrice(false, _config, hourlyUsage));
-                if (maxPriceSegment is null)
-                    break;
-                var maxPriceSegmentIndex = energySegments.IndexOf(maxPriceSegment);
-                maxPriceSegment.Action = EnergySegmentAction.Sell;
-                for (var i = maxPriceSegmentIndex; i < energySegments.Count; i++)
-                {
-                    energySegments[i].EstimatedBatteryChargeKwh -= _config.SegmentDischargeAmountKwh;
-                }
-            }
-            if (boundaryResult.IsMax == false)
-            {
-                var lowestPriceSegment = energySegments
-                    .Where((segment, index) =>
-                        segment.Action is EnergySegmentAction.None &&
-                        (segment.EstimatedBatteryChargeKwh + _config.SegmentChargeAmountKwh) <= _config.MaxCapacity &&
-                        previousBoundaryCrossingIndex <= index &&
-                        index <= boundaryResult.IndexOfBoundaryCrossing &&
-                        !segment.IsDemandWindow)
-                    .MinBy(segment => segment.GetWeightedPrice(true, _config, hourlyUsage));
-                if (lowestPriceSegment is null)
-                    break;
-                var lowestPriceSegmentIndex = energySegments.IndexOf(lowestPriceSegment);
-                lowestPriceSegment.Action = EnergySegmentAction.Buy;
-                for (var i = lowestPriceSegmentIndex; i < energySegments.Count; i++)
-                {
-                    energySegments[i].EstimatedBatteryChargeKwh += _config.SegmentChargeAmountKwh;
-                }
-            }
-            boundaryResult = CalculateBoundaryResult(energySegments);
-        }
+        _config.BatteryUntilLog.SetDatetime(datetime: BatteryPlanner.GetBatteryUntil(energySegments, _config).ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss"));
+
+        BatteryPlanner.OptimiseSegments(energySegments, _config, hourlyUsage);
+
         var currentAction = energySegments.First().Action;
         _config.CurrentActionLog.SelectOption(currentAction.ToString());
         var currentActionEnd = energySegments.FirstOrDefault(segment => segment.Action != currentAction);
@@ -169,33 +126,7 @@ public class BatteryControl
             await Task.Delay(TimeSpan.FromSeconds(_config.MaxPriceLockInRetryDelaySecs));
             amberPrices = await _amberClient.GetCurrentPriceAsync() ?? [];
         }
-        var curEnergySegment = new EnergySegment
-        {
-            EstimatedBatteryChargeKwh = currentBatteryChargeKwh,
-            Duration = _config.SegmentSize,
-            StartUtc = startUtc
-        };
-        curEnergySegment.ApplySolarForecast(solarForecast);
-        curEnergySegment.ApplyPrice(amberPrices);
-        var energySegments = new List<EnergySegment>
-        {
-            curEnergySegment
-        };
-        while (curEnergySegment.BuyPricePerKw is not null ||
-               curEnergySegment.SellPricePerKw is not null ||
-               curEnergySegment.StartUtc < startUtc + TimeSpan.FromHours(_config.MinForecastHours))
-        {
-            curEnergySegment = new EnergySegment
-            {
-                EstimatedBatteryChargeKwh = curEnergySegment.EstimatedBatteryChargeKwh - averageHalfHourUsage,
-                Duration = _config.SegmentSize,
-                StartUtc = curEnergySegment.StartUtc + _config.SegmentSize
-            };
-            curEnergySegment.ApplySolarForecast(solarForecast);
-            curEnergySegment.ApplyPrice(amberPrices);
-            energySegments.Add(curEnergySegment);
-        }
-        return energySegments;
+        return BatteryPlanner.BuildSegments(startUtc, currentBatteryChargeKwh, averageHalfHourUsage, solarForecast, amberPrices, _config);
     }
 
     private decimal GetAverageSegmentUsage()
@@ -230,59 +161,4 @@ public class BatteryControl
         return now - timeIntoInterval;
     }
 
-    private BoundaryResult CalculateBoundaryResult(List<EnergySegment> energySegments)
-    {
-        for (int i = 1; i < energySegments.Count; i++)
-        {
-            var curSegment = energySegments[i - 1];
-            var nextSegment = energySegments[i];
-            if (curSegment.EstimatedBatteryChargeKwh <= _config.MinCapacity &&
-                nextSegment.EstimatedBatteryChargeKwh < curSegment.EstimatedBatteryChargeKwh)
-            {
-                return new BoundaryResult
-                {
-                    IsOutOfBounds = true,
-                    IsMax = false,
-                    IndexOfBoundaryCrossing = i
-                };
-            }
-            if (_config.MaxCapacity <= curSegment.EstimatedBatteryChargeKwh &&
-                curSegment.EstimatedBatteryChargeKwh < nextSegment.EstimatedBatteryChargeKwh)
-            {
-                return new BoundaryResult
-                {
-                    IsOutOfBounds = true,
-                    IsMax = true,
-                    IndexOfBoundaryCrossing = i
-                };
-            }
-        }
-        return new BoundaryResult
-        {
-            IsOutOfBounds = false,
-            IsMax = null,
-            IndexOfBoundaryCrossing = null
-        };
-    }
-
-    public DateTime GetBatteryUntil(List<EnergySegment> energySegments)
-    {
-        return energySegments.FirstOrDefault(segment => segment.EstimatedBatteryChargeKwh < _config.MinCapacity)?.StartUtc ?? DateTime.MaxValue;
-    }
-
-    private int GetPreviousBoundaryCrossingIndex(List<EnergySegment> energySegments, BoundaryResult boundaryResult)
-    {
-        if (boundaryResult.IndexOfBoundaryCrossing is null || boundaryResult.IsMax is null) return 0;
-        for (var i = boundaryResult.IndexOfBoundaryCrossing.Value; i >= 0; i--)
-        {
-            var curSegment = energySegments[i];
-            if (boundaryResult.IsMax.Value
-                    ? (curSegment.EstimatedBatteryChargeKwh - _config.SegmentDischargeAmountKwh) <= _config.MinCapacity
-                    : _config.MaxCapacity <= (curSegment.EstimatedBatteryChargeKwh + _config.SegmentChargeAmountKwh))
-            {
-                return i;
-            }
-        }
-        return 0;
-    }
 }
