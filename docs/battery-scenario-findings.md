@@ -44,6 +44,14 @@ None of the open items were fixed — they're for review.
 - Short runway prefers a tighter-band estimate over a wider-band one with a slightly lower predicted price.
 - End-to-end (BuildSegments → ApplyPrice → OptimiseSegments): charges at the cheap current segment.
 - Estimate-sell sign handling: among uncertain feed-in estimates it discharges at the highest *expected* earning.
+- Neutral runway band uses the predicted price (ranks two neutral estimates by predicted).
+- A segment with no price is never chosen for a buy (weighted price falls back to decimal.MaxValue).
+
+## Questions for review (behaviour to confirm, not necessarily bugs)
+- **Selling during demand windows** (`SellDuringDemandWindow_IsAllowed`, passing): the buy filter excludes
+  demand windows (intentional), but the sell filter does not — so the planner will discharge/export during a
+  demand window. Is that intended, or should demand-window energy be kept for self-consumption to avoid the
+  demand charge? Parallel to the buy-side decision.
 - Over-charge relief discharges at the **highest** feed-in price (most profitable). *Initially looked like a
   bug, but was a false alarm from inverted test sign — confirmed correct.*
 - High solar keeps the battery within MaxCapacity by discharging. *Initially "failed" only due to a decimal
