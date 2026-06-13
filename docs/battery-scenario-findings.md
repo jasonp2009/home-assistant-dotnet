@@ -104,8 +104,10 @@ overshoot that immediately plateaus is never flagged.
 over-charge projected several segments out, the sell window spans `[0, crossing]`, so the solver discharges
 the segment with the best feed-in anywhere in that span — here the current 40 kWh segment (feed-in 30c),
 dropping it to 39 before solar refills it.
-- Why: `GetPreviousBoundaryCrossingIndex` only walks back to where discharging would hit Min, so the sell
-  window can be very wide; selection is purely by feed-in price within it.
+- Why: `GetPreviousBoundaryCrossingIndex` walks back from the over-charge to the last segment that is itself
+  too low to safely discharge (`charge − dischargeAmount ≤ Min`); the sell window starts just after it. When
+  charge stays well above Min across the horizon there is no such segment, so the window reaches back to the
+  current segment, and selection within it is purely by feed-in price.
 - Severity: nuanced — this is often *good* arbitrage (sell high now, refill free from solar later), but it
   discharges early based on a forecast and could deplete reserve if the solar forecast under-delivers.
 - Fix direction: confirm whether early discharge-for-arbitrage is intended; if not, constrain the sell window
