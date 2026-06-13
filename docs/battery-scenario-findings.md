@@ -115,6 +115,10 @@ overshoot that immediately plateaus is never flagged.
     at ~Max so the crossing is missed and the over-charge is left unrelieved.
   - `DeepDepletion_SteepDecline_LeavesSegmentBelowMin` — a >1 kWh/segment decline leaves a residual sub-Min
     dip after partial buys (prior segment already raised above Min). Edge: real usage/segment ≪ charge rate.
+  - `SharpPeakAndTrough_LeftBadlyOutOfBounds` — the most striking case: a sharp peak (60) and trough (1) the
+    projection passes through are left at ~59 / ~1 after a single corrective action de-triggers detection.
+    Shows the gap can leave the plan *badly* out of bounds, not just by 1 kWh. (Still needs a sharp,
+    unrealistic single-segment swing; gradual ramps are caught while crossing.) → bumps #5 toward Low–Med.
 
 ### 7. Charge/discharge step size isn't exactly 1 kWh
 `SegmentChargeAmountKwh`/`SegmentDischargeAmountKwh` = `RateKw × Convert.ToDecimal(SegmentSize.TotalHours)`,
@@ -137,5 +141,17 @@ dropping it to 39 before solar refills it.
   discharges early based on a forecast and could deplete reserve if the solar forecast under-delivers.
 - Fix direction: confirm whether early discharge-for-arbitrage is intended; if not, constrain the sell window
   closer to the actual over-charge, or only discharge segments whose own projected charge is near Max.
+
+## Code-review candidates (flagged by reading the code; NOT yet reproduced by a test)
+Leads to confirm, not confirmed bugs:
+- **General + ControlledLoad lumped for buy** (`ApplyPrice`): both channels feed one buy-candidate list and
+  the longer-overlap interval wins, so a segment straddling a tariff boundary could take the wrong channel's
+  price / `IsDemandWindow`. Impact depends on whether Amber ever returns both channels for the same slot.
+- **Buy window may over-narrow after earlier buys** (`GetPreviousBoundaryCrossingIndex`): it reads the
+  already-mutated charges, so once earlier buys raise mid-list charge near Max the walk-back can start later
+  than ideal and exclude cheap early segments from a subsequent buy. Plausible; not reproduced.
+- **`SegmentSizeMins = 0` would make `BuildSegments` loop forever** (time never advances). Config-guard only.
+- A code-review hypothesis that the `loopCount < Count` cap causes non-convergence was investigated and
+  **refuted** — the real mechanism behind out-of-bounds plans is finding #5 (detection de-triggers), not the cap.
 
 <!-- More findings appended below as scenario batches complete. -->
