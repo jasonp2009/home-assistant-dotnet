@@ -12,8 +12,8 @@ hours-to-empty = (charge − MinCapacity) / hourlyUsage.
 
 ## TL;DR
 
-80 tests total: **70 pass, 10 fail**. All 10 failures are intentional `KnownIssue` probes (green subset
-`dotnet test --filter "Category!=KnownIssue"` is 70/70). After owner triage:
+85 tests total: **75 pass, 10 fail**. All 10 failures are intentional `KnownIssue` probes (green subset
+`dotnet test --filter "Category!=KnownIssue"` is 75/75). After owner triage:
 
 | # | Issue | Severity | Status |
 |---|-------|----------|--------|
@@ -46,6 +46,9 @@ None of the open items were fixed — they're for review.
 - Estimate-sell sign handling: among uncertain feed-in estimates it discharges at the highest *expected* earning.
 - Neutral runway band uses the predicted price (ranks two neutral estimates by predicted).
 - A segment with no price is never chosen for a buy (weighted price falls back to decimal.MaxValue).
+- **Usage drives conservatism** (validates the runway-weighting design): with the same prices/charge, a high
+  usage rate (short runway) makes it prefer the certain near price, while a low usage rate (deep runway) leans
+  to the optimistic estimate. The low-usage case is the same trade-off as finding #2.
 
 ## Questions for review (behaviour to confirm, not necessarily bugs)
 - **Selling during demand windows** (`SellDuringDemandWindow_IsAllowed`, passing): the buy filter excludes
