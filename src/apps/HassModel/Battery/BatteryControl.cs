@@ -62,13 +62,14 @@ public class BatteryControl
     private async Task<EnergySegmentAction> GetCurrentActionAsync()
     {
         var energySegments = await InitialiseEnergySegmentsAsync();
+        var hourlyUsage = GetHourlyUsage();
         _logger.LogInformation(
             "Initialised segments with {SegmentCount} {SegmentStart} - {SegmentEnd} First segment is estimate: {IsEstimate} Hourly usage estimate: {HourlyUsageEstimate}",
             energySegments.Count,
             energySegments.First().StartUtc.ToLocalTime().ToString(),
             energySegments.Last().StartUtc.ToLocalTime().ToString(),
             energySegments.First().IsBuyEstimate,
-            GetHourlyUsage());
+            hourlyUsage);
         _config.BatteryUntilLog.SetDatetime(datetime: GetBatteryUntil(energySegments).ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss"));
         
         var boundaryResult = CalculateBoundaryResult(energySegments);
@@ -85,7 +86,7 @@ public class BatteryControl
                         _config.MinCapacity <= (segment.EstimatedBatteryChargeKwh - _config.SegmentDischargeAmountKwh) &&
                         previousBoundaryCrossingIndex <= index &&
                         index <= boundaryResult.IndexOfBoundaryCrossing)
-                    .MaxBy(segment => segment.GetWeightedPrice(false, _config));
+                    .MaxBy(segment => segment.GetWeightedPrice(false, _config, hourlyUsage));
                 if (maxPriceSegment is null)
                     break;
                 var maxPriceSegmentIndex = energySegments.IndexOf(maxPriceSegment);
@@ -104,7 +105,7 @@ public class BatteryControl
                         previousBoundaryCrossingIndex <= index &&
                         index <= boundaryResult.IndexOfBoundaryCrossing &&
                         !segment.IsDemandWindow)
-                    .MinBy(segment => segment.GetWeightedPrice(true, _config));
+                    .MinBy(segment => segment.GetWeightedPrice(true, _config, hourlyUsage));
                 if (lowestPriceSegment is null)
                     break;
                 var lowestPriceSegmentIndex = energySegments.IndexOf(lowestPriceSegment);

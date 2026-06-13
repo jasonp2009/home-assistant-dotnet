@@ -10,7 +10,6 @@ public class BatteryConfig
     public SensorEntity SolarProduction3DaysEntity { get; set; }
     public SensorEntity BatteryChargeDiff3DaysEntity { get; set; }
     public decimal EstimatedUsageMultiplier { get; set; }
-    public decimal AdvancedPriceWeight { get; set; }
 
     // Risk weighting based on battery runway (hours-to-empty). Pessimism leans an estimated
     // price toward Amber's High bound (buy)/Low bound (sell); optimism leans the other way.

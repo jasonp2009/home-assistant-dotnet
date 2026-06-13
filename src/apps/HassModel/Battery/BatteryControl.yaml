@@ -9,7 +9,12 @@
   SolarProduction3DaysEntity: sensor.pawar_plant_total_solar_production_3_days
   BatteryChargeDiff3DaysEntity: sensor.solar_battery_battery_diff_3_days
   EstimatedUsageMultiplier: 1.1
-  AdvancedPriceWeight: 0.5
+  PessimismStartHours: 20
+  PessimismMaxAtHours: 4
+  PessimismMaxWeight: 0.7
+  OptimismStartHours: 26
+  OptimismMaxAtHours: 32
+  OptimismMaxWeight: 0.3
   CurrentActionLog: input_select.current_action_battery_log
   CurrentActionEndLog: input_datetime.current_action_end_battery_log
   BatteryUntilLog: input_datetime.battery_until_battery_log

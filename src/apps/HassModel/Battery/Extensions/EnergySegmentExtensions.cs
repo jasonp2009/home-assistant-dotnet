@@ -71,13 +71,11 @@ public static class EnergySegmentExtensions
         return overlapDuration;
     }
 
-    public static decimal GetWeightedPrice(this EnergySegment segment, bool isBuy, BatteryConfig config)
+    public static decimal GetWeightedPrice(this EnergySegment segment, bool isBuy, BatteryConfig config, decimal hourlyUsageKwh)
     {
-        var capacityDiff = config.MaxCapacity - config.MinCapacity;
-        var batteryMidpointKwh = (config.MaxCapacity + config.MinCapacity) / 2;
-        var advancedPriceWeightMultiplier = (segment.EstimatedBatteryChargeKwh - batteryMidpointKwh)*2/capacityDiff;
-        var advancedPriceWeight = -advancedPriceWeightMultiplier * config.AdvancedPriceWeight;
-        
+        var hoursToEmpty = GetHoursToEmpty(segment.EstimatedBatteryChargeKwh, config.MinCapacity, hourlyUsageKwh);
+        var advancedPriceWeight = GetRiskWeight(hoursToEmpty, config);
+
         if (isBuy && !segment.IsBuyEstimate) return segment.BuyPricePerKw ?? decimal.MaxValue;
         if (!isBuy && !segment.IsSellEstimate) return segment.SellPricePerKw ?? decimal.MinValue;
         var advancedPrice = isBuy ? segment.AdvancedBuyPrice : segment.AdvancedSellPrice;
