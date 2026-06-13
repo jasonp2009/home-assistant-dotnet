@@ -10,6 +10,22 @@ Sign/units reminder: 5-min segments, 12 kW rates → ~1 kWh moved per segment (d
 `SellPricePerKw` (Amber reports feed-in perKwh negative; `ApplyPrice` negates). The runway weight uses
 hours-to-empty = (charge − MinCapacity) / hourlyUsage.
 
+## TL;DR
+
+77 tests total: **68 pass, 9 fail**. All 9 failures are intentional `KnownIssue` probes (the green subset
+`dotnet test --filter "Category!=KnownIssue"` is 68/68). The 9 failures group into 6 issues, roughly by impact:
+
+| # | Issue | Severity | Kind |
+|---|-------|----------|------|
+| 4 | No proactive charging at cheap/negative prices (only acts on capacity crossings) | High | Design limitation |
+| 1 | Demand-window-only periods deplete below the minimum reserve | Med–High | Bug/safety |
+| 2 | Optimism skips a certain good price when runway is deep | Medium | Weighting gap |
+| 3 | Discharges to relieve an over-charge regardless of economics (negative feed-in, or no feed-in data) | Medium | Modelling |
+| 6 | Over-charge relief can discharge a far-from-full segment early (wide sell window) | Low | Nuanced/arguably-good |
+| 5 | Boundary detection misses a single-step jump past a limit that then plateaus | Low | Brittle edge |
+
+Everything else behaves as intended (see passing list). None of these were fixed — they're for review.
+
 ## Verified-correct behaviour (passing scenarios)
 - Buys at the cheapest segment when depletion forces a buy.
 - Low battery (short runway → pessimistic) prefers a certain current price over an optimistically-cheaper
@@ -25,6 +41,7 @@ hours-to-empty = (charge − MinCapacity) / hourlyUsage.
 - Deep depletion needing ~3 kWh buys at the three cheapest segments.
 - Battery starting below the reserve → charges immediately (current action = Buy).
 - Short runway prefers a tighter-band estimate over a wider-band one with a slightly lower predicted price.
+- End-to-end (BuildSegments → ApplyPrice → OptimiseSegments): charges at the cheap current segment.
 - Over-charge relief discharges at the **highest** feed-in price (most profitable). *Initially looked like a
   bug, but was a false alarm from inverted test sign — confirmed correct.*
 - High solar keeps the battery within MaxCapacity by discharging. *Initially "failed" only due to a decimal
@@ -57,6 +74,9 @@ instead of paying to export.
   economic; there is no "let solar curtail" option.
 - Fix direction: don't force a discharge when feed-in is negative (treat curtailment as the action), or only
   discharge to relieve over-charge when the feed-in price is above some floor.
+- Related evidence: `Overcharge_DischargesEvenWithNoFeedInData` — with no feed-in price at all on any segment,
+  it still discharges to relieve the over-charge (weighted price falls back to decimal.MinValue and a Sell is
+  placed anyway). Same root cause: over-charge relief ignores whether discharging is economic.
 
 ### 4. No proactive arbitrage — won't charge at cheap (or negative) prices unless forced
 `Arbitrage_BuysCheapNowWhenNoBoundaryCrossing`, `NegativePrice_ChargesWhenPaidToConsume` — with the battery
