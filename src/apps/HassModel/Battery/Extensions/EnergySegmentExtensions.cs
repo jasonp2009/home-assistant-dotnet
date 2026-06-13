@@ -92,4 +92,41 @@ public static class EnergySegmentExtensions
         return predicted * (1 - Math.Abs(advancedPriceWeight)) +
                advancedPriceAdjustor * Math.Abs(advancedPriceWeight);
     }
+
+    // Usage is floored to avoid divide-by-zero / a sign flip on net-production segments.
+    private const decimal MinHourlyUsageKwh = 0.01m;
+
+    /// <summary>
+    /// Hours of battery runway remaining at a given charge: usable charge above the floor divided
+    /// by the expected hourly usage. The caller supplies the usage rate so a future time-of-day
+    /// estimate can be passed per segment without changing this method.
+    /// </summary>
+    public static decimal GetHoursToEmpty(decimal chargeKwh, decimal minCapacity, decimal hourlyUsageKwh)
+    {
+        var usableKwh = chargeKwh - minCapacity;
+        var usage = Math.Max(hourlyUsageKwh, MinHourlyUsageKwh);
+        return usableKwh / usage;
+    }
+
+    /// <summary>
+    /// Signed risk weight from runway. Short runway ramps to +PessimismMaxWeight (lean toward the
+    /// High price for buys / Low for sells); deep runway ramps to -OptimismMaxWeight; the band in
+    /// between is neutral (0 = use the predicted price). Optimism and pessimism ramp independently.
+    /// </summary>
+    public static decimal GetRiskWeight(decimal hoursToEmpty, BatteryConfig config)
+    {
+        if (hoursToEmpty <= config.PessimismStartHours)
+        {
+            var span = config.PessimismStartHours - config.PessimismMaxAtHours;
+            var t = span <= 0 ? 1m : (config.PessimismStartHours - hoursToEmpty) / span;
+            return config.PessimismMaxWeight * Math.Clamp(t, 0m, 1m);
+        }
+        if (hoursToEmpty >= config.OptimismStartHours)
+        {
+            var span = config.OptimismMaxAtHours - config.OptimismStartHours;
+            var t = span <= 0 ? 1m : (hoursToEmpty - config.OptimismStartHours) / span;
+            return -config.OptimismMaxWeight * Math.Clamp(t, 0m, 1m);
+        }
+        return 0m;
+    }
 }
