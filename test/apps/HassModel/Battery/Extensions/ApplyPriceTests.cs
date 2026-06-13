@@ -6,7 +6,7 @@ using src.apps.HassModel.Battery.Extensions;
 using src.apps.HassModel.Battery.Models;
 using Xunit;
 
-namespace Tests;
+namespace Tests.apps.HassModel.Battery.Extensions;
 
 /// <summary>
 /// Characterisation tests for <see cref="EnergySegmentExtensions.ApplyPrice"/>: how Amber

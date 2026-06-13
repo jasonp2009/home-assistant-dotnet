@@ -5,7 +5,7 @@ using src.apps.HassModel.Battery.Extensions;
 using src.apps.HassModel.Battery.Models;
 using Xunit;
 
-namespace Tests;
+namespace Tests.apps.HassModel.Battery.Extensions;
 
 /// <summary>
 /// Tests for the runway-weighted price used to rank buy/sell segments. With Usage = 1 kWh/h and

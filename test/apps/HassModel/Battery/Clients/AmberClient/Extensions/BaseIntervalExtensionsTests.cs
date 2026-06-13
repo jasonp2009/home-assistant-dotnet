@@ -3,7 +3,7 @@ using src.apps.HassModel.Battery.Clients.AmberClient.Models;
 using src.apps.HassModel.Battery.Clients.AmberClient.Extensions;
 using Xunit;
 
-namespace Tests;
+namespace Tests.apps.HassModel.Battery.Clients.AmberClient.Extensions;
 
 /// <summary>
 /// Characterisation tests for the Amber interval price helpers. These document the

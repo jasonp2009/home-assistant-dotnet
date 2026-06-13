@@ -2,7 +2,7 @@ using src.apps.HassModel.Battery;
 using src.apps.HassModel.Battery.Extensions;
 using Xunit;
 
-namespace Tests;
+namespace Tests.apps.HassModel.Battery.Extensions;
 
 /// <summary>
 /// Unit tests for the runway-based risk weight (GetRiskWeight) and the hours-to-empty calculation.
