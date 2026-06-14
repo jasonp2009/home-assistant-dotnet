@@ -10,22 +10,27 @@ Sign/units reminder: 5-min segments, 12 kW rates → ~1 kWh moved per segment (d
 `SellPricePerKw` (Amber reports feed-in perKwh negative; `ApplyPrice` negates). The runway weight uses
 hours-to-empty = (charge − MinCapacity) / hourlyUsage.
 
+Inverter note: it **exports** surplus to the grid at 100% SoC (it does not curtail), so an over-charge means
+an export *will* happen regardless — relieving it by discharging at the best available feed-in is correct.
+
 ## TL;DR
 
-85 tests total: **75 pass, 10 fail**. All 10 failures are intentional `KnownIssue` probes (green subset
-`dotnet test --filter "Category!=KnownIssue"` is 75/75). After owner triage:
+86 tests total: **75 pass, 11 fail**. The 11 failures are intentional `KnownIssue` probes (green subset
+`dotnet test --filter "Category!=KnownIssue"` is 75/75). After owner triage, **every finding is resolved** —
+the remaining red probes document accepted trade-offs or the agreed arbitrage gap (#4):
 
 | # | Issue | Severity | Status |
 |---|-------|----------|--------|
-| 2 | Optimism skips a certain good price when runway is deep | Medium | **Open** |
-| 3 | Discharges to relieve an over-charge regardless of economics (negative feed-in, or no feed-in data) | Medium | **Open** |
-| 6 | Over-charge relief can discharge a far-from-full segment early (wide sell window) | Low | Open / nuanced |
-| 5 | Boundary detection misses a single-step jump past a limit (also: induced over-charge / steep decline) | Low | Open / edge |
-| 7 | Charge/discharge step (12×5/60) isn't exactly 1 kWh, nudging detection at the threshold | Low | Open / cleanup |
+| 2 | Optimism skips a certain good price when runway is deep | Medium | Accepted (owner: fine — only deep runway; regret small & bounded) |
+| 3 | Over-charge relief discharges at the best feed-in (even pay-to-export) | — | Not a bug — inverter exports at 100%, so least-bad export is optimal |
+| 6 | Over-charge relief can discharge a far-from-full segment early (wide sell window) | Low | Accepted (owner: fine) |
+| 5 | Over/under the limits for short periods (Min/Max are guidelines, brief excursions OK) | Low | Accepted (owner: fine) |
+| 7 | Charge/discharge step (12×5/60) isn't exactly 1 kWh | Low | Accepted (owner: all estimates anyway) |
 | 4 | No proactive arbitrage (won't charge at cheap/negative prices) | High | Accepted gap — to add later |
 | 1 | No charging during demand windows | — | Intentional — not a bug (grid covers it) |
 
-None of the open items were fixed — they're for review.
+All findings are now triaged (see Status); nothing in production code has been changed. The agreed next
+feature is **price arbitrage (#4)** — buy low / sell high — planned in `docs/battery-arbitrage-plan.md`.
 
 ## Verified-correct behaviour (passing scenarios)
 - Buys at the cheapest segment when depletion forces a buy.
@@ -60,7 +65,7 @@ None of the open items were fixed — they're for review.
 - High solar keeps the battery within MaxCapacity by discharging. *Initially "failed" only due to a decimal
   rounding artifact in the per-segment kWh; not a real over-charge.*
 
-## Confirmed issues (failing probes — for discussion)
+## Findings (all triaged — see Status in the TL;DR)
 
 ### 1. No charging during demand windows — INTENTIONAL (not a bug)
 `DemandWindowOnly_DoesNotBuy_ReliesOnGrid` (now a passing test). The planner never charges during a demand
@@ -68,25 +73,28 @@ window; if the whole pre-depletion window is demand-windowed it buys nothing and
 grid. Confirmed by the owner as intended — demand windows carry excess usage charges, so grid import there is
 expected. No change needed.
 
-### 2. Optimism skips a certain good price when runway is deep
+### 2. Optimism skips a certain good price when runway is deep — ACCEPTED
 `DeepRunway_DoesNotSkipCertainPrice_ForOptimisticEstimate` — with lots of runway early in the buy window, the
 optimism discount leans an uncertain estimate toward its Low bound, making a predicted-14c segment score 11c
 and beating a certain 12c. It buys the estimate whose *expected* price (14c) is actually worse.
 - Why: optimism keys off the Low bound regardless of how far the predicted price sits above the alternative.
-- Fix direction: optimism should never discount an estimate below the cheapest *certain* option; or cap the
-  optimism adjustment so it can't cross a locked price; or only apply optimism relative to predicted, not Low.
+- **Resolution (owner): accepted.** It only happens with deep runway (>~26 h), where there is ample time to
+  find another good price; the logic self-corrects to pessimism as runway shrinks (so it's never *forced* into
+  a much higher price); and worst-case regret is bounded by the optimism discount, `|w|·(predicted−Low)` capped
+  at `OptimismMaxWeight=0.3` — single-digit c/kWh per event. The probe stays red to document the trade-off.
+- If ever revisited: cap optimism so it can't score below the cheapest *certain* option, or discount off
+  predicted rather than blending to the Amber Low bound.
 
-### 3. Over-charge relief discharges even at a negative feed-in price
+### 3. Over-charge relief discharges even at a negative feed-in price — NOT A BUG
 `Overcharge_DoesNotDischargeAtNegativeFeedIn` — when the battery would exceed max and all feed-in prices are
-negative (you pay to export), the solver still places a Sell. Physically the inverter would curtail solar
-instead of paying to export.
-- Why: the model treats an over-charge as something that must be discharged, ignoring whether discharging is
-  economic; there is no "let solar curtail" option.
-- Fix direction: don't force a discharge when feed-in is negative (treat curtailment as the action), or only
-  discharge to relieve over-charge when the feed-in price is above some floor.
-- Related evidence: `Overcharge_DischargesEvenWithNoFeedInData` — with no feed-in price at all on any segment,
-  it still discharges to relieve the over-charge (weighted price falls back to decimal.MinValue and a Sell is
-  placed anyway). Same root cause: over-charge relief ignores whether discharging is economic.
+negative, the solver still places a Sell.
+- **Resolution (owner): not a bug.** The inverter **exports** surplus to the grid at 100% SoC (it does not
+  curtail), so an export *will* happen regardless. Discharging at the highest (least-negative) feed-in via
+  `MaxBy` is therefore the loss-minimising choice — picking the least-bad export time beats being forced to
+  export at a worse one. My earlier "let solar curtail (free)" objection assumed curtailment, which this
+  inverter doesn't do.
+- `Overcharge_DischargesEvenWithNoFeedInData` is an artificial edge to force a preference for intervals that
+  have price data; feed-in data always exists in practice, so it isn't a real-world concern.
 
 ### 4. No proactive arbitrage — won't charge at cheap (or negative) prices unless forced
 **Status: ACCEPTED GAP** — the app doesn't do arbitrage yet; owner plans to add it later (will pair on it).

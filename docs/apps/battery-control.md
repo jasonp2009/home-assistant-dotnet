@@ -81,13 +81,25 @@ for worked examples of every branch.
 
 | File | Role |
 |---|---|
-| [`BatteryControl.cs`](../../src/apps/HassModel/Battery/BatteryControl.cs) | Scheduler, decision loop, boundary solver, usage estimate, HA logging |
+| [`BatteryControl.cs`](../../src/apps/HassModel/Battery/BatteryControl.cs) | Scheduler + Home Assistant I/O (reads state, sets inverter mode, logs); delegates planning to `BatteryPlanner` |
+| [`BatteryPlanner.cs`](../../src/apps/HassModel/Battery/BatteryPlanner.cs) | Pure, unit-testable planning: `BuildSegments`, `OptimiseSegments` (greedy boundary solver), `CalculateBoundaryResult`, `GetBatteryUntil` |
 | [`BatteryConfig.cs`](../../src/apps/HassModel/Battery/BatteryConfig.cs) | Typed config bound from the YAML |
 | [`BatteryControl.yaml`](../../src/apps/HassModel/Battery/BatteryControl.yaml) | Entity ids + tuning values |
 | [`Models/EnergySegment.cs`](../../src/apps/HassModel/Battery/Models/EnergySegment.cs) | A 5-minute slot: projected charge, prices, solar, action |
 | [`Extensions/EnergySegmentExtensions.cs`](../../src/apps/HassModel/Battery/Extensions/EnergySegmentExtensions.cs) | `ApplyPrice`, `ApplySolarForecast`, `GetHoursToEmpty`, `GetRiskWeight`, `GetWeightedPrice` |
 | [`Clients/AmberClient/`](../../src/apps/HassModel/Battery/Clients/AmberClient/) | Amber API client, interval models (`BaseInterval`/`Current`/`Forecast`/`Actual`), `AdvancedPrice`, channel/descriptor enums |
 | [`Clients/ForecastSolarClient/`](../../src/apps/HassModel/Battery/Clients/ForecastSolarClient/) | Forecast.Solar API client |
+
+## Behaviour notes & known trade-offs
+
+- The decision logic is unit-tested — see `test/apps/HassModel/Battery/` and the scenario findings + owner
+  triage in [`../battery-scenario-findings.md`](../battery-scenario-findings.md).
+- **Inverter:** it exports surplus to the grid at 100% SoC (it does **not** curtail), so relieving an
+  over-charge by discharging at the best available feed-in is the correct, loss-minimising action.
+- **No charging during demand windows** is intentional (the home draws from the grid; demand windows carry
+  excess usage charges).
+- **Not yet implemented:** proactive price arbitrage (buy low / sell high without a capacity-boundary trigger)
+  — planned in [`../battery-arbitrage-plan.md`](../battery-arbitrage-plan.md).
 
 ## Configuration reference (`BatteryControl.yaml`)
 
