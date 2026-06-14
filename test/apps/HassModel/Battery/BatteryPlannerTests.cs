@@ -80,15 +80,23 @@ public class BatteryPlannerTests
     }
 
     [Fact]
-    public void BuildSegments_AddsSolarForecastToProjectedCharge()
+    public void BuildSegments_SpreadsSolarForecastPeriodAcrossItsSegments()
     {
-        var prices = new List<BaseInterval> { GeneralInterval(0, 20m), GeneralInterval(1, 20m) };
-        var solar = new Dictionary<System.DateTime, int> { [Base.AddMinutes(5)] = 1000 }; // 1 kWh during the 2nd slot
+        var prices = new List<BaseInterval>
+        {
+            GeneralInterval(0, 20m), GeneralInterval(1, 20m), GeneralInterval(2, 20m), GeneralInterval(3, 20m)
+        };
+        // A 900 Wh 15-minute period at 00:00; the 00:15 point (0 Wh) just defines the period length.
+        // The period spans the three 5-min segments [00:00,00:15), so each takes 0.3 kWh, not 0.9 dumped
+        // into one segment.
+        var solar = new Dictionary<System.DateTime, int> { [Base] = 900, [Base.AddMinutes(15)] = 0 };
 
         var segs = BatteryPlanner.BuildSegments(Base, currentChargeKwh: 20m, averageSegmentUsage: 0m, solar, prices, Cfg());
 
-        Assert.Equal(20m, segs[0].EstimatedBatteryChargeKwh); // no solar in slot 0
-        Assert.Equal(1m, segs[1].SolarForecastKwh);
-        Assert.Equal(21m, segs[1].EstimatedBatteryChargeKwh); // 20 - 0 usage + 1 solar
+        Assert.Equal(0.3m, segs[0].SolarForecastKwh, precision: 3);
+        Assert.Equal(0.3m, segs[1].SolarForecastKwh, precision: 3);
+        Assert.Equal(0.3m, segs[2].SolarForecastKwh, precision: 3);
+        Assert.Equal(0m, segs[3].SolarForecastKwh); // next period carries 0 Wh
+        Assert.Equal(20.9m, segs[2].EstimatedBatteryChargeKwh, precision: 3); // 20 + 3 * 0.3, no usage
     }
 }

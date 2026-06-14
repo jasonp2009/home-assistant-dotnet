@@ -10,12 +10,38 @@ namespace src.apps.HassModel.Battery.Extensions;
 
 public static class EnergySegmentExtensions
 {
+    // Fallback period length for the final forecast point, which has no following point to measure
+    // against. Forecast.Solar's watthours/period endpoint is 15-minute resolution.
+    private static readonly TimeSpan DefaultForecastPeriod = TimeSpan.FromMinutes(15);
+
+    /// <summary>
+    /// Adds the solar forecast to a segment's projected charge. Forecast.Solar reports energy in
+    /// 15-minute periods (the value at key <c>T</c> is the energy generated over <c>[T, nextKey)</c>),
+    /// but segments are shorter (5 minutes). Rather than dumping a whole period into the one segment
+    /// that happens to contain its timestamp — which sawtooths the trajectory and fools the boundary
+    /// solver — each period's energy is spread evenly over its duration and the segment takes only the
+    /// fraction that overlaps it.
+    /// </summary>
     public static void ApplySolarForecast(this EnergySegment segment, Dictionary<DateTime, int>? solarForecast)
     {
         if (solarForecast is null) return;
-        var solarForecastWh = Convert.ToDecimal(solarForecast
-            .Where(pair => segment.StartUtc <= pair.Key && pair.Key < segment.EndUtc)
-            .Sum(pair => pair.Value));
+
+        var orderedForecast = solarForecast.OrderBy(pair => pair.Key).ToList();
+        var solarForecastWh = 0m;
+        for (var i = 0; i < orderedForecast.Count; i++)
+        {
+            var periodStart = orderedForecast[i].Key;
+            var periodEnd = i + 1 < orderedForecast.Count ? orderedForecast[i + 1].Key : periodStart + DefaultForecastPeriod;
+            var periodDuration = periodEnd - periodStart;
+            if (periodDuration <= TimeSpan.Zero) continue;
+
+            var overlapStart = segment.StartUtc > periodStart ? segment.StartUtc : periodStart;
+            var overlapEnd = segment.EndUtc < periodEnd ? segment.EndUtc : periodEnd;
+            var overlap = overlapEnd - overlapStart;
+            if (overlap <= TimeSpan.Zero) continue;
+
+            solarForecastWh += orderedForecast[i].Value * (decimal)(overlap / periodDuration);
+        }
         var solarForecastKwh = solarForecastWh / 1000;
 
         segment.SolarForecastKwh = solarForecastKwh;
