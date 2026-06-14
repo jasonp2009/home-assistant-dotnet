@@ -99,4 +99,19 @@ public class BatteryPlannerTests
         Assert.Equal(0m, segs[3].SolarForecastKwh); // next period carries 0 Wh
         Assert.Equal(20.9m, segs[2].EstimatedBatteryChargeKwh, precision: 3); // 20 + 3 * 0.3, no usage
     }
+
+    [Fact]
+    public void BuildSegments_DrainsByPerSegmentEstimate()
+    {
+        var prices = new List<BaseInterval> { GeneralInterval(0, 20m), GeneralInterval(1, 20m), GeneralInterval(2, 20m) };
+        // Usage varies by time of day: 0.5 kWh for the first slot, 1.0 kWh thereafter. The estimator is
+        // queried with the start of the segment being drained.
+        decimal Usage(System.DateTime start) => start == Base ? 0.5m : 1.0m;
+
+        var segs = BatteryPlanner.BuildSegments(Base, currentChargeKwh: 30m, Usage, solarForecast: null, prices, Cfg());
+
+        Assert.Equal(30m, segs[0].EstimatedBatteryChargeKwh);
+        Assert.Equal(29.5m, segs[1].EstimatedBatteryChargeKwh); // drained by Usage(Base) = 0.5
+        Assert.Equal(28.5m, segs[2].EstimatedBatteryChargeKwh); // drained by Usage(Base+5min) = 1.0
+    }
 }

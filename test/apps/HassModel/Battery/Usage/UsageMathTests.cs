@@ -1,0 +1,216 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using src.apps.HassModel.Battery;
+using src.apps.HassModel.Battery.Models;
+using src.apps.HassModel.Battery.Usage;
+using Xunit;
+using static Tests.apps.HassModel.Battery.BatteryTestData;
+
+namespace Tests.apps.HassModel.Battery.Usage;
+
+/// <summary>
+/// Unit tests for the pure consumption maths: computing per-interval consumption from cumulative
+/// counters (with daily-reset handling), spreading a solar-aligned window across its 5-minute buckets,
+/// and the per-time-of-day weighted estimate.
+/// </summary>
+public class UsageMathTests
+{
+    private static readonly DateTime T0 = new(2026, 6, 15, 0, 0, 0, DateTimeKind.Utc);
+
+    private static BatteryConfig UsageCfg(decimal multiplier = 1m, int windowCap = 4, decimal maxSegmentKwh = 5m)
+    {
+        var cfg = Cfg();
+        cfg.EstimatedUsageMultiplier = multiplier;
+        cfg.UsageMaxWindowSegments = windowCap;
+        cfg.UsageMaxSegmentKwh = maxSegmentKwh;
+        cfg.UsageWindow1Days = 1; cfg.UsageWindow1Weight = 0.4m;
+        cfg.UsageWindow2Days = 3; cfg.UsageWindow2Weight = 0.3m;
+        cfg.UsageWindow3Days = 7; cfg.UsageWindow3Weight = 0.3m;
+        return cfg;
+    }
+
+    private static CounterReading Reading(DateTime t, decimal gridIn = 0, decimal gridOut = 0,
+        decimal solar = 0, decimal charge = 0, decimal discharge = 0)
+        => new(t, gridIn, gridOut, solar, charge, discharge);
+
+    // ---- ComputeConsumption ------------------------------------------------------------------
+
+    [Fact]
+    public void ComputeConsumption_NetsAllFourTerms()
+    {
+        var prev = Reading(T0, gridIn: 100m, gridOut: 10m, solar: 1000m, charge: 50m, discharge: 40m);
+        var cur = Reading(T0.AddMinutes(5), gridIn: 100.5m, gridOut: 10m, solar: 1000.3m, charge: 50.2m, discharge: 40.1m);
+
+        // 0.5 - 0 + 0.3 - (0.2 - 0.1) = 0.7
+        Assert.Equal(0.7m, UsageMath.ComputeConsumption(prev, cur));
+    }
+
+    [Fact]
+    public void ComputeConsumption_BatteryCounterReset_ReturnsNull()
+    {
+        var prev = Reading(T0, charge: 30m);
+        var cur = Reading(T0.AddMinutes(5), gridIn: 0.5m, charge: 2m); // charge counter reset (went down)
+
+        Assert.Null(UsageMath.ComputeConsumption(prev, cur));
+    }
+
+    [Fact]
+    public void ComputeConsumption_NegativeFromSkew_FlooredToZero()
+    {
+        var prev = Reading(T0);
+        var cur = Reading(T0.AddMinutes(5), gridIn: 0.1m, charge: 1.0m); // 0.1 - (1.0) = -0.9 -> 0
+
+        Assert.Equal(0m, UsageMath.ComputeConsumption(prev, cur));
+    }
+
+    [Fact]
+    public void ComputeConsumption_LifetimeCounterBackwards_ReturnsNull()
+    {
+        var prev = Reading(T0, gridIn: 100m);
+        var cur = Reading(T0.AddMinutes(5), gridIn: 99.9m); // a lifetime counter shouldn't go backwards
+
+        Assert.Null(UsageMath.ComputeConsumption(prev, cur));
+    }
+
+    // ---- SpreadWindow ------------------------------------------------------------------------
+
+    [Fact]
+    public void SpreadWindow_SpreadsConsumptionEvenlyAcrossSegments()
+    {
+        var start = Reading(T0);
+        var end = Reading(T0.AddMinutes(15), gridIn: 0.9m); // 15 min = 3 segments, 0.9 kWh total
+
+        var samples = UsageMath.SpreadWindow(start, end, UsageCfg()).ToList();
+
+        Assert.Equal(3, samples.Count);
+        Assert.All(samples, s => Assert.Equal(0.3m, s.ConsumptionKwh));
+        Assert.Equal(new[] { T0, T0.AddMinutes(5), T0.AddMinutes(10) }, samples.Select(s => s.SegmentStartUtc));
+    }
+
+    [Fact]
+    public void SpreadWindow_PerSegmentOverCap_Discarded()
+    {
+        var start = Reading(T0);
+        var end = Reading(T0.AddMinutes(15), gridIn: 0.9m); // 0.3/segment
+
+        Assert.Empty(UsageMath.SpreadWindow(start, end, UsageCfg(maxSegmentKwh: 0.2m)));
+    }
+
+    [Fact]
+    public void SpreadWindow_WindowLongerThanCap_Discarded()
+    {
+        var start = Reading(T0);
+        var end = Reading(T0.AddMinutes(30), gridIn: 0.6m); // 6 segments > cap (4)
+
+        Assert.Empty(UsageMath.SpreadWindow(start, end, UsageCfg(windowCap: 4)));
+    }
+
+    // ---- BuildSamplesFromReadings (batch backfill) -------------------------------------------
+
+    [Fact]
+    public void BuildSamplesFromReadings_SolarJump_SpreadsEvenly_NoSawtooth()
+    {
+        // Solar only ticks at the boundary after its 15-min period; grid rises smoothly.
+        var readings = new List<CounterReading>
+        {
+            Reading(T0,                 gridIn: 0m,   solar: 0m),
+            Reading(T0.AddMinutes(5),   gridIn: 0.1m, solar: 0m),
+            Reading(T0.AddMinutes(10),  gridIn: 0.2m, solar: 0m),
+            Reading(T0.AddMinutes(15),  gridIn: 0.3m, solar: 0.9m) // solar lump lands here
+        };
+
+        var samples = UsageMath.BuildSamplesFromReadings(readings, UsageCfg());
+
+        // Window closes on the solar tick: (0.3 grid + 0.9 solar) = 1.2 over 3 segments = 0.4 each,
+        // i.e. the 0.9 solar lump is spread, not dumped into the last segment.
+        Assert.Equal(3, samples.Count);
+        Assert.All(samples, s => Assert.Equal(0.4m, s.ConsumptionKwh));
+    }
+
+    [Fact]
+    public void BuildSamplesFromReadings_NightWindow_ClosesAtCap_StillEmits()
+    {
+        // No solar all night; window must close at the cap (4 segments) and still emit load samples.
+        var readings = new List<CounterReading>
+        {
+            Reading(T0,                gridIn: 0m,   solar: 0m),
+            Reading(T0.AddMinutes(5),  gridIn: 0.1m, solar: 0m),
+            Reading(T0.AddMinutes(10), gridIn: 0.2m, solar: 0m),
+            Reading(T0.AddMinutes(15), gridIn: 0.3m, solar: 0m),
+            Reading(T0.AddMinutes(20), gridIn: 0.4m, solar: 0m)
+        };
+
+        var samples = UsageMath.BuildSamplesFromReadings(readings, UsageCfg(windowCap: 4));
+
+        Assert.Equal(4, samples.Count); // 0.4 over 4 segments
+        Assert.All(samples, s => Assert.Equal(0.1m, s.ConsumptionKwh));
+    }
+
+    [Fact]
+    public void BuildSamplesFromReadings_WindowWithReset_Dropped()
+    {
+        var readings = new List<CounterReading>
+        {
+            Reading(T0,                gridIn: 0m,   solar: 0m, charge: 30m),
+            Reading(T0.AddMinutes(5),  gridIn: 0.1m, solar: 0m, charge: 30m),
+            Reading(T0.AddMinutes(15), gridIn: 0.3m, solar: 0.9m, charge: 2m) // reset inside the window
+        };
+
+        Assert.Empty(UsageMath.BuildSamplesFromReadings(readings, UsageCfg()));
+    }
+
+    // ---- EstimateSegmentUsage ----------------------------------------------------------------
+
+    private static readonly DateTime Now = new(2026, 6, 15, 12, 0, 0, DateTimeKind.Utc);
+    private static readonly DateTime Tod = new(2026, 6, 15, 6, 0, 0, DateTimeKind.Utc); // a 06:00 segment
+
+    [Fact]
+    public void EstimateSegmentUsage_BlendsNestedWindowsByWeight()
+    {
+        var samples = new List<UsageSample>
+        {
+            new(Tod,                  1.0m), // today        -> in 1d, 3d, 7d
+            new(Tod.AddDays(-2),      2.0m), // 2 days ago   -> in 3d, 7d
+            new(Tod.AddDays(-5),      3.0m)  // 5 days ago   -> in 7d only
+        };
+
+        // avg1=1.0, avg3=(1+2)/2=1.5, avg7=(1+2+3)/3=2.0
+        // 1.0*0.4 + 1.5*0.3 + 2.0*0.3 = 1.45 (weights sum to 1)
+        var estimate = UsageMath.EstimateSegmentUsage(samples, Tod, Now, UsageCfg(), fallbackKwh: 99m);
+
+        Assert.Equal(1.45m, estimate, precision: 6);
+    }
+
+    [Fact]
+    public void EstimateSegmentUsage_AppliesMultiplier()
+    {
+        var samples = new List<UsageSample> { new(Tod, 1.0m), new(Tod.AddDays(-2), 2.0m), new(Tod.AddDays(-5), 3.0m) };
+
+        var estimate = UsageMath.EstimateSegmentUsage(samples, Tod, Now, UsageCfg(multiplier: 1.1m), fallbackKwh: 99m);
+
+        Assert.Equal(1.45m * 1.1m, estimate, precision: 6);
+    }
+
+    [Fact]
+    public void EstimateSegmentUsage_RenormalisesWhenOnlySomeWindowsHaveData()
+    {
+        // Only a 5-day-old sample: only the 7-day window matches; its weight (0.3) is renormalised to 1.
+        var samples = new List<UsageSample> { new(Tod.AddDays(-5), 5.0m) };
+
+        var estimate = UsageMath.EstimateSegmentUsage(samples, Tod, Now, UsageCfg(), fallbackKwh: 99m);
+
+        Assert.Equal(5.0m, estimate, precision: 6);
+    }
+
+    [Fact]
+    public void EstimateSegmentUsage_NoMatchingBucket_ReturnsFallback()
+    {
+        var samples = new List<UsageSample> { new(Tod, 1.0m) }; // 06:00 bucket
+
+        // Target is a 09:00 segment -> different time-of-day bucket -> no data -> fallback.
+        var estimate = UsageMath.EstimateSegmentUsage(samples, Tod.AddHours(3), Now, UsageCfg(), fallbackKwh: 42m);
+
+        Assert.Equal(42m, estimate);
+    }
+}
