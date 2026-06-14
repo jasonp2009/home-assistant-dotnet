@@ -27,6 +27,21 @@ public static class BatteryPlanner
         Dictionary<DateTime, int>? solarForecast,
         List<BaseInterval>? amberPrices,
         BatteryConfig config)
+        => BuildSegments(startUtc, currentChargeKwh, _ => averageSegmentUsage, solarForecast, amberPrices, config);
+
+    /// <summary>
+    /// As above, but drains each segment by a per-segment usage estimate. <paramref name="segmentUsage"/>
+    /// is queried with the UTC start of the segment being drained (the elapsed interval), so a
+    /// time-of-day estimate produces a realistically shaped trajectory (e.g. evening peaks, overnight
+    /// flats) rather than a single flat drain.
+    /// </summary>
+    public static List<EnergySegment> BuildSegments(
+        DateTime startUtc,
+        decimal currentChargeKwh,
+        Func<DateTime, decimal> segmentUsage,
+        Dictionary<DateTime, int>? solarForecast,
+        List<BaseInterval>? amberPrices,
+        BatteryConfig config)
     {
         var curEnergySegment = new EnergySegment
         {
@@ -46,7 +61,7 @@ public static class BatteryPlanner
         {
             curEnergySegment = new EnergySegment
             {
-                EstimatedBatteryChargeKwh = curEnergySegment.EstimatedBatteryChargeKwh - averageSegmentUsage,
+                EstimatedBatteryChargeKwh = curEnergySegment.EstimatedBatteryChargeKwh - segmentUsage(curEnergySegment.StartUtc),
                 Duration = config.SegmentSize,
                 StartUtc = curEnergySegment.StartUtc + config.SegmentSize
             };

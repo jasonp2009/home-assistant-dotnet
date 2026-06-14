@@ -7,9 +7,11 @@ using NetDaemon.Extensions.Scheduler;
 using src.apps.HassModel.Battery.Clients.AmberClient;
 using src.apps.HassModel.Battery.Clients.AmberClient.Extensions;
 using src.apps.HassModel.Battery.Clients.ForecastSolarClient;
+using src.apps.HassModel.Battery.Clients.HaHistoryClient;
 using src.apps.HassModel.Battery.Enums;
 using src.apps.HassModel.Battery.Extensions;
 using src.apps.HassModel.Battery.Models;
+using src.apps.HassModel.Battery.Usage;
 
 namespace src.apps.HassModel.Battery;
 
@@ -20,14 +22,17 @@ public class BatteryControl
     private readonly BatteryConfig _config;
     private readonly ForecastSolarClient _forecastSolarClient;
     private readonly ILogger<BatteryControl> _logger;
+    private readonly UsageTracker _usageTracker;
 
     public BatteryControl(IHaContext ha, INetDaemonScheduler scheduler, IAppConfig<BatteryConfig> config,
-        ILogger<BatteryControl> logger, ForecastSolarClient forecastSolarClient, AmberClient amberClient)
+        ILogger<BatteryControl> logger, ForecastSolarClient forecastSolarClient, AmberClient amberClient,
+        HaHistoryClient haHistoryClient, ILogger<UsageTracker> usageLogger)
     {
         _config = config.Value;
         _logger = logger;
         _forecastSolarClient = forecastSolarClient;
         _amberClient = amberClient;
+        _usageTracker = new UsageTracker(_config, haHistoryClient, usageLogger);
         var nextRun = GetCurrentSegmentStart() + _config.SegmentSize;
         scheduler.RunEvery(_config.SegmentSize, nextRun, () => Task.Run(async () => await CheckAndUpdateBatteryModeAsync()));
     }
@@ -124,9 +129,15 @@ public class BatteryControl
 
     private async Task<List<EnergySegment>> InitialiseEnergySegmentsAsync()
     {
-        var averageHalfHourUsage = GetAverageSegmentUsage();
+        await _usageTracker.EnsureBackfilledAsync();
+        _usageTracker.Record();
+        var fallbackSegmentUsage = GetAverageSegmentUsage();
+        var segmentUsageEstimator = _usageTracker.BuildEstimator(fallbackSegmentUsage);
         var currentBatteryChargeKwh = GetCurrentBatteryChargeKwh();
         var startUtc = GetCurrentSegmentStart();
+        _logger.LogInformation(
+            "Segment usage estimate for {Time}: {Estimate} kWh (flat fallback {Fallback} kWh)",
+            startUtc.ToLocalTime().ToShortTimeString(), segmentUsageEstimator(startUtc), fallbackSegmentUsage);
         var solarForecastTask = _forecastSolarClient.GetForecastAsync();
         var amberPricesTask = _amberClient.GetCurrentPriceAsync();
         await Task.WhenAll(solarForecastTask, amberPricesTask);
@@ -138,7 +149,7 @@ public class BatteryControl
             await Task.Delay(TimeSpan.FromSeconds(_config.MaxPriceLockInRetryDelaySecs));
             amberPrices = await _amberClient.GetCurrentPriceAsync() ?? [];
         }
-        return BatteryPlanner.BuildSegments(startUtc, currentBatteryChargeKwh, averageHalfHourUsage, solarForecast, amberPrices, _config);
+        return BatteryPlanner.BuildSegments(startUtc, currentBatteryChargeKwh, segmentUsageEstimator, solarForecast, amberPrices, _config);
     }
 
     private decimal GetAverageSegmentUsage()
@@ -163,14 +174,6 @@ public class BatteryControl
         return Convert.ToDecimal(_config.SolarBatteryStateOfChargeEntity.State) / 100 * _config.BatteryCapacity;
     }
 
-    private DateTime GetCurrentSegmentStart()
-    {
-        var now = DateTime.UtcNow;
-
-        var segmentTicks = _config.SegmentSize.Ticks;
-        var remainderTicks = now.Ticks % segmentTicks;
-        var timeIntoInterval = TimeSpan.FromTicks(remainderTicks);
-        return now - timeIntoInterval;
-    }
+    private DateTime GetCurrentSegmentStart() => UsageMath.SegmentStart(DateTime.UtcNow, _config.SegmentSize);
 
 }
