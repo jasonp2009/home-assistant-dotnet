@@ -36,9 +36,9 @@ internal static class BatteryTestData
         OptimismMaxAtHours = 32m,
         OptimismMaxWeight = 0.3m,
         ArbitrageEnabled = true,
-        ArbitragePessimismWeight = 0.7m,
+        ArbitragePessimismWeight = 0.5m,
         RoundTripEfficiency = 0.9m,
-        ArbitrageMinMarginPerKwh = 5m
+        ArbitrageMinMarginPerKwh = 0m
     };
 
     public static AdvancedPrice Adv(decimal low, decimal predicted, decimal high)

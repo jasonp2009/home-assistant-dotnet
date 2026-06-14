@@ -69,14 +69,17 @@ public class BatteryArbitrageTests
     }
 
     // -----------------------------------------------------------------------------------------
-    // 3. MarginAndEfficiency_BlockMarginalPair
-    //    Gate: 30/0.9 + 5 = 38.33 > 38 → no commit
+    // 3. MarginGate_BlocksWhenBelowConfiguredMargin
+    //    Deployed margin is 0; this test sets an explicit 10c margin to exercise that gate.
+    //    buy 30, sell 35: without margin, 35 >= 30/0.9 = 33.33 would commit; the 10c margin lifts the
+    //    threshold to 43.33, so it must NOT commit.
     // -----------------------------------------------------------------------------------------
 
     [Fact]
-    public void MarginAndEfficiency_BlockMarginalPair()
+    public void MarginGate_BlocksWhenBelowConfiguredMargin()
     {
         var cfg = Cfg();
+        cfg.ArbitrageMinMarginPerKwh = 10m;
         var segs = new List<EnergySegment>
         {
             Seg(0, 25),
@@ -84,7 +87,7 @@ public class BatteryArbitrageTests
             Seg(2, 25, buy: 30),
             Seg(3, 25),
             Seg(4, 25),
-            Seg(5, 25, sell: 38m),
+            Seg(5, 25, sell: 35m),
             Seg(6, 25),
         };
 
@@ -181,9 +184,9 @@ public class BatteryArbitrageTests
 
     // -----------------------------------------------------------------------------------------
     // 7. UncertainPrices_GatedByPessimism
-    //    Predicted: buy=10, sell=40 → would commit on predicted alone.
-    //    Pessimistic: buy~24 (10*0.3 + 30*0.7), sell~19 (40*0.3 + 10*0.7).
-    //    Gate: 19 >= 24/0.9 + 5 = 31.67 → FALSE → no commit.
+    //    Predicted: buy=10, sell=40 → would commit on predicted alone (40 >= 10/0.9 = 11.1).
+    //    Pessimistic (weight 0.5): buy ~25 (10*0.5 + 40*0.5), sell ~22 (40*0.5 + 4*0.5).
+    //    Gate (margin 0, eff 0.9): 22 >= 25/0.9 = 27.78 → FALSE → no commit.
     // -----------------------------------------------------------------------------------------
 
     [Fact]
@@ -194,10 +197,10 @@ public class BatteryArbitrageTests
         {
             Seg(0, 25),
             Seg(1, 25),
-            Seg(2, 25, buy: 10, buyLocked: false, advBuy: Adv(8, 10, 30)),
+            Seg(2, 25, buy: 10, buyLocked: false, advBuy: Adv(8, 10, 40)),
             Seg(3, 25),
             Seg(4, 25),
-            Seg(5, 25, sell: 40m, sellLocked: false, advSell: Adv(-42m, -40m, -10m)),
+            Seg(5, 25, sell: 40m, sellLocked: false, advSell: Adv(-44m, -40m, -4m)),
             Seg(6, 25),
         };
 
