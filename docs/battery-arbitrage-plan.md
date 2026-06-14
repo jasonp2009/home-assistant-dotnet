@@ -1,6 +1,9 @@
 # Battery price-arbitrage plan (finding #4)
 
-Status: **plan for review — not yet implemented.**
+Status: **implemented** (`WeightedPrice` extraction → `ApplyArbitrage` → tests → wired into the control loop).
+Active when `ArbitrageEnabled` (YAML, currently `true`); set it `false` to disable. Defaults
+`ArbitragePessimismWeight=0.7`, `RoundTripEfficiency=0.9`, `ArbitrageMinMarginPerKwh=5` are starting points to
+tune against real Amber data.
 
 ## Context
 
