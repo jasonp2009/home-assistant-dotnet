@@ -140,7 +140,73 @@ public static class BatteryPlanner
     /// </summary>
     public static void ApplyArbitrage(List<EnergySegment> energySegments, BatteryConfig config)
     {
-        throw new NotImplementedException();
+        if (!config.ArbitrageEnabled) return;
+        const decimal tol = 0.01m;
+        var loopGuard = 0;
+        while (loopGuard++ < energySegments.Count)
+        {
+            // Candidate sells: Action==None and SellPricePerKw != null, sorted by PessimisticSellEarning DESC
+            var sells = energySegments
+                .Where(s => s.Action == EnergySegmentAction.None && s.SellPricePerKw != null)
+                .OrderByDescending(s => s.PessimisticSellEarning(config));
+
+            var committed = false;
+            foreach (var sell in sells)
+            {
+                var sellIndex = energySegments.IndexOf(sell);
+                var sellEarning = sell.PessimisticSellEarning(config);
+
+                // Candidate buys: Action==None, BuyPricePerKw != null, not the sell, and the pair is feasible.
+                // Pick the lowest PessimisticBuyCost among feasible buys.
+                EnergySegment? bestBuy = null;
+                var bestCost = decimal.MaxValue;
+                foreach (var buy in energySegments.Where(b => b.Action == EnergySegmentAction.None && b.BuyPricePerKw != null && b != sell))
+                {
+                    var buyIndex = energySegments.IndexOf(buy);
+                    if (!FeasiblePair(buyIndex, sellIndex, energySegments, config, tol)) continue;
+                    var cost = buy.PessimisticBuyCost(config);
+                    if (cost < bestCost) { bestCost = cost; bestBuy = buy; }
+                }
+                if (bestBuy is null) continue; // This sell has no feasible buy -> try next-best sell
+
+                // Profit gate
+                if (sellEarning >= bestCost / config.RoundTripEfficiency + config.ArbitrageMinMarginPerKwh)
+                {
+                    var buyIndex = energySegments.IndexOf(bestBuy);
+                    bestBuy.Action = EnergySegmentAction.Buy;
+                    sell.Action = EnergySegmentAction.Sell;
+                    for (var i = buyIndex; i < energySegments.Count; i++) energySegments[i].EstimatedBatteryChargeKwh += config.SegmentChargeAmountKwh;
+                    for (var i = sellIndex; i < energySegments.Count; i++) energySegments[i].EstimatedBatteryChargeKwh -= config.SegmentDischargeAmountKwh;
+                    committed = true;
+                    break; // Restart the outer while from scratch
+                }
+                // else: this sell's best buy isn't profitable -> try the next-best sell
+            }
+            if (!committed) break; // No profitable feasible pair anywhere -> done
+        }
+    }
+
+    private static bool FeasiblePair(int buyIndex, int sellIndex, List<EnergySegment> energySegments, BatteryConfig config, decimal tol)
+    {
+        if (buyIndex < sellIndex)
+        {
+            // Buy before sell: hold the extra kWh; check we don't exceed MaxCapacity
+            for (var i = buyIndex; i < sellIndex; i++)
+            {
+                if (energySegments[i].EstimatedBatteryChargeKwh + config.SegmentChargeAmountKwh > config.MaxCapacity + tol)
+                    return false;
+            }
+        }
+        else
+        {
+            // Sell before buy: discharge early then refill; check we don't go below MinCapacity
+            for (var i = sellIndex; i < buyIndex; i++)
+            {
+                if (energySegments[i].EstimatedBatteryChargeKwh - config.SegmentDischargeAmountKwh < config.MinCapacity - tol)
+                    return false;
+            }
+        }
+        return true;
     }
 
     /// <summary>
