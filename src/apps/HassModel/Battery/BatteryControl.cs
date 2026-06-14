@@ -73,6 +73,7 @@ public class BatteryControl
         _config.BatteryUntilLog.SetDatetime(datetime: BatteryPlanner.GetBatteryUntil(energySegments, _config).ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss"));
 
         BatteryPlanner.OptimiseSegments(energySegments, _config, hourlyUsage);
+        BatteryPlanner.ApplyArbitrage(energySegments, _config);
 
         var currentAction = energySegments.First().Action;
         _config.CurrentActionLog.SelectOption(currentAction.ToString());
