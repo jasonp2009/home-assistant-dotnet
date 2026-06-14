@@ -84,6 +84,7 @@ public static class BatteryPlanner
                     break;
                 var maxPriceSegmentIndex = energySegments.IndexOf(maxPriceSegment);
                 maxPriceSegment.Action = EnergySegmentAction.Sell;
+                maxPriceSegment.ActionReason = EnergySegmentActionReason.Usage;
                 for (var i = maxPriceSegmentIndex; i < energySegments.Count; i++)
                 {
                     energySegments[i].EstimatedBatteryChargeKwh -= config.SegmentDischargeAmountKwh;
@@ -103,6 +104,7 @@ public static class BatteryPlanner
                     break;
                 var lowestPriceSegmentIndex = energySegments.IndexOf(lowestPriceSegment);
                 lowestPriceSegment.Action = EnergySegmentAction.Buy;
+                lowestPriceSegment.ActionReason = EnergySegmentActionReason.Usage;
                 for (var i = lowestPriceSegmentIndex; i < energySegments.Count; i++)
                 {
                     energySegments[i].EstimatedBatteryChargeKwh += config.SegmentChargeAmountKwh;
@@ -174,7 +176,9 @@ public static class BatteryPlanner
                 {
                     var buyIndex = energySegments.IndexOf(bestBuy);
                     bestBuy.Action = EnergySegmentAction.Buy;
+                    bestBuy.ActionReason = EnergySegmentActionReason.Arbitrage;
                     sell.Action = EnergySegmentAction.Sell;
+                    sell.ActionReason = EnergySegmentActionReason.Arbitrage;
                     for (var i = buyIndex; i < energySegments.Count; i++) energySegments[i].EstimatedBatteryChargeKwh += config.SegmentChargeAmountKwh;
                     for (var i = sellIndex; i < energySegments.Count; i++) energySegments[i].EstimatedBatteryChargeKwh -= config.SegmentDischargeAmountKwh;
                     committed = true;

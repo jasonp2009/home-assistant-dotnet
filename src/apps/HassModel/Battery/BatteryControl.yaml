@@ -20,9 +20,12 @@
   RoundTripEfficiency: 0.9
   ArbitrageMinMarginPerKwh: 0
   CurrentActionLog: input_select.current_action_battery_log
+  CurrentActionReasonLog: input_select.current_action_reason_battery_log
+  CurrentActionWithPriceLog: input_text.current_action_with_price_battery_log
   CurrentActionEndLog: input_datetime.current_action_end_battery_log
   BatteryUntilLog: input_datetime.battery_until_battery_log
   NextActionLog: input_select.next_action_battery_log
+  NextActionReasonLog: input_select.next_action_reason_battery_log
   NextActionPriceLog: input_number.next_action_price_battery_log
   NextActionAtLog: input_datetime.next_action_at_battery_log
   BatteryCapacity: 53

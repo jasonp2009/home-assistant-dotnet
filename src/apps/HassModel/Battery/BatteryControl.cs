@@ -75,8 +75,16 @@ public class BatteryControl
         BatteryPlanner.OptimiseSegments(energySegments, _config, hourlyUsage);
         BatteryPlanner.ApplyArbitrage(energySegments, _config);
 
-        var currentAction = energySegments.First().Action;
+        var currentSegment = energySegments.First();
+        var currentAction = currentSegment.Action;
         _config.CurrentActionLog.SelectOption(currentAction.ToString());
+        _config.CurrentActionReasonLog.SelectOption(currentSegment.ActionReason.ToString());
+        _config.CurrentActionWithPriceLog.SetValue(currentAction switch
+        {
+            EnergySegmentAction.Buy => $"Buy at {Math.Round(currentSegment.BuyPricePerKw ?? 0)}c",
+            EnergySegmentAction.Sell => $"Sell at {Math.Round(currentSegment.SellPricePerKw ?? 0)}c",
+            _ => "None"
+        });
         var currentActionEnd = energySegments.FirstOrDefault(segment => segment.Action != currentAction);
         if (currentActionEnd is not null)
         {
@@ -89,11 +97,13 @@ public class BatteryControl
             if (nextAction is null)
             {
                 _config.NextActionLog.SelectOption(EnergySegmentAction.None.ToString());
+                _config.NextActionReasonLog.SelectOption(EnergySegmentActionReason.NotApplicable.ToString());
                 _config.NextActionPriceLog.SetValue(0);
             }
             else
             {
                 _config.NextActionLog.SelectOption(nextAction.Action.ToString());
+                _config.NextActionReasonLog.SelectOption(nextAction.ActionReason.ToString());
                 _config.NextActionPriceLog.SetValue(nextAction.Action switch
                 {
                     EnergySegmentAction.Buy => Convert.ToDouble(Math.Round(nextAction.BuyPricePerKw ?? 0) / 100),
@@ -106,6 +116,7 @@ public class BatteryControl
         else
         {
             _config.NextActionLog.SelectOption(EnergySegmentAction.None.ToString());
+            _config.NextActionReasonLog.SelectOption(EnergySegmentActionReason.NotApplicable.ToString());
             _config.NextActionPriceLog.SetValue(0);
         }
         return currentAction;

@@ -19,6 +19,7 @@ public class EnergySegment
     public bool IsSellEstimate { get; set; } = true;
     public AdvancedPrice? AdvancedSellPrice { get; set; }
     public EnergySegmentAction Action { get; set; } = EnergySegmentAction.None;
+    public EnergySegmentActionReason ActionReason { get; set; } = EnergySegmentActionReason.NotApplicable;
 
     public override string ToString()
     {
