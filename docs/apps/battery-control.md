@@ -24,7 +24,8 @@ accordingly.
 1. **Build the forecast horizon.** Create a list of [`EnergySegment`](../../src/apps/HassModel/Battery/Models/EnergySegment.cs)s,
    one per 5-minute slot, spanning at least `MinForecastHours` (72 h). Each segment is seeded with a
    projected battery charge: start from the current state of charge, then for each subsequent
-   segment subtract the estimated usage and add the solar forecast.
+   segment subtract the estimated usage (a **per-time-of-day** estimate — see
+   [Segmented usage estimate](#segmented-usage-estimate)) and add the solar forecast.
    - Amber prices ([`AmberClient.GetCurrentPriceAsync`](../../src/apps/HassModel/Battery/Clients/AmberClient/AmberClient.cs))
      and the solar forecast ([`ForecastSolarClient`](../../src/apps/HassModel/Battery/Clients/ForecastSolarClient/ForecastSolarClient.cs))
      are fetched in parallel.
@@ -77,6 +78,32 @@ usage estimate can be supplied per segment without changing the weighting logic.
 See the unit tests in [`../../test/apps/HassModel/Battery/Extensions/`](../../test/apps/HassModel/Battery/Extensions/)
 for worked examples of every branch.
 
+## Segmented usage estimate
+
+The per-segment **drain** in `BuildSegments` is a learned, time-of-day consumption estimate (so a
+3 a.m. segment and a 6 p.m. segment deplete by realistic, different amounts), produced by
+[`UsageTracker`](../../src/apps/HassModel/Battery/Usage/UsageTracker.cs) + the pure
+[`UsageMath`](../../src/apps/HassModel/Battery/Usage/UsageMath.cs):
+
+1. **Measure consumption** from the cumulative counters as a delta between readings:
+   `ΔgridIn − ΔgridOut + Δsolar − (Δcharge − Δdischarge)`. The battery charge/discharge counters reset
+   daily, so a backwards delta marks a reset and the sample is skipped.
+2. **Solar-aligned windowing.** The solar lifetime counter only advances every ~15 min, so
+   consumption is measured over a window that closes when solar ticks (or at `UsageMaxWindowSegments`
+   for night/no-generation) and **spread evenly** across the 5-minute segments it covers — the same
+   anti-sawtooth trick as `ApplySolarForecast`.
+3. **Storage is in-memory; HA is the source of truth.** On startup the sample set is backfilled from
+   `UsageBackfillDays` of HA history (via [`HaHistoryClient`](../../src/apps/HassModel/Battery/Clients/HaHistoryClient/HaHistoryClient.cs))
+   and then extended live each run. A restart simply re-pulls from HA, so gaps self-heal.
+4. **Estimate** for a target segment: average samples sharing its local time-of-day over the last
+   1 / 3 / 7 days, blended `0.4 / 0.3 / 0.3` (renormalised over windows that have data), times
+   `EstimatedUsageMultiplier`. Any time-of-day bucket with no data falls back to the flat 3-day
+   average, so the estimate is never 0.
+
+The **runway** risk weight (above) still uses the flat 3-day *average* hourly usage, not the
+time-of-day estimate: runway is an average-rate concept, and an instantaneous near-zero overnight rate
+would make hours-to-empty effectively infinite.
+
 ## Key files
 
 | File | Role |
@@ -87,8 +114,11 @@ for worked examples of every branch.
 | [`BatteryControl.yaml`](../../src/apps/HassModel/Battery/BatteryControl.yaml) | Entity ids + tuning values |
 | [`Models/EnergySegment.cs`](../../src/apps/HassModel/Battery/Models/EnergySegment.cs) | A 5-minute slot: projected charge, prices, solar, action |
 | [`Extensions/EnergySegmentExtensions.cs`](../../src/apps/HassModel/Battery/Extensions/EnergySegmentExtensions.cs) | `ApplyPrice`, `ApplySolarForecast`, `GetHoursToEmpty`, `GetRiskWeight`, `GetWeightedPrice` |
+| [`Usage/UsageMath.cs`](../../src/apps/HassModel/Battery/Usage/UsageMath.cs) | Pure usage maths: `ComputeConsumption`, `SpreadWindow`, `BuildSamplesFromReadings`, `EstimateSegmentUsage` |
+| [`Usage/UsageTracker.cs`](../../src/apps/HassModel/Battery/Usage/UsageTracker.cs) | In-memory sample store: startup backfill + per-run live update + `BuildEstimator` |
 | [`Clients/AmberClient/`](../../src/apps/HassModel/Battery/Clients/AmberClient/) | Amber API client, interval models (`BaseInterval`/`Current`/`Forecast`/`Actual`), `AdvancedPrice`, channel/descriptor enums |
 | [`Clients/ForecastSolarClient/`](../../src/apps/HassModel/Battery/Clients/ForecastSolarClient/) | Forecast.Solar API client |
+| [`Clients/HaHistoryClient/`](../../src/apps/HassModel/Battery/Clients/HaHistoryClient/) | Minimal HA REST history client used to backfill the usage estimate on startup |
 
 ## Behaviour notes & known trade-offs
 
@@ -127,6 +157,17 @@ for worked examples of every branch.
 | `OptimismMaxAtHours` | 32 | Runway at/above which optimism is maxed |
 | `OptimismMaxWeight` | 0.3 | Max optimism blend fraction |
 
+**Segmented usage estimate**
+
+| Key | Default | Meaning |
+|---|---|---|
+| `UsageBackfillDays` | 7 | Days of HA history pulled on startup to seed the estimate |
+| `UsageMaxWindowSegments` | 4 | Measurement-window cap (segments); closes night/no-solar windows and bounds gaps |
+| `UsageMaxSegmentKwh` | 5 | Per-segment sanity cap; windows above it are discarded |
+| `UsageWindow1Days` / `UsageWindow1Weight` | 1 / 0.4 | Recent window (days back) and blend weight |
+| `UsageWindow2Days` / `UsageWindow2Weight` | 3 / 0.3 | Mid window |
+| `UsageWindow3Days` / `UsageWindow3Weight` | 7 / 0.3 | Long window |
+
 **Inverter modes** — strings matching the work-mode `select` options:
 `BatteryNoneMode` = `Self-consumption mode`, `BatteryChargeMode` = `Reserve power mode`,
 `BatteryDischargeMode` = `Custom mode`.
@@ -142,9 +183,16 @@ for worked examples of every branch.
 | `GridOut3DaysEntity` | `sensor.energy_meter_grid_out_3_days` |
 | `SolarProduction3DaysEntity` | `sensor.pawar_plant_total_solar_production_3_days` |
 | `BatteryChargeDiff3DaysEntity` | `sensor.solar_battery_battery_diff_3_days` |
+| `GridEnergyInTotalEntity` | `sensor.energy_meter_grid_energy_in_total` (lifetime kWh) |
+| `GridEnergyOutTotalEntity` | `sensor.energy_meter_grid_energy_out_total` (lifetime kWh) |
+| `SolarLifetimeOutputEntity` | `sensor.pawar_plant_total_lifetime_energy_output` (lifetime kWh, ~15-min updates) |
+| `BatteryEnergyChargingEntity` | `sensor.ai_hb_g2_series_battery_energy_for_charging` (kWh, daily reset) |
+| `BatteryEnergyDischargingEntity` | `sensor.ai_hb_g2_series_battery_energy_for_discharging` (kWh, daily reset) |
 
-The hourly usage estimate is derived from the four 3-day sensors:
-`gridIn − gridOut + solar − batteryUsage`, averaged per segment and scaled by `EstimatedUsageMultiplier`.
+The four 3-day sensors give the **flat average** hourly usage (`gridIn − gridOut + solar − batteryUsage`,
+averaged per segment, scaled by `EstimatedUsageMultiplier`). That average drives the runway risk weight
+and is the per-segment fallback. The per-segment **drain** itself comes from the cumulative counters via
+the [segmented usage estimate](#segmented-usage-estimate).
 
 **Write (control)**
 
