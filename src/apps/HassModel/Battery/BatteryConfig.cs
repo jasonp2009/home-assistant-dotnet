@@ -1,4 +1,5 @@
-﻿using HomeAssistantGenerated;
+﻿using System.Collections.Generic;
+using HomeAssistantGenerated;
 
 namespace src.apps.HassModel.Battery;
 
@@ -10,6 +11,35 @@ public class BatteryConfig
     public SensorEntity SolarProduction3DaysEntity { get; set; }
     public SensorEntity BatteryChargeDiff3DaysEntity { get; set; }
     public decimal EstimatedUsageMultiplier { get; set; }
+
+    // Cumulative (lifetime) counters used to learn per-time-of-day consumption. Consumption over an
+    // interval = ΔgridIn − ΔgridOut + Δsolar − (Δcharge − Δdischarge). The battery charge/discharge
+    // counters reset daily (handled in UsageMath). See docs/apps/battery-control.md.
+    public SensorEntity GridEnergyInTotalEntity { get; set; }
+    public SensorEntity GridEnergyOutTotalEntity { get; set; }
+    public SensorEntity SolarLifetimeOutputEntity { get; set; }
+    public SensorEntity BatteryEnergyChargingEntity { get; set; }
+    public SensorEntity BatteryEnergyDischargingEntity { get; set; }
+
+    // Segmented usage estimate (UsageTracker / UsageMath).
+    public int UsageBackfillDays { get; set; }        // history pulled on startup to seed the estimate
+    public int UsageMaxWindowSegments { get; set; }   // window cap: closes night/no-solar windows and bounds gaps
+    public decimal UsageMaxSegmentKwh { get; set; }   // per-segment sanity cap; larger windows are discarded
+    // Three nested averaging windows (days back) and their blend weights (renormalised over windows
+    // that have data). Defaults: last 1 day 0.4, last 3 days 0.3, last 7 days 0.3.
+    public int UsageWindow1Days { get; set; }
+    public decimal UsageWindow1Weight { get; set; }
+    public int UsageWindow2Days { get; set; }
+    public decimal UsageWindow2Weight { get; set; }
+    public int UsageWindow3Days { get; set; }
+    public decimal UsageWindow3Weight { get; set; }
+
+    public IEnumerable<(int Days, decimal Weight)> UsageEstimateWindows =>
+    [
+        (UsageWindow1Days, UsageWindow1Weight),
+        (UsageWindow2Days, UsageWindow2Weight),
+        (UsageWindow3Days, UsageWindow3Weight)
+    ];
 
     // Risk weighting based on battery runway (hours-to-empty). Pessimism leans an estimated
     // price toward Amber's High bound (buy)/Low bound (sell); optimism leans the other way.
