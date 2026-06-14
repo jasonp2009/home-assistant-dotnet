@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using src.apps.HassModel.AC;
 using src.apps.HassModel.Battery.Clients.AmberClient;
 using src.apps.HassModel.Battery.Clients.ForecastSolarClient;
+using src.apps.HassModel.Battery.Clients.HaHistoryClient;
 
 namespace src;
 
@@ -13,6 +14,7 @@ public static class DependencyInjection
         services.AddMitsubishiClient(configuration);
         services.AddForecastSolarClient(configuration);
         services.AddAmberClient(configuration);
+        services.AddHaHistoryClient(configuration);
         return services;
     }
 }
