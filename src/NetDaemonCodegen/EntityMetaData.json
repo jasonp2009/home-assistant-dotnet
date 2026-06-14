@@ -500,7 +500,7 @@
         {
           "jsonName": "media_content_id",
           "cSharpName": "MediaContentId",
-          "clrType": "System.String"
+          "clrType": "System.Object"
         },
         {
           "jsonName": "media_content_type",
@@ -610,6 +610,41 @@
         {
           "jsonName": "player_source",
           "cSharpName": "PlayerSource",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "media_series_title",
+          "cSharpName": "MediaSeriesTitle",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "media_season",
+          "cSharpName": "MediaSeason",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "media_episode",
+          "cSharpName": "MediaEpisode",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "media_content_rating",
+          "cSharpName": "MediaContentRating",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "media_library_title",
+          "cSharpName": "MediaLibraryTitle",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "media_summary",
+          "cSharpName": "MediaSummary",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "username",
+          "cSharpName": "Username",
           "clrType": "System.String"
         }
       ]
@@ -3046,6 +3081,11 @@
           "jsonName": "entity_id",
           "cSharpName": "EntityId",
           "clrType": "System.Collections.Generic.IReadOnlyList\u00601[System.String]"
+        },
+        {
+          "jsonName": "arjun.ja5 - Plex for Samsung",
+          "cSharpName": "Arjun_ja5PlexforSamsung",
+          "clrType": "System.String"
         }
       ]
     },
