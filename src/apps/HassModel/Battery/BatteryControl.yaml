@@ -15,6 +15,10 @@
   OptimismStartHours: 26
   OptimismMaxAtHours: 32
   OptimismMaxWeight: 0.3
+  ArbitrageEnabled: true
+  ArbitragePessimismWeight: 0.7
+  RoundTripEfficiency: 0.9
+  ArbitrageMinMarginPerKwh: 5
   CurrentActionLog: input_select.current_action_battery_log
   CurrentActionEndLog: input_datetime.current_action_end_battery_log
   BatteryUntilLog: input_datetime.battery_until_battery_log

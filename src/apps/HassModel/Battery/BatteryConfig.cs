@@ -20,6 +20,15 @@ public class BatteryConfig
     public decimal OptimismStartHours { get; set; }   // runway above which optimism begins ramping
     public decimal OptimismMaxAtHours { get; set; }   // runway at/above which optimism is maxed
     public decimal OptimismMaxWeight { get; set; }    // max optimism blend fraction
+
+    // Price arbitrage (buy import low / export high). Uses a fixed pessimistic weight (not the runway weight)
+    // so it only commits when confident. Profit gate:
+    //   pessimisticSell >= pessimisticBuy / RoundTripEfficiency + ArbitrageMinMarginPerKwh.
+    public bool ArbitrageEnabled { get; set; }
+    public decimal ArbitragePessimismWeight { get; set; }  // 0..1: how far arbitrage prices lean to High (buy) / low-earning (sell)
+    public decimal RoundTripEfficiency { get; set; }       // charge->discharge efficiency, used only in the profit gate
+    public decimal ArbitrageMinMarginPerKwh { get; set; }  // minimum profit (price units) required to commit a pair
+
     public SelectEntity BatteryModeSelectEntity { get; set; }
     public string BatteryNoneMode { get; set; }
     public string BatteryChargeMode { get; set; }

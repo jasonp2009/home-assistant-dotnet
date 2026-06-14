@@ -74,8 +74,18 @@ public static class EnergySegmentExtensions
     public static decimal GetWeightedPrice(this EnergySegment segment, bool isBuy, BatteryConfig config, decimal hourlyUsageKwh)
     {
         var hoursToEmpty = GetHoursToEmpty(segment.EstimatedBatteryChargeKwh, config.MinCapacity, hourlyUsageKwh);
-        var advancedPriceWeight = GetRiskWeight(hoursToEmpty, config);
+        return segment.WeightedPrice(isBuy, GetRiskWeight(hoursToEmpty, config));
+    }
 
+    /// <summary>
+    /// Blends a segment's price toward an uncertainty bound by a signed weight: positive = pessimistic
+    /// (buy leans to the advanced High; sell leans to the lowest plausible earning), negative = optimistic.
+    /// Locked (non-estimate) prices pass through unchanged; estimates with no advanced band scale the raw
+    /// price. Shared by the runway weighting (<see cref="GetWeightedPrice"/>) and the arbitrage pricing
+    /// (which passes a fixed pessimistic weight).
+    /// </summary>
+    public static decimal WeightedPrice(this EnergySegment segment, bool isBuy, decimal advancedPriceWeight)
+    {
         if (isBuy && !segment.IsBuyEstimate) return segment.BuyPricePerKw ?? decimal.MaxValue;
         if (!isBuy && !segment.IsSellEstimate) return segment.SellPricePerKw ?? decimal.MinValue;
         var advancedPrice = isBuy ? segment.AdvancedBuyPrice : segment.AdvancedSellPrice;
@@ -85,7 +95,7 @@ public static class EnergySegmentExtensions
         var predicted = isBuy ? advancedPrice.Predicted : -advancedPrice.Predicted;
         var high = isBuy ? advancedPrice.High : -advancedPrice.High;
         var low = isBuy ? advancedPrice.Low : -advancedPrice.Low;
-        
+
         var advancedPriceAdjustor = advancedPriceWeight > 0 ? high : low;
         return predicted * (1 - Math.Abs(advancedPriceWeight)) +
                advancedPriceAdjustor * Math.Abs(advancedPriceWeight);
@@ -127,4 +137,20 @@ public static class EnergySegmentExtensions
         }
         return 0m;
     }
+
+    /// <summary>
+    /// Conservative (pessimistic) import cost for arbitrage: the weighted price using a fixed positive weight
+    /// (<c>config.ArbitragePessimismWeight</c>), so it leans toward the advanced High bound. Returns
+    /// decimal.MaxValue when there is no buy price.
+    /// </summary>
+    public static decimal PessimisticBuyCost(this EnergySegment segment, BatteryConfig config)
+        => segment.WeightedPrice(isBuy: true, config.ArbitragePessimismWeight);
+
+    /// <summary>
+    /// Conservative (pessimistic) feed-in earning for arbitrage: the weighted price using a fixed positive
+    /// weight (<c>config.ArbitragePessimismWeight</c>), so it leans toward the lowest plausible earning.
+    /// Returns decimal.MinValue when there is no sell price.
+    /// </summary>
+    public static decimal PessimisticSellEarning(this EnergySegment segment, BatteryConfig config)
+        => segment.WeightedPrice(isBuy: false, config.ArbitragePessimismWeight);
 }

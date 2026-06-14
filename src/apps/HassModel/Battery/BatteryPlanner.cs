@@ -113,6 +113,37 @@ public static class BatteryPlanner
     }
 
     /// <summary>
+    /// Opportunistic price arbitrage (buy import low / export high). Runs AFTER <see cref="OptimiseSegments"/>
+    /// on the same segment list and mutates it in place. No-op when <c>config.ArbitrageEnabled</c> is false.
+    ///
+    /// Greedy loop:
+    ///  1. Among segments with <c>Action == None</c> and a sell price (<c>SellPricePerKw != null</c>), take the
+    ///     one with the highest <c>PessimisticSellEarning(config)</c> (most we can confidently earn exporting).
+    ///  2. Among segments with <c>Action == None</c> and a buy price (<c>BuyPricePerKw != null</c>), other than
+    ///     the chosen sell, that form a FEASIBLE pair, take the one with the lowest <c>PessimisticBuyCost(config)</c>.
+    ///  3. Commit the pair only when it clears the profit gate:
+    ///       <c>PessimisticSellEarning(sell) >= PessimisticBuyCost(buy) / config.RoundTripEfficiency + config.ArbitrageMinMarginPerKwh</c>.
+    ///     Committing sets <c>buy.Action = Buy</c>, <c>sell.Action = Sell</c>, and applies the 1 kWh round-trip to
+    ///     the projection: <c>+SegmentChargeAmountKwh</c> from the buy index onward and
+    ///     <c>-SegmentDischargeAmountKwh</c> from the sell index onward (same convention as OptimiseSegments).
+    ///  4. Repeat until no profitable, feasible pair remains. If the best sell has no profitable feasible buy,
+    ///     move on to the next-best sell before stopping (don't give up at the first miss).
+    ///
+    /// FEASIBILITY keeps the round-trip within [MinCapacity, MaxCapacity] (i.e. inside the slack between
+    /// boundary crossings), using a small tolerance (e.g. 0.01) to absorb SegmentChargeAmountKwh rounding:
+    ///  - buy before sell (charge cheap, hold, export dear): every segment i with buyIndex &lt;= i &lt; sellIndex
+    ///    must satisfy <c>charge[i] + SegmentChargeAmountKwh &lt;= MaxCapacity + tol</c>.
+    ///  - sell before buy (export from stored charge, refill cheap): every segment i with sellIndex &lt;= i &lt; buyIndex
+    ///    must satisfy <c>charge[i] - SegmentDischargeAmountKwh &gt;= MinCapacity - tol</c>.
+    ///
+    /// Round-trip efficiency is applied ONLY in the profit gate, not in the 1 kWh charge accounting.
+    /// </summary>
+    public static void ApplyArbitrage(List<EnergySegment> energySegments, BatteryConfig config)
+    {
+        throw new NotImplementedException();
+    }
+
+    /// <summary>
     /// Finds the first point at which the projected charge is parked against a capacity limit and
     /// still moving the wrong way: at/below MinCapacity and still falling (buy needed), or
     /// at/above MaxCapacity and still rising (sell needed). Returns no boundary when within range.
