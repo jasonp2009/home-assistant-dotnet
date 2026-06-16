@@ -183,14 +183,16 @@ public class BatteryArbitrageTests
     }
 
     // -----------------------------------------------------------------------------------------
-    // 7. UncertainPrices_GatedByPessimism
-    //    Predicted: buy=10, sell=40 → would commit on predicted alone (40 >= 10/0.9 = 11.1).
-    //    Pessimistic (weight 0.5): buy ~25 (10*0.5 + 40*0.5), sell ~22 (40*0.5 + 4*0.5).
-    //    Gate (margin 0, eff 0.9): 22 >= 25/0.9 = 27.78 → FALSE → no commit.
+    // 7. DirectionalPessimism_PricesEarlierLegAtFaceValue
+    //    buy(seg2) before sell(seg5), both estimates. Pessimism (0.5) lands on the LATER leg only (the
+    //    sell): 40*0.5 + 4*0.5 = 22. The earlier leg (buy) is priced at face value (predicted) = 10.
+    //    Gate (margin 0, eff 0.9): net = 22 - 10/0.9 = 10.89 >= 0 → COMMITS.
+    //    (The old both-legs-pessimised pricing used buy ~25 → 22 vs 25/0.9 = 27.78 → would NOT have
+    //    committed; this pins the directional change.)
     // -----------------------------------------------------------------------------------------
 
     [Fact]
-    public void UncertainPrices_GatedByPessimism()
+    public void DirectionalPessimism_PricesEarlierLegAtFaceValue()
     {
         var cfg = Cfg();
         var segs = new List<EnergySegment>
@@ -201,6 +203,99 @@ public class BatteryArbitrageTests
             Seg(3, 25),
             Seg(4, 25),
             Seg(5, 25, sell: 40m, sellLocked: false, advSell: Adv(-44m, -40m, -4m)),
+            Seg(6, 25),
+        };
+
+        BatteryPlanner.OptimiseSegments(segs, cfg, 1m);
+        BatteryPlanner.ApplyArbitrage(segs, cfg);
+
+        var actions = string.Join(",", segs.Select(s => s.Action));
+        Assert.True(segs[2].Action == EnergySegmentAction.Buy, $"actions=[{actions}]");
+        Assert.True(segs[5].Action == EnergySegmentAction.Sell, $"actions=[{actions}]");
+    }
+
+    // -----------------------------------------------------------------------------------------
+    // 8. LaterLegPessimism_StillGatesUncertainPair
+    //    buy(seg2) before sell(seg5), both estimates. Earlier leg (buy) at face value = 20. Later leg
+    //    (sell) pessimised: predicted 30, low-earning bound 2 → 30*0.5 + 2*0.5 = 16.
+    //    Gate (margin 0): net = 16 - 20/0.9 = -6.22 < 0 → NO commit — even though face value alone
+    //    (30 - 20/0.9 = 7.78) would have cleared it. Proves the later leg's pessimism still bites.
+    // -----------------------------------------------------------------------------------------
+
+    [Fact]
+    public void LaterLegPessimism_StillGatesUncertainPair()
+    {
+        var cfg = Cfg();
+        var segs = new List<EnergySegment>
+        {
+            Seg(0, 25),
+            Seg(1, 25),
+            Seg(2, 25, buy: 20, buyLocked: false, advBuy: Adv(18, 20, 30)),
+            Seg(3, 25),
+            Seg(4, 25),
+            Seg(5, 25, sell: 30m, sellLocked: false, advSell: Adv(-40m, -30m, -2m)),
+            Seg(6, 25),
+        };
+
+        BatteryPlanner.OptimiseSegments(segs, cfg, 1m);
+        BatteryPlanner.ApplyArbitrage(segs, cfg);
+
+        var actions = string.Join(",", segs.Select(s => s.Action));
+        Assert.True(segs.All(s => s.Action == EnergySegmentAction.None), $"actions=[{actions}]");
+    }
+
+    // -----------------------------------------------------------------------------------------
+    // 9. SellBeforeBuy_PessimisesLaterBuyNotEarlierSell
+    //    sell(seg1) before buy(seg4), both estimates. Here the BUY is the later leg. The earlier leg
+    //    (sell) is priced at face value (predicted) = 30 — its poor pessimistic bound (2) is NOT used.
+    //    Later leg (buy) pessimised: 10*0.5 + 20*0.5 = 15.
+    //    Gate (margin 0): net = 30 - 15/0.9 = 13.33 >= 0 → COMMITS. (Had the sell been wrongly
+    //    pessimised to 2, net would be -14.7 → blocked, so the commit proves the earlier sell is at
+    //    face value.)
+    // -----------------------------------------------------------------------------------------
+
+    [Fact]
+    public void SellBeforeBuy_PessimisesLaterBuyNotEarlierSell()
+    {
+        var cfg = Cfg();
+        var segs = new List<EnergySegment>
+        {
+            Seg(0, 25),
+            Seg(1, 25, sell: 30m, sellLocked: false, advSell: Adv(-35m, -30m, -2m)),
+            Seg(2, 25),
+            Seg(3, 25),
+            Seg(4, 25, buy: 10, buyLocked: false, advBuy: Adv(8, 10, 20)),
+            Seg(5, 25),
+            Seg(6, 25),
+        };
+
+        BatteryPlanner.OptimiseSegments(segs, cfg, 1m);
+        BatteryPlanner.ApplyArbitrage(segs, cfg);
+
+        var actions = string.Join(",", segs.Select(s => s.Action));
+        Assert.True(segs[1].Action == EnergySegmentAction.Sell, $"actions=[{actions}]");
+        Assert.True(segs[4].Action == EnergySegmentAction.Buy, $"actions=[{actions}]");
+    }
+
+    // -----------------------------------------------------------------------------------------
+    // 10. Margin2c_BlocksThinArbitrage
+    //    Deployed margin is 2c; this pins that it blocks a thin spread. buy 30, sell 35 (locked):
+    //    net = 35 - 30/0.9 = 1.67 < 2 → NO commit (would have committed at margin 0).
+    // -----------------------------------------------------------------------------------------
+
+    [Fact]
+    public void Margin2c_BlocksThinArbitrage()
+    {
+        var cfg = Cfg();
+        cfg.ArbitrageMinMarginPerKwh = 2m;
+        var segs = new List<EnergySegment>
+        {
+            Seg(0, 25),
+            Seg(1, 25),
+            Seg(2, 25, buy: 30),
+            Seg(3, 25),
+            Seg(4, 25),
+            Seg(5, 25, sell: 35m),
             Seg(6, 25),
         };
 

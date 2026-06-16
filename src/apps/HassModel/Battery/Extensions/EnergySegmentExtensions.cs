@@ -163,20 +163,4 @@ public static class EnergySegmentExtensions
         }
         return 0m;
     }
-
-    /// <summary>
-    /// Conservative (pessimistic) import cost for arbitrage: the weighted price using a fixed positive weight
-    /// (<c>config.ArbitragePessimismWeight</c>), so it leans toward the advanced High bound. Returns
-    /// decimal.MaxValue when there is no buy price.
-    /// </summary>
-    public static decimal PessimisticBuyCost(this EnergySegment segment, BatteryConfig config)
-        => segment.WeightedPrice(isBuy: true, config.ArbitragePessimismWeight);
-
-    /// <summary>
-    /// Conservative (pessimistic) feed-in earning for arbitrage: the weighted price using a fixed positive
-    /// weight (<c>config.ArbitragePessimismWeight</c>), so it leans toward the lowest plausible earning.
-    /// Returns decimal.MinValue when there is no sell price.
-    /// </summary>
-    public static decimal PessimisticSellEarning(this EnergySegment segment, BatteryConfig config)
-        => segment.WeightedPrice(isBuy: false, config.ArbitragePessimismWeight);
 }

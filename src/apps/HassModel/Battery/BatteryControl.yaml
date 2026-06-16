@@ -32,7 +32,7 @@
   ArbitrageEnabled: true
   ArbitragePessimismWeight: 0.5
   RoundTripEfficiency: 0.9
-  ArbitrageMinMarginPerKwh: 0
+  ArbitrageMinMarginPerKwh: 2
   CurrentActionLog: input_select.current_action_battery_log
   CurrentActionReasonLog: input_select.current_action_reason_battery_log
   CurrentActionWithPriceLog: input_text.current_action_with_price_battery_log

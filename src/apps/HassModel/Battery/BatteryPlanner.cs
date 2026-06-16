@@ -135,16 +135,24 @@ public static class BatteryPlanner
     ///
     /// Greedy loop:
     ///  1. Among segments with <c>Action == None</c> and a sell price (<c>SellPricePerKw != null</c>), take the
-    ///     one with the highest <c>PessimisticSellEarning(config)</c> (most we can confidently earn exporting).
+    ///     one with the highest face-value (predicted) earning.
     ///  2. Among segments with <c>Action == None</c> and a buy price (<c>BuyPricePerKw != null</c>), other than
-    ///     the chosen sell, that form a FEASIBLE pair, take the one with the lowest <c>PessimisticBuyCost(config)</c>.
+    ///     the chosen sell, that form a FEASIBLE pair, take the one giving the best net profit per kWh.
     ///  3. Commit the pair only when it clears the profit gate:
-    ///       <c>PessimisticSellEarning(sell) >= PessimisticBuyCost(buy) / config.RoundTripEfficiency + config.ArbitrageMinMarginPerKwh</c>.
+    ///       <c>net := sellEarning - buyCost / config.RoundTripEfficiency >= config.ArbitrageMinMarginPerKwh</c>.
     ///     Committing sets <c>buy.Action = Buy</c>, <c>sell.Action = Sell</c>, and applies the 1 kWh round-trip to
     ///     the projection: <c>+SegmentChargeAmountKwh</c> from the buy index onward and
     ///     <c>-SegmentDischargeAmountKwh</c> from the sell index onward (same convention as OptimiseSegments).
     ///  4. Repeat until no profitable, feasible pair remains. If the best sell has no profitable feasible buy,
     ///     move on to the next-best sell before stopping (don't give up at the first miss).
+    ///
+    /// PESSIMISM IS DIRECTIONAL: the discount (<c>config.ArbitragePessimismWeight</c>) is applied to the LATER
+    /// leg of the pair only — the speculative price we're waiting on — while the earlier, more-imminent leg is
+    /// priced at face value (the same way a materialised "now" price is acted on at face value elsewhere). That
+    /// keeps a near-future leg priced consistently with the current segment, so a sustained run does not drop
+    /// out one segment ahead and re-commit each tick:
+    ///  - buy before sell: the sell (later) is pessimised, the buy (earlier) is priced at predicted.
+    ///  - sell before buy: the buy (later) is pessimised, the sell (earlier) is priced at predicted.
     ///
     /// FEASIBILITY keeps the round-trip within [MinCapacity, MaxCapacity] (i.e. inside the slack between
     /// boundary crossings), using a small tolerance (e.g. 0.01) to absorb SegmentChargeAmountKwh rounding:
@@ -162,32 +170,37 @@ public static class BatteryPlanner
         var loopGuard = 0;
         while (loopGuard++ < energySegments.Count)
         {
-            // Candidate sells: Action==None and SellPricePerKw != null, sorted by PessimisticSellEarning DESC
+            // Rank candidate sells (Action==None, SellPricePerKw != null) by face-value (predicted) earning,
+            // DESC. The pessimism discount is applied per-pair to the later leg only, so the sell is ranked at
+            // face value here rather than pre-discounted.
             var sells = energySegments
                 .Where(s => s.Action == EnergySegmentAction.None && s.SellPricePerKw != null)
-                .OrderByDescending(s => s.PessimisticSellEarning(config));
+                .OrderByDescending(s => s.WeightedPrice(isBuy: false, 0m));
 
             var committed = false;
             foreach (var sell in sells)
             {
                 var sellIndex = energySegments.IndexOf(sell);
-                var sellEarning = sell.PessimisticSellEarning(config);
 
                 // Candidate buys: Action==None, BuyPricePerKw != null, not the sell, and the pair is feasible.
-                // Pick the lowest PessimisticBuyCost among feasible buys.
+                // Pessimise only the LATER leg (the speculative price we're waiting on); price the earlier,
+                // more-imminent leg at face value. Keep the buy giving the best net profit per kWh.
                 EnergySegment? bestBuy = null;
-                var bestCost = decimal.MaxValue;
+                var bestNet = decimal.MinValue;
                 foreach (var buy in energySegments.Where(b => b.Action == EnergySegmentAction.None && b.BuyPricePerKw != null && b != sell))
                 {
                     var buyIndex = energySegments.IndexOf(buy);
                     if (!FeasiblePair(buyIndex, sellIndex, energySegments, config, tol)) continue;
-                    var cost = buy.PessimisticBuyCost(config);
-                    if (cost < bestCost) { bestCost = cost; bestBuy = buy; }
+                    var sellIsLater = sellIndex > buyIndex;
+                    var sellEarning = sell.WeightedPrice(isBuy: false, sellIsLater ? config.ArbitragePessimismWeight : 0m);
+                    var buyCost = buy.WeightedPrice(isBuy: true, sellIsLater ? 0m : config.ArbitragePessimismWeight);
+                    var net = sellEarning - buyCost / config.RoundTripEfficiency;
+                    if (net > bestNet) { bestNet = net; bestBuy = buy; }
                 }
                 if (bestBuy is null) continue; // This sell has no feasible buy -> try next-best sell
 
-                // Profit gate
-                if (sellEarning >= bestCost / config.RoundTripEfficiency + config.ArbitrageMinMarginPerKwh)
+                // Profit gate: net profit per kWh must clear the configured margin.
+                if (bestNet >= config.ArbitrageMinMarginPerKwh)
                 {
                     var buyIndex = energySegments.IndexOf(bestBuy);
                     bestBuy.Action = EnergySegmentAction.Buy;
