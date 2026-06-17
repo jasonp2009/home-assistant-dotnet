@@ -44,8 +44,11 @@ public class HaHistoryClient
         try
         {
             var start = startUtc.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss", CultureInfo.InvariantCulture) + "Z";
+            // HA defaults end_time to start + 1 day when omitted, silently truncating the backfill to its
+            // first 24 h. Pass it explicitly so we get the whole window up to now.
+            var end = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss", CultureInfo.InvariantCulture) + "Z";
             var filter = string.Join(",", entityIds);
-            var url = $"api/history/period/{start}?filter_entity_id={filter}&minimal_response";
+            var url = $"api/history/period/{start}?filter_entity_id={filter}&minimal_response&end_time={Uri.EscapeDataString(end)}";
 
             using var response = await _httpClient.GetAsync(url);
             response.EnsureSuccessStatusCode();
