@@ -66,15 +66,18 @@ public class BatteryControl
 
     private async Task<EnergySegmentAction> GetCurrentActionAsync()
     {
-        var energySegments = await InitialiseEnergySegmentsAsync();
+        var (energySegments, currentSegmentUsage) = await InitialiseEnergySegmentsAsync();
         var hourlyUsage = GetHourlyUsage();
+        // Log the current segment's time-of-day estimate scaled to an hour (the runway/OptimiseSegments
+        // still uses the flat hourly average below — see GetHourlyUsage).
+        var hourlyUsageEstimate = currentSegmentUsage * Convert.ToDecimal(TimeSpan.FromHours(1) / _config.SegmentSize);
         _logger.LogInformation(
             "Initialised segments with {SegmentCount} {SegmentStart} - {SegmentEnd} First segment is estimate: {IsEstimate} Hourly usage estimate: {HourlyUsageEstimate}",
             energySegments.Count,
             energySegments.First().StartUtc.ToLocalTime().ToString(),
             energySegments.Last().StartUtc.ToLocalTime().ToString(),
             energySegments.First().IsBuyEstimate,
-            hourlyUsage);
+            hourlyUsageEstimate);
         _config.BatteryUntilLog.SetDatetime(datetime: BatteryPlanner.GetBatteryUntil(energySegments, _config).ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss"));
 
         BatteryPlanner.OptimiseSegments(energySegments, _config, hourlyUsage);
@@ -127,7 +130,7 @@ public class BatteryControl
         return currentAction;
     }
 
-    private async Task<List<EnergySegment>> InitialiseEnergySegmentsAsync()
+    private async Task<(List<EnergySegment> Segments, decimal CurrentSegmentUsageKwh)> InitialiseEnergySegmentsAsync()
     {
         await _usageTracker.EnsureBackfilledAsync();
         _usageTracker.Record();
@@ -135,9 +138,10 @@ public class BatteryControl
         var segmentUsageEstimator = _usageTracker.BuildEstimator(fallbackSegmentUsage);
         var currentBatteryChargeKwh = GetCurrentBatteryChargeKwh();
         var startUtc = GetCurrentSegmentStart();
+        var currentSegmentUsage = segmentUsageEstimator(startUtc);
         _logger.LogInformation(
             "Segment usage estimate for {Time}: {Estimate} kWh (flat fallback {Fallback} kWh)",
-            startUtc.ToLocalTime().ToShortTimeString(), segmentUsageEstimator(startUtc), fallbackSegmentUsage);
+            startUtc.ToLocalTime().ToShortTimeString(), currentSegmentUsage, fallbackSegmentUsage);
         var profileDate = startUtc.ToLocalTime().Date;
         var profile = string.Join("  ", new[] { 0, 3, 6, 9, 12, 15, 18, 21 }
             .Select(h => $"{h:00}h={segmentUsageEstimator(profileDate.AddHours(h).ToUniversalTime()):0.###}"));
@@ -153,7 +157,8 @@ public class BatteryControl
             await Task.Delay(TimeSpan.FromSeconds(_config.MaxPriceLockInRetryDelaySecs));
             amberPrices = await _amberClient.GetCurrentPriceAsync() ?? [];
         }
-        return BatteryPlanner.BuildSegments(startUtc, currentBatteryChargeKwh, segmentUsageEstimator, solarForecast, amberPrices, _config);
+        var segments = BatteryPlanner.BuildSegments(startUtc, currentBatteryChargeKwh, segmentUsageEstimator, solarForecast, amberPrices, _config);
+        return (segments, currentSegmentUsage);
     }
 
     private decimal GetAverageSegmentUsage()
