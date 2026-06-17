@@ -35,6 +35,11 @@ See [`../CLAUDE.md`](../CLAUDE.md). In short: build any config (`dotnet build`),
 `dotnet test`, and **never run the app locally** — it commands live devices and conflicts with the
 deployed instance. A Debug build's `nd-codegen` step connecting to live HA is expected and fine.
 
+## Operations
+
+- [deployed-logs.md](deployed-logs.md) — read the **deployed** add-on's logs over the HA REST API
+  (read-only; the safe way to verify production behaviour without running the app locally).
+
 ## Apps
 
 | App | Folder | Docs | Summary |
