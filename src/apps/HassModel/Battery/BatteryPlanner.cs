@@ -182,12 +182,13 @@ public static class BatteryPlanner
             {
                 var sellIndex = energySegments.IndexOf(sell);
 
-                // Candidate buys: Action==None, BuyPricePerKw != null, not the sell, and the pair is feasible.
-                // Pessimise only the LATER leg (the speculative price we're waiting on); price the earlier,
-                // more-imminent leg at face value. Keep the buy giving the best net profit per kWh.
+                // Candidate buys: Action==None, BuyPricePerKw != null, not the sell, not a demand window
+                // (buying in a demand window incurs extra charges, so it's disallowed — selling is fine),
+                // and the pair is feasible. Pessimise only the LATER leg (the speculative price we're waiting
+                // on); price the earlier, more-imminent leg at face value. Keep the buy with the best net.
                 EnergySegment? bestBuy = null;
                 var bestNet = decimal.MinValue;
-                foreach (var buy in energySegments.Where(b => b.Action == EnergySegmentAction.None && b.BuyPricePerKw != null && b != sell))
+                foreach (var buy in energySegments.Where(b => b.Action == EnergySegmentAction.None && b.BuyPricePerKw != null && b != sell && !b.IsDemandWindow))
                 {
                     var buyIndex = energySegments.IndexOf(buy);
                     if (!FeasiblePair(buyIndex, sellIndex, energySegments, config, tol)) continue;

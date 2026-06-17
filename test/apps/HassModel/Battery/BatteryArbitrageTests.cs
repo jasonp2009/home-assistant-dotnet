@@ -305,4 +305,62 @@ public class BatteryArbitrageTests
         var actions = string.Join(",", segs.Select(s => s.Action));
         Assert.True(segs.All(s => s.Action == EnergySegmentAction.None), $"actions=[{actions}]");
     }
+
+    // -----------------------------------------------------------------------------------------
+    // 11. Arbitrage_DoesNotBuyInDemandWindow
+    //    The only cheap buy (seg2, 5c) is in a demand window. Buying in a demand window incurs extra
+    //    charges and is disallowed, so the profitable sell (seg5) has no buy counterpart and nothing
+    //    commits.
+    // -----------------------------------------------------------------------------------------
+
+    [Fact]
+    public void Arbitrage_DoesNotBuyInDemandWindow()
+    {
+        var cfg = Cfg();
+        var segs = new List<EnergySegment>
+        {
+            Seg(0, 25),
+            Seg(1, 25),
+            Seg(2, 25, buy: 5, demand: true),
+            Seg(3, 25),
+            Seg(4, 25),
+            Seg(5, 25, sell: 40m),
+            Seg(6, 25),
+        };
+
+        BatteryPlanner.OptimiseSegments(segs, cfg, 1m);
+        BatteryPlanner.ApplyArbitrage(segs, cfg);
+
+        var actions = string.Join(",", segs.Select(s => s.Action));
+        Assert.True(segs.All(s => s.Action == EnergySegmentAction.None), $"actions=[{actions}]");
+    }
+
+    // -----------------------------------------------------------------------------------------
+    // 12. Arbitrage_AllowsSellInDemandWindow
+    //    Selling in a demand window is fine; only buying is disallowed. Buy seg2 (non-demand, 5c),
+    //    sell seg5 (demand, 40c) → commits.
+    // -----------------------------------------------------------------------------------------
+
+    [Fact]
+    public void Arbitrage_AllowsSellInDemandWindow()
+    {
+        var cfg = Cfg();
+        var segs = new List<EnergySegment>
+        {
+            Seg(0, 25),
+            Seg(1, 25),
+            Seg(2, 25, buy: 5),
+            Seg(3, 25),
+            Seg(4, 25),
+            Seg(5, 25, sell: 40m, demand: true),
+            Seg(6, 25),
+        };
+
+        BatteryPlanner.OptimiseSegments(segs, cfg, 1m);
+        BatteryPlanner.ApplyArbitrage(segs, cfg);
+
+        var actions = string.Join(",", segs.Select(s => s.Action));
+        Assert.True(segs[2].Action == EnergySegmentAction.Buy, $"actions=[{actions}]");
+        Assert.True(segs[5].Action == EnergySegmentAction.Sell, $"actions=[{actions}]");
+    }
 }
