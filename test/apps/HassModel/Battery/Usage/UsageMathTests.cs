@@ -160,6 +160,48 @@ public class UsageMathTests
         Assert.Empty(UsageMath.BuildSamplesFromReadings(readings, UsageCfg()));
     }
 
+    // ---- RebaseResets (daily counter reset) --------------------------------------------------
+
+    [Fact]
+    public void RebaseResets_CarriesBatteryCountersAcrossDailyReset()
+    {
+        var readings = new List<CounterReading>
+        {
+            Reading(T0,                discharge: 26.0m, charge: 5.0m),
+            Reading(T0.AddMinutes(5),  discharge: 26.2m, charge: 5.0m),
+            Reading(T0.AddMinutes(10), discharge: 0.1m,  charge: 0.0m), // reset to ~0
+            Reading(T0.AddMinutes(15), discharge: 0.3m,  charge: 0.0m)
+        };
+
+        var rebased = UsageMath.RebaseResets(readings);
+
+        // Pre-reset total (26.2 / 5.0) is carried forward, so both counters stay monotonic.
+        Assert.Equal(new[] { 26.0m, 26.2m, 26.3m, 26.5m }, rebased.Select(r => r.BatteryDischargeKwh));
+        Assert.Equal(new[] { 5.0m, 5.0m, 5.0m, 5.0m }, rebased.Select(r => r.BatteryChargeKwh));
+    }
+
+    [Fact]
+    public void RebaseResets_RecoversTheWindowStraddlingTheReset()
+    {
+        // A night (no solar) where the battery counters reset mid-window; consumption = Δdischarge.
+        var readings = new List<CounterReading>
+        {
+            Reading(T0,                discharge: 26.0m),
+            Reading(T0.AddMinutes(5),  discharge: 26.2m),
+            Reading(T0.AddMinutes(10), discharge: 26.4m),
+            Reading(T0.AddMinutes(15), discharge: 26.6m),
+            Reading(T0.AddMinutes(20), discharge: 0.1m) // reset -> the capped window closes here
+        };
+
+        // Raw: the capped window [T0, T0+20] straddles the reset -> negative delta -> dropped.
+        Assert.Empty(UsageMath.BuildSamplesFromReadings(readings, UsageCfg(windowCap: 4)));
+
+        // Rebased: the window computes its true delta (26.7-26.0 = 0.7 over 4 segments) and is kept.
+        var samples = UsageMath.BuildSamplesFromReadings(UsageMath.RebaseResets(readings), UsageCfg(windowCap: 4));
+        Assert.Equal(4, samples.Count);
+        Assert.All(samples, s => Assert.Equal(0.175m, s.ConsumptionKwh));
+    }
+
     // ---- EstimateSegmentUsage ----------------------------------------------------------------
 
     private static readonly DateTime Now = new(2026, 6, 15, 12, 0, 0, DateTimeKind.Utc);

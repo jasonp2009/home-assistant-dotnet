@@ -87,7 +87,9 @@ The per-segment **drain** in `BuildSegments` is a learned, time-of-day consumpti
 
 1. **Measure consumption** from the cumulative counters as a delta between readings:
    `ΔgridIn − ΔgridOut + Δsolar − (Δcharge − Δdischarge)`. The battery charge/discharge counters reset
-   daily, so a backwards delta marks a reset and the sample is skipped.
+   daily; the reset is **rebased across** (`UsageMath.RebaseResets` / the live equivalent in
+   `UsageTracker`) — the pre-reset total is carried forward so the window straddling midnight still
+   yields a sample, instead of being dropped and leaving the midnight buckets to the flat fallback.
 2. **Solar-aligned windowing.** The solar lifetime counter only advances every ~15 min, so
    consumption is measured over a window that closes when solar ticks (or at `UsageMaxWindowSegments`
    for night/no-generation) and **spread evenly** across the 5-minute segments it covers — the same

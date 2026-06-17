@@ -29,6 +29,14 @@ public class UsageTracker
     private CounterReading? _anchor;
     private bool _backfilled;
 
+    // Carries the battery charge/discharge counters across their daily reset so the live reads stay
+    // monotonic (the incremental analogue of UsageMath.RebaseResets). Seeded from the backfill tail.
+    private decimal _chargeOffset;
+    private decimal _dischargeOffset;
+    private decimal _lastRawCharge;
+    private decimal _lastRawDischarge;
+    private bool _rebasePrimed;
+
     public UsageTracker(BatteryConfig config, HaHistoryClient historyClient, ILogger<UsageTracker> logger)
     {
         _config = config;
@@ -55,12 +63,22 @@ public class UsageTracker
                 return;
             }
 
-            var readings = BuildBoundaryReadings(history, start, now);
+            var rawReadings = BuildBoundaryReadings(history, start, now);
+            var readings = UsageMath.RebaseResets(rawReadings);
             var samples = UsageMath.BuildSamplesFromReadings(readings, _config);
 
             var existing = _samples.Select(s => s.SegmentStartUtc).ToHashSet();
             _samples.AddRange(samples.Where(s => !existing.Contains(s.SegmentStartUtc)));
-            if (readings.Count > 0) _anchor = readings[^1];
+            if (readings.Count > 0)
+            {
+                _anchor = readings[^1];
+                // Continue the live rebase from the backfill tail so the first live read lines up.
+                _chargeOffset = readings[^1].BatteryChargeKwh - rawReadings[^1].BatteryChargeKwh;
+                _dischargeOffset = readings[^1].BatteryDischargeKwh - rawReadings[^1].BatteryDischargeKwh;
+                _lastRawCharge = rawReadings[^1].BatteryChargeKwh;
+                _lastRawDischarge = rawReadings[^1].BatteryDischargeKwh;
+                _rebasePrimed = true;
+            }
             _backfilled = true;
 
             var bucketsPopulated = _samples
@@ -87,8 +105,9 @@ public class UsageTracker
     /// </summary>
     public void Record()
     {
-        var cur = ReadCounters();
-        if (cur is null) return;
+        var raw = ReadCounters();
+        if (raw is null) return;
+        var cur = ApplyRebase(raw);
         if (_anchor is null) { _anchor = cur; return; }
 
         var k = (int)Math.Round((cur.TimestampUtc - _anchor.TimestampUtc) / _config.SegmentSize, MidpointRounding.AwayFromZero);
@@ -151,6 +170,28 @@ public class UsageTracker
             _logger.LogWarning("Could not read usage counters: {Message}", ex.Message);
             return null;
         }
+    }
+
+    /// <summary>
+    /// Makes a live counter read monotonic across the battery counters' daily reset by carrying the
+    /// pre-reset total forward as an offset — the incremental analogue of <see cref="UsageMath.RebaseResets"/>,
+    /// so the once-a-day reset no longer discards the window straddling midnight.
+    /// </summary>
+    private CounterReading ApplyRebase(CounterReading raw)
+    {
+        if (_rebasePrimed)
+        {
+            if (raw.BatteryChargeKwh < _lastRawCharge) _chargeOffset += _lastRawCharge;
+            if (raw.BatteryDischargeKwh < _lastRawDischarge) _dischargeOffset += _lastRawDischarge;
+        }
+        _lastRawCharge = raw.BatteryChargeKwh;
+        _lastRawDischarge = raw.BatteryDischargeKwh;
+        _rebasePrimed = true;
+        return raw with
+        {
+            BatteryChargeKwh = raw.BatteryChargeKwh + _chargeOffset,
+            BatteryDischargeKwh = raw.BatteryDischargeKwh + _dischargeOffset
+        };
     }
 
     private static decimal ParseState(SensorEntity entity)

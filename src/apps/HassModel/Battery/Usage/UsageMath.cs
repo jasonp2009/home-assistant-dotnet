@@ -36,6 +36,37 @@ public static class UsageMath
     }
 
     /// <summary>
+    /// Returns a copy of <paramref name="readings"/> (time-ordered) with the battery charge/discharge
+    /// counters made monotonic across their daily reset: when a counter reads lower than the previous
+    /// reading (a reset), its pre-reset total is carried forward as an offset. The lifetime grid/solar
+    /// counters are left untouched. Without this, the once-a-day reset makes the window straddling
+    /// midnight compute a large negative battery delta, so it is dropped — leaving the midnight
+    /// time-of-day buckets empty and the estimate falling back to the (higher) flat average there.
+    /// </summary>
+    public static List<CounterReading> RebaseResets(IReadOnlyList<CounterReading> readings)
+    {
+        var result = new List<CounterReading>(readings.Count);
+        decimal chargeOffset = 0m, dischargeOffset = 0m, prevCharge = 0m, prevDischarge = 0m;
+        for (var i = 0; i < readings.Count; i++)
+        {
+            var r = readings[i];
+            if (i > 0)
+            {
+                if (r.BatteryChargeKwh < prevCharge) chargeOffset += prevCharge;
+                if (r.BatteryDischargeKwh < prevDischarge) dischargeOffset += prevDischarge;
+            }
+            prevCharge = r.BatteryChargeKwh;
+            prevDischarge = r.BatteryDischargeKwh;
+            result.Add(r with
+            {
+                BatteryChargeKwh = r.BatteryChargeKwh + chargeOffset,
+                BatteryDischargeKwh = r.BatteryDischargeKwh + dischargeOffset
+            });
+        }
+        return result;
+    }
+
+    /// <summary>
     /// Spreads the consumption measured over a window <c>[windowStart, cur]</c> evenly across the
     /// 5-minute segments it covers (the window is solar-aligned by the caller). Yields nothing when the
     /// window is invalid: non-positive/over-cap length, a counter reset inside it
