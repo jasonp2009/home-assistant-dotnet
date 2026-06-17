@@ -1,35 +1,30 @@
 using System.Collections.Generic;
 using System.Globalization;
-using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
+using NetDaemon.Client;
 
 namespace src.apps.HassModel.Battery.Clients.HaHistoryClient;
 
 /// <summary>
 /// Minimal client for Home Assistant's REST history endpoint
-/// (<c>GET /api/history/period/{start}?filter_entity_id=...&amp;minimal_response</c>), used to backfill
-/// the usage estimate on startup. HA is the source of truth for historical counter values.
+/// (<c>GET /api/history/period/{start}?...&amp;minimal_response</c>), used to backfill the usage
+/// estimate on startup. Calls go through NetDaemon's <see cref="IHomeAssistantApiManager"/> so they
+/// reuse the app's existing authenticated connection. A hand-rolled <c>HttpClient</c> against the
+/// configured host/token works locally but is rejected with 403 inside the HA add-on (which talks to
+/// core via the Supervisor proxy/token) — the API manager handles both environments.
 /// </summary>
 public class HaHistoryClient
 {
-    private readonly HttpClient _httpClient;
+    private readonly IHomeAssistantApiManager _apiManager;
     private readonly ILogger<HaHistoryClient> _logger;
 
-    public HaHistoryClient(IOptions<HaHistorySettings> settings, ILogger<HaHistoryClient> logger)
+    public HaHistoryClient(IHomeAssistantApiManager apiManager, ILogger<HaHistoryClient> logger)
     {
+        _apiManager = apiManager;
         _logger = logger;
-        var s = settings.Value;
-        var scheme = s.Ssl ? "https" : "http";
-        _httpClient = new HttpClient
-        {
-            BaseAddress = new Uri($"{scheme}://{s.Host}:{s.Port}/"),
-            Timeout = TimeSpan.FromSeconds(30)
-        };
-        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", s.Token);
     }
 
     /// <summary>
@@ -44,19 +39,22 @@ public class HaHistoryClient
         try
         {
             var start = startUtc.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss", CultureInfo.InvariantCulture) + "Z";
-            // HA defaults end_time to start + 1 day when omitted, silently truncating the backfill to its
-            // first 24 h. Pass it explicitly so we get the whole window up to now.
+            // end_time is required: HA defaults it to start + 1 day, which would truncate the backfill.
             var end = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss", CultureInfo.InvariantCulture) + "Z";
             var filter = string.Join(",", entityIds);
-            var url = $"api/history/period/{start}?filter_entity_id={filter}&minimal_response&end_time={Uri.EscapeDataString(end)}";
+            // Path is relative to HA's /api/ base; IHomeAssistantApiManager prepends the base URL + auth.
+            var apiPath = $"history/period/{start}?filter_entity_id={filter}&minimal_response&end_time={Uri.EscapeDataString(end)}";
 
-            using var response = await _httpClient.GetAsync(url);
-            response.EnsureSuccessStatusCode();
-            await using var stream = await response.Content.ReadAsStreamAsync();
-            using var doc = await JsonDocument.ParseAsync(stream);
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+            var root = await _apiManager.GetApiCallAsync<JsonElement>(apiPath, cts.Token);
+            if (root is not { ValueKind: JsonValueKind.Array } entities)
+            {
+                _logger.LogWarning("HA history returned no array (kind {Kind})", root.ValueKind);
+                return null;
+            }
 
             var result = new Dictionary<string, List<(DateTime, decimal)>>();
-            foreach (var entityArray in doc.RootElement.EnumerateArray())
+            foreach (var entityArray in entities.EnumerateArray())
             {
                 string? entityId = null;
                 var series = new List<(DateTime, decimal)>();

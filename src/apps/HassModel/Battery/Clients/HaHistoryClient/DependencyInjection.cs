@@ -7,7 +7,8 @@ public static class DependencyInjection
 {
     public static void AddHaHistoryClient(this IServiceCollection services, IConfiguration configuration)
     {
-        services.Configure<HaHistorySettings>(configuration.GetSection("HomeAssistant"));
+        // HaHistoryClient uses NetDaemon's IHomeAssistantApiManager (already registered by the runtime),
+        // so no connection settings are bound here.
         services.AddScoped<HaHistoryClient>();
     }
 }
