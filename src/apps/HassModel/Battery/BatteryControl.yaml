@@ -23,12 +23,12 @@
   UsageWindow2Weight: 0.3
   UsageWindow3Days: 7
   UsageWindow3Weight: 0.3
-  PessimismStartHours: 20
-  PessimismMaxAtHours: 4
-  PessimismMaxWeight: 0.7
-  OptimismStartHours: 26
-  OptimismMaxAtHours: 32
-  OptimismMaxWeight: 0.3
+  PessimismStartHours: 18
+  PessimismMaxAtHours: 2
+  PessimismMaxWeight: 0.5
+  OptimismStartHours: 24
+  OptimismMaxAtHours: 30
+  OptimismMaxWeight: 0.2
   ArbitrageEnabled: true
   ArbitragePessimismWeight: 0.5
   RoundTripEfficiency: 0.9
