@@ -138,6 +138,10 @@ public class BatteryControl
         _logger.LogInformation(
             "Segment usage estimate for {Time}: {Estimate} kWh (flat fallback {Fallback} kWh)",
             startUtc.ToLocalTime().ToShortTimeString(), segmentUsageEstimator(startUtc), fallbackSegmentUsage);
+        var profileDate = startUtc.ToLocalTime().Date;
+        var profile = string.Join("  ", new[] { 0, 3, 6, 9, 12, 15, 18, 21 }
+            .Select(h => $"{h:00}h={segmentUsageEstimator(profileDate.AddHours(h).ToUniversalTime()):0.###}"));
+        _logger.LogInformation("Per-segment usage estimate profile (kWh per 5min, local time-of-day): {Profile}", profile);
         var solarForecastTask = _forecastSolarClient.GetForecastAsync();
         var amberPricesTask = _amberClient.GetCurrentPriceAsync();
         await Task.WhenAll(solarForecastTask, amberPricesTask);

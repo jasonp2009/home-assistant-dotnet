@@ -63,8 +63,16 @@ public class UsageTracker
             if (readings.Count > 0) _anchor = readings[^1];
             _backfilled = true;
 
-            _logger.LogInformation("Usage backfill: {Samples} samples from {Readings} boundary readings over {Days}d",
-                samples.Count, readings.Count, _config.UsageBackfillDays);
+            var bucketsPopulated = _samples
+                .Select(s => DateTime.SpecifyKind(s.SegmentStartUtc, DateTimeKind.Utc).ToLocalTime())
+                .Select(l => (l.Hour * 60 + l.Minute) / _config.SegmentSizeMins)
+                .Distinct().Count();
+            var totalBuckets = 24 * 60 / _config.SegmentSizeMins;
+            var oldest = _samples.Count > 0 ? _samples.Min(s => s.SegmentStartUtc).ToLocalTime().ToString("g") : "n/a";
+            var newest = _samples.Count > 0 ? _samples.Max(s => s.SegmentStartUtc).ToLocalTime().ToString("g") : "n/a";
+            _logger.LogInformation(
+                "Usage backfill: {New} new samples from {Readings} boundary readings over {Days}d; total {Total} samples spanning {Oldest}–{Newest}; {Buckets}/{TotalBuckets} time-of-day buckets populated",
+                samples.Count, readings.Count, _config.UsageBackfillDays, _samples.Count, oldest, newest, bucketsPopulated, totalBuckets);
         }
         catch (Exception ex)
         {
@@ -86,9 +94,21 @@ public class UsageTracker
         var k = (int)Math.Round((cur.TimestampUtc - _anchor.TimestampUtc) / _config.SegmentSize, MidpointRounding.AwayFromZero);
         if (k < 1) return; // same segment / clock skew — keep the window open
         var solarAdvanced = cur.SolarKwh > _anchor.SolarKwh;
-        if (!solarAdvanced && k < _config.UsageMaxWindowSegments) return; // window stays open
+        if (!solarAdvanced && k < _config.UsageMaxWindowSegments)
+        {
+            _logger.LogDebug("Usage live update: window open ({K}/{Cap} segments, solar {Anchor}->{Cur} kWh)",
+                k, _config.UsageMaxWindowSegments, _anchor.SolarKwh, cur.SolarKwh);
+            return; // window stays open
+        }
 
-        _samples.AddRange(UsageMath.SpreadWindow(_anchor, cur, _config));
+        var added = UsageMath.SpreadWindow(_anchor, cur, _config).ToList();
+        _samples.AddRange(added);
+        _logger.LogInformation(
+            "Usage live update: closed {K}-segment window {Start}–{End} ({Trigger}), +{Added} samples{Detail}; total {Total}",
+            k, _anchor.TimestampUtc.ToLocalTime().ToShortTimeString(), cur.TimestampUtc.ToLocalTime().ToShortTimeString(),
+            solarAdvanced ? "solar advanced" : "cap reached", added.Count,
+            added.Count > 0 ? $" ({added[0].ConsumptionKwh:0.###} kWh/seg)" : " (discarded: reset/over-sanity)",
+            _samples.Count);
         _anchor = cur;
         PruneOld(cur.TimestampUtc);
     }
