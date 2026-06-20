@@ -77,6 +77,14 @@ public static class BatteryPlanner
     /// segment in the affected window as Sell (above max) or Buy (below min), re-simulate the charge
     /// forward, and repeat until the projection stays within [MinCapacity, MaxCapacity].
     /// Mutates <paramref name="energySegments"/> in place (Action and EstimatedBatteryChargeKwh).
+    ///
+    /// The limits are detected (<see cref="CalculateBoundaryResult"/>) at MinCapacity/MaxCapacity, but a
+    /// solver action reserves a ONE-STEP buffer: a buy may charge only up to MaxCapacity - one segment,
+    /// and a sell may discharge only down to MinCapacity + one segment. Otherwise a charge could land the
+    /// projection exactly on MaxCapacity (the sell trigger) and a discharge exactly on MinCapacity (the
+    /// buy trigger), so a single action would directly arm the opposite action a step later — the
+    /// buy/sell loop. With the buffer the battery can reach a trigger only from solar (over max) or usage
+    /// (under min), never from the solver's own action.
     /// </summary>
     public static void OptimiseSegments(List<EnergySegment> energySegments, BatteryConfig config, decimal hourlyUsage)
     {
@@ -91,7 +99,7 @@ public static class BatteryPlanner
                 var maxPriceSegment = energySegments
                     .Where((segment, index) =>
                         segment.Action is EnergySegmentAction.None &&
-                        config.MinCapacity <= (segment.EstimatedBatteryChargeKwh - config.SegmentDischargeAmountKwh) &&
+                        config.MinCapacity + config.SegmentDischargeAmountKwh <= (segment.EstimatedBatteryChargeKwh - config.SegmentDischargeAmountKwh) &&
                         previousBoundaryCrossingIndex <= index &&
                         index <= boundaryResult.IndexOfBoundaryCrossing)
                     .MaxBy(segment => segment.GetWeightedPrice(false, config, hourlyUsage));
@@ -110,7 +118,7 @@ public static class BatteryPlanner
                 var lowestPriceSegment = energySegments
                     .Where((segment, index) =>
                         segment.Action is EnergySegmentAction.None &&
-                        (segment.EstimatedBatteryChargeKwh + config.SegmentChargeAmountKwh) <= config.MaxCapacity &&
+                        (segment.EstimatedBatteryChargeKwh + config.SegmentChargeAmountKwh) <= config.MaxCapacity - config.SegmentChargeAmountKwh &&
                         previousBoundaryCrossingIndex <= index &&
                         index <= boundaryResult.IndexOfBoundaryCrossing &&
                         !segment.IsDemandWindow)
@@ -223,19 +231,21 @@ public static class BatteryPlanner
     {
         if (buyIndex < sellIndex)
         {
-            // Buy before sell: hold the extra kWh; check we don't exceed MaxCapacity
+            // Buy before sell: hold the extra kWh; check we don't charge to within one step of MaxCapacity
+            // (the same one-step buffer OptimiseSegments reserves, so arbitrage can't park on the sell trigger).
             for (var i = buyIndex; i < sellIndex; i++)
             {
-                if (energySegments[i].EstimatedBatteryChargeKwh + config.SegmentChargeAmountKwh > config.MaxCapacity + tol)
+                if (energySegments[i].EstimatedBatteryChargeKwh + config.SegmentChargeAmountKwh > config.MaxCapacity - config.SegmentChargeAmountKwh + tol)
                     return false;
             }
         }
         else
         {
-            // Sell before buy: discharge early then refill; check we don't go below MinCapacity
+            // Sell before buy: discharge early then refill; check we don't discharge to within one step of
+            // MinCapacity (same one-step buffer, so arbitrage can't park on the buy trigger).
             for (var i = sellIndex; i < buyIndex; i++)
             {
-                if (energySegments[i].EstimatedBatteryChargeKwh - config.SegmentDischargeAmountKwh < config.MinCapacity - tol)
+                if (energySegments[i].EstimatedBatteryChargeKwh - config.SegmentDischargeAmountKwh < config.MinCapacity + config.SegmentDischargeAmountKwh - tol)
                     return false;
             }
         }
