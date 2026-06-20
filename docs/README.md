@@ -37,8 +37,9 @@ deployed instance. A Debug build's `nd-codegen` step connecting to live HA is ex
 
 ## Operations
 
-- [deployed-logs.md](deployed-logs.md) — read the **deployed** add-on's logs over the HA REST API
-  (read-only; the safe way to verify production behaviour without running the app locally).
+- [deployed-logs.md](deployed-logs.md) — read the **deployed** add-on's logs (and raw entity state
+  history) over the HA REST API (read-only; the safe way to verify production behaviour without
+  running the app locally).
 
 ## Apps
 

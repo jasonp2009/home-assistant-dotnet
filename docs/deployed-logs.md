@@ -69,6 +69,38 @@ curl -s -H "Authorization: Bearer $TOKEN" -H "Range: entries=:-400:400" \
 | `Succesfully set battery mode to …` | the work-mode command actually sent to the inverter |
 | `[ERR]` / `Error …` | failures worth investigating |
 
+## Reading entity state history
+
+Sometimes you need the **raw history of a specific entity** rather than the app's logs — e.g. to
+spot-check the battery charge/discharge counters against what the usage estimate computed, or to
+correlate the `current_action_battery_log` against the Amber price sensors. HA exposes per-entity
+state history through the same REST API and the same token:
+
+- `GET /api/history/period/{start}?filter_entity_id=<id[,id…]>&minimal_response&end_time={end}`
+
+`start` and `end` are ISO-8601 timestamps — append `Z` for UTC. `filter_entity_id` is a
+comma-separated list of entity ids. `minimal_response` drops attributes (returns just `state` +
+`last_changed`), which is much smaller for a multi-day pull.
+
+> **Gotcha — always pass `end_time`.** If you omit it, `end_time` defaults to **`start + 1 day`**, so
+> a multi-day request is silently truncated to the first 24 h (no error — you just get less data than
+> you asked for). This once broke the usage backfill (fixed in `4ac8f20`). Always set `end_time`
+> explicitly when the window is longer than a day.
+
+Example — pull the last 40 minutes of the battery charge/discharge counters (e.g. to verify the
+midnight daily-reset rebase):
+
+```bash
+START=$(python -c "import datetime as d;print((d.datetime.utcnow()-d.timedelta(minutes=40)).strftime('%Y-%m-%dT%H:%M:%S'))")
+END=$(python -c "import datetime as d;print(d.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S'))")
+curl -s -H "Authorization: Bearer $TOKEN" \
+  "http://homeassistant.local:8123/api/history/period/${START}Z?filter_entity_id=sensor.ai_hb_g2_series_battery_energy_for_charging,sensor.ai_hb_g2_series_battery_energy_for_discharging&minimal_response&end_time=${END}Z"
+```
+
+The response is a JSON array of per-entity arrays, each element `{ "state": …, "last_changed": … }`
+(or `last_updated`). For the **current** state of an entity (no history), use
+`GET /api/states/<entity_id>` instead.
+
 ## Notes
 
 - **Read-only and safe to run anytime** — these calls never command devices (unlike launching the app).
