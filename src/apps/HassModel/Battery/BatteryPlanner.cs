@@ -47,7 +47,8 @@ public static class BatteryPlanner
         {
             EstimatedBatteryChargeKwh = currentChargeKwh,
             Duration = config.SegmentSize,
-            StartUtc = startUtc
+            StartUtc = startUtc,
+            UsageKwh = segmentUsage(startUtc)
         };
         curEnergySegment.ApplySolarForecast(solarForecast);
         curEnergySegment.ApplyPrice(amberPrices);
@@ -59,11 +60,13 @@ public static class BatteryPlanner
                curEnergySegment.SellPricePerKw is not null ||
                curEnergySegment.StartUtc < startUtc + TimeSpan.FromHours(config.MinForecastHours))
         {
+            var nextStartUtc = curEnergySegment.StartUtc + config.SegmentSize;
             curEnergySegment = new EnergySegment
             {
                 EstimatedBatteryChargeKwh = curEnergySegment.EstimatedBatteryChargeKwh - segmentUsage(curEnergySegment.StartUtc),
                 Duration = config.SegmentSize,
-                StartUtc = curEnergySegment.StartUtc + config.SegmentSize
+                StartUtc = nextStartUtc,
+                UsageKwh = segmentUsage(nextStartUtc)
             };
             curEnergySegment.ApplySolarForecast(solarForecast);
             curEnergySegment.ApplyPrice(amberPrices);

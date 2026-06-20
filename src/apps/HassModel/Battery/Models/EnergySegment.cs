@@ -11,6 +11,16 @@ public class EnergySegment
     public DateTime EndUtc => StartUtc.Add(Duration);
     public required decimal EstimatedBatteryChargeKwh { get; set; }
     public decimal SolarForecastKwh { get; set; }
+    public decimal UsageKwh { get; set; }
+
+    /// <summary>
+    /// The segment's own natural battery flow with no action taken: solar charged in minus the household
+    /// drain. The projected <see cref="EstimatedBatteryChargeKwh"/> already includes this. When an action
+    /// forces charge/discharge at the inverter's per-segment rate cap, the forced move SUBSUMES this flow
+    /// (solar surplus and load are met through the cap via the grid, they don't stack on top of it), so it
+    /// must be removed from the action's applied delta. See <c>BatteryPlanner.OptimiseSegments</c>.
+    /// </summary>
+    public decimal NaturalChargeDeltaKwh => SolarForecastKwh - UsageKwh;
     public bool IsDemandWindow { get; set; }
     public decimal? BuyPricePerKw { get; set; }
     public bool IsBuyEstimate { get; set; } = true;
