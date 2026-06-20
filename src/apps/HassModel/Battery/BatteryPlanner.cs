@@ -111,9 +111,14 @@ public static class BatteryPlanner
                 var maxPriceSegmentIndex = energySegments.IndexOf(maxPriceSegment);
                 maxPriceSegment.Action = EnergySegmentAction.Sell;
                 maxPriceSegment.ActionReason = EnergySegmentActionReason.Usage;
+                // Forcing discharge caps the battery's net change for this segment at the inverter's rate,
+                // so the segment's own natural flow is subsumed (its solar exports and its load is served
+                // from the discharge, both within the cap). The projection already baked that flow in, so
+                // remove it: a high-usage segment now drops by exactly the discharge amount, not amount + usage.
+                var dischargeDelta = config.SegmentDischargeAmountKwh + maxPriceSegment.NaturalChargeDeltaKwh;
                 for (var i = maxPriceSegmentIndex; i < energySegments.Count; i++)
                 {
-                    energySegments[i].EstimatedBatteryChargeKwh -= config.SegmentDischargeAmountKwh;
+                    energySegments[i].EstimatedBatteryChargeKwh -= dischargeDelta;
                 }
             }
             if (boundaryResult.IsMax == false)
@@ -131,9 +136,14 @@ public static class BatteryPlanner
                 var lowestPriceSegmentIndex = energySegments.IndexOf(lowestPriceSegment);
                 lowestPriceSegment.Action = EnergySegmentAction.Buy;
                 lowestPriceSegment.ActionReason = EnergySegmentActionReason.Usage;
+                // Forcing charge caps the battery's net change for this segment at the inverter's rate, so
+                // the segment's own natural flow is subsumed (its solar surplus and load are met within the
+                // cap via the grid). The projection already baked that flow in, so remove it: a sunny segment
+                // now rises by exactly the charge amount, not amount + solar surplus.
+                var chargeDelta = config.SegmentChargeAmountKwh - lowestPriceSegment.NaturalChargeDeltaKwh;
                 for (var i = lowestPriceSegmentIndex; i < energySegments.Count; i++)
                 {
-                    energySegments[i].EstimatedBatteryChargeKwh += config.SegmentChargeAmountKwh;
+                    energySegments[i].EstimatedBatteryChargeKwh += chargeDelta;
                 }
             }
             boundaryResult = CalculateBoundaryResult(energySegments, config);
@@ -219,8 +229,13 @@ public static class BatteryPlanner
                     bestBuy.ActionReason = EnergySegmentActionReason.Arbitrage;
                     sell.Action = EnergySegmentAction.Sell;
                     sell.ActionReason = EnergySegmentActionReason.Arbitrage;
-                    for (var i = buyIndex; i < energySegments.Count; i++) energySegments[i].EstimatedBatteryChargeKwh += config.SegmentChargeAmountKwh;
-                    for (var i = sellIndex; i < energySegments.Count; i++) energySegments[i].EstimatedBatteryChargeKwh -= config.SegmentDischargeAmountKwh;
+                    // Each forced leg moves the battery by exactly the inverter's per-segment rate; the leg
+                    // segment's own natural solar/usage flow is subsumed by that move, so remove it from the
+                    // applied delta (it is already in the projection). Same convention as OptimiseSegments.
+                    var buyDelta = config.SegmentChargeAmountKwh - bestBuy.NaturalChargeDeltaKwh;
+                    var sellDelta = config.SegmentDischargeAmountKwh + sell.NaturalChargeDeltaKwh;
+                    for (var i = buyIndex; i < energySegments.Count; i++) energySegments[i].EstimatedBatteryChargeKwh += buyDelta;
+                    for (var i = sellIndex; i < energySegments.Count; i++) energySegments[i].EstimatedBatteryChargeKwh -= sellDelta;
                     committed = true;
                     break; // Restart the outer while from scratch
                 }
