@@ -102,7 +102,9 @@ public static class BatteryPlanner
                 var maxPriceSegment = energySegments
                     .Where((segment, index) =>
                         segment.Action is EnergySegmentAction.None &&
-                        config.MinCapacity + config.SegmentDischargeAmountKwh <= (segment.EstimatedBatteryChargeKwh - config.SegmentDischargeAmountKwh) &&
+                        // Post-sell level subsumes this segment's natural flow (see the apply step below),
+                        // so predict it the same way to keep the one-step buffer above Min intact.
+                        config.MinCapacity + config.SegmentDischargeAmountKwh <= (segment.EstimatedBatteryChargeKwh - config.SegmentDischargeAmountKwh - segment.NaturalChargeDeltaKwh) &&
                         previousBoundaryCrossingIndex <= index &&
                         index <= boundaryResult.IndexOfBoundaryCrossing)
                     .MaxBy(segment => segment.GetWeightedPrice(false, config, hourlyUsage));
@@ -126,7 +128,9 @@ public static class BatteryPlanner
                 var lowestPriceSegment = energySegments
                     .Where((segment, index) =>
                         segment.Action is EnergySegmentAction.None &&
-                        (segment.EstimatedBatteryChargeKwh + config.SegmentChargeAmountKwh) <= config.MaxCapacity - config.SegmentChargeAmountKwh &&
+                        // Post-buy level subsumes this segment's natural flow (see the apply step below),
+                        // so predict it the same way to keep the one-step buffer below Max intact.
+                        (segment.EstimatedBatteryChargeKwh + config.SegmentChargeAmountKwh - segment.NaturalChargeDeltaKwh) <= config.MaxCapacity - config.SegmentChargeAmountKwh &&
                         previousBoundaryCrossingIndex <= index &&
                         index <= boundaryResult.IndexOfBoundaryCrossing &&
                         !segment.IsDemandWindow)
@@ -251,19 +255,23 @@ public static class BatteryPlanner
         {
             // Buy before sell: hold the extra kWh; check we don't charge to within one step of MaxCapacity
             // (the same one-step buffer OptimiseSegments reserves, so arbitrage can't park on the sell trigger).
+            // The hold-window levels rise by the buy leg's applied delta, which subsumes the buy segment's
+            // natural flow, so predict the held level the same way.
             for (var i = buyIndex; i < sellIndex; i++)
             {
-                if (energySegments[i].EstimatedBatteryChargeKwh + config.SegmentChargeAmountKwh > config.MaxCapacity - config.SegmentChargeAmountKwh + tol)
+                if (energySegments[i].EstimatedBatteryChargeKwh + config.SegmentChargeAmountKwh - energySegments[buyIndex].NaturalChargeDeltaKwh > config.MaxCapacity - config.SegmentChargeAmountKwh + tol)
                     return false;
             }
         }
         else
         {
             // Sell before buy: discharge early then refill; check we don't discharge to within one step of
-            // MinCapacity (same one-step buffer, so arbitrage can't park on the buy trigger).
+            // MinCapacity (same one-step buffer, so arbitrage can't park on the buy trigger). The hold-window
+            // levels fall by the sell leg's applied delta, which subsumes the sell segment's natural flow, so
+            // predict the held level the same way.
             for (var i = sellIndex; i < buyIndex; i++)
             {
-                if (energySegments[i].EstimatedBatteryChargeKwh - config.SegmentDischargeAmountKwh < config.MinCapacity + config.SegmentDischargeAmountKwh - tol)
+                if (energySegments[i].EstimatedBatteryChargeKwh - config.SegmentDischargeAmountKwh - energySegments[sellIndex].NaturalChargeDeltaKwh < config.MinCapacity + config.SegmentDischargeAmountKwh - tol)
                     return false;
             }
         }
@@ -329,9 +337,11 @@ public static class BatteryPlanner
         for (var i = boundaryResult.IndexOfBoundaryCrossing.Value; i >= 0; i--)
         {
             var curSegment = energySegments[i];
+            // Predict the post-action level with the same natural-flow subsumption the apply step uses, so the
+            // window bound matches where an action would actually leave the projection.
             if (boundaryResult.IsMax.Value
-                    ? (curSegment.EstimatedBatteryChargeKwh - config.SegmentDischargeAmountKwh) <= config.MinCapacity
-                    : config.MaxCapacity <= (curSegment.EstimatedBatteryChargeKwh + config.SegmentChargeAmountKwh))
+                    ? (curSegment.EstimatedBatteryChargeKwh - config.SegmentDischargeAmountKwh - curSegment.NaturalChargeDeltaKwh) <= config.MinCapacity
+                    : config.MaxCapacity <= (curSegment.EstimatedBatteryChargeKwh + config.SegmentChargeAmountKwh - curSegment.NaturalChargeDeltaKwh))
             {
                 return i;
             }
