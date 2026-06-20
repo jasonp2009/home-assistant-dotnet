@@ -66,7 +66,7 @@ public class BatteryControl
 
     private async Task<EnergySegmentAction> GetCurrentActionAsync()
     {
-        var (energySegments, currentSegmentUsage) = await InitialiseEnergySegmentsAsync();
+        var (energySegments, currentSegmentUsage, currentChargeKwh) = await InitialiseEnergySegmentsAsync();
         var hourlyUsage = GetHourlyUsage();
         // Log the current segment's time-of-day estimate scaled to an hour (the runway/OptimiseSegments
         // still uses the flat hourly average below — see GetHourlyUsage).
@@ -80,11 +80,14 @@ public class BatteryControl
             hourlyUsageEstimate);
         _config.BatteryUntilLog.SetDatetime(datetime: BatteryPlanner.GetBatteryUntil(energySegments, _config).ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss"));
 
+        LogPlanningContext(energySegments, currentChargeKwh);
+
         BatteryPlanner.OptimiseSegments(energySegments, _config, hourlyUsage);
         BatteryPlanner.ApplyArbitrage(energySegments, _config);
 
         var currentSegment = energySegments.First();
         var currentAction = currentSegment.Action;
+        LogDecision(energySegments, currentSegment, currentAction, currentChargeKwh);
         _config.CurrentActionLog.SelectOption(currentAction.ToString());
         _config.CurrentActionReasonLog.SelectOption(currentSegment.ActionReason.ToString());
         _config.CurrentActionWithPriceLog.SetValue(currentAction switch
@@ -130,7 +133,7 @@ public class BatteryControl
         return currentAction;
     }
 
-    private async Task<(List<EnergySegment> Segments, decimal CurrentSegmentUsageKwh)> InitialiseEnergySegmentsAsync()
+    private async Task<(List<EnergySegment> Segments, decimal CurrentSegmentUsageKwh, decimal CurrentChargeKwh)> InitialiseEnergySegmentsAsync()
     {
         await _usageTracker.EnsureBackfilledAsync();
         _usageTracker.Record();
@@ -158,7 +161,54 @@ public class BatteryControl
             amberPrices = await _amberClient.GetCurrentPriceAsync() ?? [];
         }
         var segments = BatteryPlanner.BuildSegments(startUtc, currentBatteryChargeKwh, segmentUsageEstimator, solarForecast, amberPrices, _config);
-        return (segments, currentSegmentUsage);
+        return (segments, currentSegmentUsage, currentBatteryChargeKwh);
+    }
+
+    /// <summary>
+    /// Logs the measured state of charge and the first capacity limit the projection crosses BEFORE the
+    /// solver acts — i.e. what OptimiseSegments is reacting to this cycle (a min crossing => buy needed,
+    /// a max crossing => sell needed, or within bounds). Read-only; mirrors <see cref="BatteryPlanner.CalculateBoundaryResult"/>.
+    /// </summary>
+    private void LogPlanningContext(List<EnergySegment> segments, decimal currentChargeKwh)
+    {
+        var boundary = BatteryPlanner.CalculateBoundaryResult(segments, _config);
+        string description;
+        if (!boundary.IsOutOfBounds || boundary.IndexOfBoundaryCrossing is null)
+        {
+            description = $"trajectory within [{_config.MinCapacity}, {_config.MaxCapacity}] kWh over horizon";
+        }
+        else
+        {
+            var crossing = segments[boundary.IndexOfBoundaryCrossing.Value];
+            var at = crossing.StartUtc.ToLocalTime().ToShortTimeString();
+            description = boundary.IsMax == true
+                ? $"MAX crossing at {at} (proj {crossing.EstimatedBatteryChargeKwh:0.0} kWh) -> sell needed"
+                : $"MIN crossing at {at} (proj {crossing.EstimatedBatteryChargeKwh:0.0} kWh) -> buy needed";
+        }
+        _logger.LogInformation("Planning: SoC {Soc:0.0} kWh; {Boundary}", currentChargeKwh, description);
+    }
+
+    /// <summary>
+    /// Logs the action chosen for "now" with its reason, the resulting projected charge, and the action
+    /// band [MinCapacity + step, MaxCapacity - step]. The one-step buffer means a Buy must land at or
+    /// below the band top and a Sell at or above the band bottom — a projected charge sitting on a limit
+    /// (50 or 8) would mean the buffer regressed. Also lists any arbitrage legs so price-arbitrage churn
+    /// is distinguishable from boundary churn in the log alone.
+    /// </summary>
+    private void LogDecision(List<EnergySegment> segments, EnergySegment now, EnergySegmentAction action, decimal currentChargeKwh)
+    {
+        _logger.LogInformation(
+            "Now {Action}/{Reason}: SoC {Soc:0.0} -> proj {Proj:0.0} kWh (action band {BandLow:0.0}-{BandHigh:0.0}); buy {Buy}c sell {Sell}c; solar(now) {Solar:0.00} kWh",
+            action, now.ActionReason, currentChargeKwh, now.EstimatedBatteryChargeKwh,
+            _config.MinCapacity + _config.SegmentDischargeAmountKwh, _config.MaxCapacity - _config.SegmentChargeAmountKwh,
+            Math.Round(now.BuyPricePerKw ?? 0), Math.Round(now.SellPricePerKw ?? 0), now.SolarForecastKwh);
+
+        var arbitrageLegs = segments
+            .Where(s => s.Action != EnergySegmentAction.None && s.ActionReason == EnergySegmentActionReason.Arbitrage)
+            .Select(s => $"{s.Action} {s.StartUtc.ToLocalTime().ToShortTimeString()}@{Math.Round((s.Action == EnergySegmentAction.Buy ? s.BuyPricePerKw : s.SellPricePerKw) ?? 0)}c")
+            .ToList();
+        if (arbitrageLegs.Count > 0)
+            _logger.LogInformation("Arbitrage legs this plan: {Legs}", string.Join(", ", arbitrageLegs));
     }
 
     private decimal GetAverageSegmentUsage()
