@@ -43,7 +43,12 @@ accordingly.
    - **Below `MinCapacity`** → pick the segment with the **lowest** weighted price (excluding demand
      windows) and mark it `Buy`.
    - Apply the action, re-simulate charge forward for all later segments, and repeat until the
-     projection stays within `[MinCapacity, MaxCapacity]`.
+     projection stays within `[MinCapacity, MaxCapacity]`. The inverter's per-segment rate caps the
+     battery's net change for the segment it acts on, so the applied move is
+     `rate − NaturalChargeDeltaKwh`: the action **subsumes** that segment's own solar/usage flow (already
+     baked into the projection) rather than stacking the full rate on top of it. A forced charge on a
+     sunny segment rises by the rate (solar surplus and load met through the grid within the cap); a
+     forced discharge on a high-usage segment falls by the rate (the load served from the discharge).
 
 3. **Act + log.** Set the inverter `BatteryModeSelectEntity` to the charge/discharge/none mode for
    the current segment, and write the next action, its price, its time, and the projected
