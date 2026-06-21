@@ -330,6 +330,14 @@ public static class BatteryPlanner
     /// <summary>
     /// Walks back from the boundary crossing to the last segment where an action would already push
     /// the battery against the opposite limit, bounding the window in which a Buy/Sell may be placed.
+    ///
+    /// The bound is the one-step BAND (MinCapacity + step / MaxCapacity - step), not the raw limit. A buy
+    /// added here is held forward to the crossing, so if any run-up segment is already within a step of
+    /// Max, charging before it would hold the battery against the ceiling — over successive replans that
+    /// walks it up to Max and forces a low-price sell. Bounding at the band defers the buy past such a
+    /// segment (toward the deficit, where the battery has drained and has room), so "now" isn't grid-charged
+    /// while near full. Symmetric for a sell near the floor. Uses the same natural-flow subsumption the
+    /// apply step uses, so the predicted post-action level matches where the action actually leaves it.
     /// </summary>
     public static int GetPreviousBoundaryCrossingIndex(List<EnergySegment> energySegments, BoundaryResult boundaryResult, BatteryConfig config)
     {
@@ -337,11 +345,9 @@ public static class BatteryPlanner
         for (var i = boundaryResult.IndexOfBoundaryCrossing.Value; i >= 0; i--)
         {
             var curSegment = energySegments[i];
-            // Predict the post-action level with the same natural-flow subsumption the apply step uses, so the
-            // window bound matches where an action would actually leave the projection.
             if (boundaryResult.IsMax.Value
-                    ? (curSegment.EstimatedBatteryChargeKwh - config.SegmentDischargeAmountKwh - curSegment.NaturalChargeDeltaKwh) <= config.MinCapacity
-                    : config.MaxCapacity <= (curSegment.EstimatedBatteryChargeKwh + config.SegmentChargeAmountKwh - curSegment.NaturalChargeDeltaKwh))
+                    ? (curSegment.EstimatedBatteryChargeKwh - config.SegmentDischargeAmountKwh - curSegment.NaturalChargeDeltaKwh) <= config.MinCapacity + config.SegmentDischargeAmountKwh
+                    : config.MaxCapacity - config.SegmentChargeAmountKwh <= (curSegment.EstimatedBatteryChargeKwh + config.SegmentChargeAmountKwh - curSegment.NaturalChargeDeltaKwh))
             {
                 return i;
             }
