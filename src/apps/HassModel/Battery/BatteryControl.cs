@@ -46,7 +46,7 @@ public class BatteryControl
         }
         catch (Exception ex)
         {
-            _logger.LogError("Error getting current battery action {Message} {Source}", ex.Message, ex.Source);
+            _logger.LogError("Error getting current battery action {Message} {StackTrace}", ex.Message, ex.StackTrace);
         }
         try
         {
