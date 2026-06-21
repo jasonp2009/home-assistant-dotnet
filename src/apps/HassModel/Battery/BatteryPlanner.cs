@@ -197,9 +197,11 @@ public static class BatteryPlanner
         {
             // Rank candidate sells (Action==None, SellPricePerKw != null) by face-value (predicted) earning,
             // DESC. The pessimism discount is applied per-pair to the later leg only, so the sell is ranked at
-            // face value here rather than pre-discounted.
+            // face value here rather than pre-discounted. Un-actionable legs (estimates past Amber's advanced
+            // horizon, for which WeightedPrice returns the decimal.Min/MaxValue sentinel) are excluded: the net
+            // calculation below does arithmetic on the leg price, which would overflow the decimal range.
             var sells = energySegments
-                .Where(s => s.Action == EnergySegmentAction.None && s.SellPricePerKw != null)
+                .Where(s => s.Action == EnergySegmentAction.None && s.SellPricePerKw != null && HasActionableSellPrice(s))
                 .OrderByDescending(s => s.WeightedPrice(isBuy: false, 0m));
 
             var committed = false;
@@ -213,7 +215,7 @@ public static class BatteryPlanner
                 // on); price the earlier, more-imminent leg at face value. Keep the buy with the best net.
                 EnergySegment? bestBuy = null;
                 var bestNet = decimal.MinValue;
-                foreach (var buy in energySegments.Where(b => b.Action == EnergySegmentAction.None && b.BuyPricePerKw != null && b != sell && !b.IsDemandWindow))
+                foreach (var buy in energySegments.Where(b => b.Action == EnergySegmentAction.None && b.BuyPricePerKw != null && b != sell && !b.IsDemandWindow && HasActionableBuyPrice(b)))
                 {
                     var buyIndex = energySegments.IndexOf(buy);
                     if (!FeasiblePair(buyIndex, sellIndex, energySegments, config, tol)) continue;
@@ -248,6 +250,15 @@ public static class BatteryPlanner
             if (!committed) break; // No profitable feasible pair anywhere -> done
         }
     }
+
+    // A leg is actionable for arbitrage only when WeightedPrice yields a real price rather than the
+    // un-actionable sentinel (decimal.Max/MinValue). That sentinel is returned for an ESTIMATE with no
+    // advanced (ML) band — a forecast past Amber's ~24h advanced horizon. ApplyArbitrage does arithmetic
+    // on the leg price (buyCost / RoundTripEfficiency), so feeding it a sentinel overflows the decimal
+    // range; these mirror the sentinel conditions in WeightedPrice so such legs are dropped, not picked.
+    // (Candidates already require BuyPricePerKw/SellPricePerKw != null, so a locked leg is always real.)
+    private static bool HasActionableBuyPrice(EnergySegment segment) => !segment.IsBuyEstimate || segment.AdvancedBuyPrice is not null;
+    private static bool HasActionableSellPrice(EnergySegment segment) => !segment.IsSellEstimate || segment.AdvancedSellPrice is not null;
 
     private static bool FeasiblePair(int buyIndex, int sellIndex, List<EnergySegment> energySegments, BatteryConfig config, decimal tol)
     {

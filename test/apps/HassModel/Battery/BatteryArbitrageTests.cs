@@ -363,4 +363,38 @@ public class BatteryArbitrageTests
         Assert.True(segs[2].Action == EnergySegmentAction.Buy, $"actions=[{actions}]");
         Assert.True(segs[5].Action == EnergySegmentAction.Sell, $"actions=[{actions}]");
     }
+
+    // -----------------------------------------------------------------------------------------
+    // 13. BeyondHorizonEstimateLeg_DoesNotOverflow
+    //    A buy candidate that is an estimate with NO advanced (ML) band (a forecast past Amber's ~24h
+    //    advanced horizon) has WeightedPrice == decimal.MaxValue (the "un-actionable" sentinel). Before
+    //    the fix, ApplyArbitrage computed buyCost/RoundTripEfficiency on that sentinel, overflowing the
+    //    decimal range ("Value was either too large or too small for a Decimal") and aborting the whole
+    //    plan. The un-actionable estimate (seg3) must be ignored, and the actionable locked pair
+    //    (buy seg2 / sell seg5) must still commit.
+    // -----------------------------------------------------------------------------------------
+
+    [Fact]
+    public void BeyondHorizonEstimateLeg_DoesNotOverflow()
+    {
+        var cfg = Cfg();
+        var segs = new List<EnergySegment>
+        {
+            Seg(0, 25),
+            Seg(1, 25),
+            Seg(2, 25, buy: 5),                                   // actionable (locked) cheap buy
+            Seg(3, 25, buy: 30, buyLocked: false, advBuy: null), // beyond-horizon estimate: no ML band
+            Seg(4, 25),
+            Seg(5, 25, sell: 40m),                               // actionable (locked) sell
+            Seg(6, 25),
+        };
+
+        BatteryPlanner.OptimiseSegments(segs, cfg, 1m);
+        BatteryPlanner.ApplyArbitrage(segs, cfg);
+
+        var actions = string.Join(",", segs.Select(s => s.Action));
+        Assert.True(segs[2].Action == EnergySegmentAction.Buy, $"actions=[{actions}]");
+        Assert.True(segs[5].Action == EnergySegmentAction.Sell, $"actions=[{actions}]");
+        Assert.True(segs[3].Action == EnergySegmentAction.None, $"actions=[{actions}]");
+    }
 }
