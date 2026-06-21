@@ -40,6 +40,9 @@ deployed instance. A Debug build's `nd-codegen` step connecting to live HA is ex
 - [deployed-logs.md](deployed-logs.md) — read the **deployed** add-on's logs (and raw entity state
   history) over the HA REST API (read-only; the safe way to verify production behaviour without
   running the app locally).
+- [amber-api.md](amber-api.md) — query the **Amber pricing API** directly (read-only) to verify the
+  prices the planner is reacting to: buy/sell channels, the feed-in sign convention, and the
+  machine-learned "advanced" price band.
 
 ## Apps
 
