@@ -106,8 +106,10 @@ public static class EnergySegmentExtensions
     /// <summary>
     /// Blends a segment's price toward an uncertainty bound by a signed weight: positive = pessimistic
     /// (buy leans to the advanced High; sell leans to the lowest plausible earning), negative = optimistic.
-    /// Locked (non-estimate) prices pass through unchanged; estimates with no advanced band scale the raw
-    /// price. Shared by the runway weighting (<see cref="GetWeightedPrice"/>) and the arbitrage pricing
+    /// Locked (non-estimate) prices pass through unchanged. An ESTIMATE with no advanced (ML) band — i.e.
+    /// a forecast beyond Amber's ~24h advanced horizon — is IGNORED: it returns the most unattractive value
+    /// (max cost for a buy, min earning for a sell) so the greedy selectors never act on a base-perKwh-only
+    /// forecast. Shared by the runway weighting (<see cref="GetWeightedPrice"/>) and the arbitrage pricing
     /// (which passes a fixed pessimistic weight).
     /// </summary>
     public static decimal WeightedPrice(this EnergySegment segment, bool isBuy, decimal advancedPriceWeight)
@@ -115,9 +117,8 @@ public static class EnergySegmentExtensions
         if (isBuy && !segment.IsBuyEstimate) return segment.BuyPricePerKw ?? decimal.MaxValue;
         if (!isBuy && !segment.IsSellEstimate) return segment.SellPricePerKw ?? decimal.MinValue;
         var advancedPrice = isBuy ? segment.AdvancedBuyPrice : segment.AdvancedSellPrice;
-        if (advancedPrice is null) return isBuy
-            ? segment.BuyPricePerKw * (1 + Math.Max(0, advancedPriceWeight)) ?? decimal.MaxValue
-            : segment.SellPricePerKw * (1 - Math.Max(0, advancedPriceWeight)) ?? decimal.MinValue;
+        // No ML band (beyond the advanced horizon): ignore the interval rather than trust the raw forecast.
+        if (advancedPrice is null) return isBuy ? decimal.MaxValue : decimal.MinValue;
         var predicted = isBuy ? advancedPrice.Predicted : -advancedPrice.Predicted;
         var high = isBuy ? advancedPrice.High : -advancedPrice.High;
         var low = isBuy ? advancedPrice.Low : -advancedPrice.Low;

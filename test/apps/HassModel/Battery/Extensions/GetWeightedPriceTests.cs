@@ -98,23 +98,24 @@ public class GetWeightedPriceTests
         Assert.Equal(12.2m, seg.GetWeightedPrice(isBuy: true, Config(), Usage), 6);
     }
 
-    // ---- estimated buy without advanced price (beyond ~24h): pessimism only ----
+    // ---- estimated price without advanced price (beyond ~24h): ignored entirely ----
 
     [Fact]
-    public void Buy_Estimate_NoAdvanced_ShortRunway_InflatesPerKwh()
+    public void Buy_Estimate_NoAdvanced_IsIgnored_RegardlessOfRunway()
     {
-        // charge 12 => hours 4 => weight +0.7 => 25*(1+0.7) = 42.5
-        var seg = BuySeg(12m, buyPrice: 25m, isEstimate: true, advanced: null);
-        Assert.Equal(42.5m, seg.GetWeightedPrice(isBuy: true, Config(), Usage), 6);
+        // An estimate with no ML band is a base-perKwh-only forecast we don't trust: a buy is treated as
+        // maximally expensive so MinBy never selects it. The runway no longer changes this.
+        Assert.Equal(decimal.MaxValue, BuySeg(12m, buyPrice: 25m, isEstimate: true, advanced: null).GetWeightedPrice(isBuy: true, Config(), Usage)); // short runway
+        Assert.Equal(decimal.MaxValue, BuySeg(48m, buyPrice: 25m, isEstimate: true, advanced: null).GetWeightedPrice(isBuy: true, Config(), Usage)); // deep runway
     }
 
     [Fact]
-    public void Buy_Estimate_NoAdvanced_DeepRunway_IsNotDiscounted()
+    public void Sell_Estimate_NoAdvanced_IsIgnored_RegardlessOfRunway()
     {
-        // charge 48 => hours 40 => weight -0.3, but optimism is clamped off when there is no
-        // advanced price (beyond ~24h): 25*(1 + max(0,-0.3)) = 25
-        var seg = BuySeg(48m, buyPrice: 25m, isEstimate: true, advanced: null);
-        Assert.Equal(25m, seg.GetWeightedPrice(isBuy: true, Config(), Usage), 6);
+        // Likewise a sell with no ML band is treated as min-earning so MaxBy never selects it — the
+        // far-future "spike" with no advanced band is not acted on until it enters the advanced horizon.
+        Assert.Equal(decimal.MinValue, SellSeg(48m, sellPrice: -2049m, isEstimate: true, advanced: null).GetWeightedPrice(isBuy: false, Config(), Usage)); // deep runway
+        Assert.Equal(decimal.MinValue, SellSeg(12m, sellPrice: -2049m, isEstimate: true, advanced: null).GetWeightedPrice(isBuy: false, Config(), Usage)); // short runway
     }
 
     // ---- estimated sell with advanced price ----
