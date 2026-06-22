@@ -120,10 +120,15 @@ public static class EnergySegmentExtensions
         // No ML band (beyond the advanced horizon): ignore the interval rather than trust the raw forecast.
         if (advancedPrice is null) return isBuy ? decimal.MaxValue : decimal.MinValue;
         var predicted = isBuy ? advancedPrice.Predicted : -advancedPrice.Predicted;
-        var high = isBuy ? advancedPrice.High : -advancedPrice.High;
-        var low = isBuy ? advancedPrice.Low : -advancedPrice.Low;
+        // The pessimistic bound is the worst case for us, the optimistic bound the best. For a BUY that is
+        // the advanced High (dearest import) and Low (cheapest). For a SELL the band is negated into an
+        // earning AND the ends swap: the worst earning is at the LOW feed-in price, the best at the HIGH.
+        // Amber reports feed-in as negative with High the most negative, so -Low is the lowest earning and
+        // -High the highest. A single `High vs Low` pick would be correct for buys but inverted for sells.
+        var pessimisticBound = isBuy ? advancedPrice.High : -advancedPrice.Low;
+        var optimisticBound = isBuy ? advancedPrice.Low : -advancedPrice.High;
 
-        var advancedPriceAdjustor = advancedPriceWeight > 0 ? high : low;
+        var advancedPriceAdjustor = advancedPriceWeight > 0 ? pessimisticBound : optimisticBound;
         return predicted * (1 - Math.Abs(advancedPriceWeight)) +
                advancedPriceAdjustor * Math.Abs(advancedPriceWeight);
     }

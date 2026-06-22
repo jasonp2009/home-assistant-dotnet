@@ -25,9 +25,9 @@ public class BatteryScenarioTests6
         // uncertain estimate. Confirms GetWeightedPrice's negation/blend is correct for sells.
         var segs = new List<EnergySegment>
         {
-            Seg(0, 50, sell: 30m, sellLocked: false, advSell: Adv(-32m, -30m, -28m)),
-            Seg(1, 51, sell: 10m, sellLocked: false, advSell: Adv(-12m, -10m, -8m)),
-            Seg(2, 52, sell: 10m, sellLocked: false, advSell: Adv(-12m, -10m, -8m)),
+            Seg(0, 50, sell: 30m, sellLocked: false, advSell: Adv(-28m, -30m, -32m)),
+            Seg(1, 51, sell: 10m, sellLocked: false, advSell: Adv(-8m, -10m, -12m)),
+            Seg(2, 52, sell: 10m, sellLocked: false, advSell: Adv(-8m, -10m, -12m)),
         };
 
         BatteryPlanner.OptimiseSegments(segs, Cfg(), Usage);

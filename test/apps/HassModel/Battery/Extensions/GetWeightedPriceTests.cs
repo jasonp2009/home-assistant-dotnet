@@ -68,8 +68,9 @@ public class GetWeightedPriceTests
     [Fact]
     public void Sell_LockedIn_ReturnsRawPrice()
     {
-        var seg = SellSeg(40m, sellPrice: -30m, isEstimate: false, advanced: null);
-        Assert.Equal(-30m, seg.GetWeightedPrice(isBuy: false, Config(), Usage));
+        // Feed-in earning is stored POSITIVE (ApplyPrice negates Amber's negative perKwh).
+        var seg = SellSeg(40m, sellPrice: 30m, isEstimate: false, advanced: null);
+        Assert.Equal(30m, seg.GetWeightedPrice(isBuy: false, Config(), Usage));
     }
 
     // ---- estimated buy with advanced price: blend toward High/Low ----
@@ -114,21 +115,34 @@ public class GetWeightedPriceTests
     {
         // Likewise a sell with no ML band is treated as min-earning so MaxBy never selects it — the
         // far-future "spike" with no advanced band is not acted on until it enters the advanced horizon.
-        Assert.Equal(decimal.MinValue, SellSeg(48m, sellPrice: -2049m, isEstimate: true, advanced: null).GetWeightedPrice(isBuy: false, Config(), Usage)); // deep runway
-        Assert.Equal(decimal.MinValue, SellSeg(12m, sellPrice: -2049m, isEstimate: true, advanced: null).GetWeightedPrice(isBuy: false, Config(), Usage)); // short runway
+        Assert.Equal(decimal.MinValue, SellSeg(48m, sellPrice: 2049m, isEstimate: true, advanced: null).GetWeightedPrice(isBuy: false, Config(), Usage)); // deep runway
+        Assert.Equal(decimal.MinValue, SellSeg(12m, sellPrice: 2049m, isEstimate: true, advanced: null).GetWeightedPrice(isBuy: false, Config(), Usage)); // short runway
     }
 
-    // ---- estimated sell with advanced price ----
+    // ---- estimated sell with advanced price (real Amber signs: feed-in band NEGATIVE, High most negative) ----
 
     [Fact]
-    public void Sell_Estimate_DeepRunway_MoreAttractiveThanPredicted()
+    public void Sell_Estimate_DeepRunway_LeansTowardBestEarning()
     {
-        // Full battery (charge 48 => hours 40 => weight -0.3). Feed-in advanced Low=5,Predicted=10,High=15.
-        // predicted_sell=-10, adjustor=low_sell=-5, |w|=0.3 => -10*0.7 + (-5)*0.3 = -8.5
-        var seg = SellSeg(48m, sellPrice: -10m, isEstimate: true, advanced: new AdvancedPrice { Low = 5m, Predicted = 10m, High = 15m });
+        // Full battery (charge 48 => hours 40 => optimism weight -0.3). Feed-in band predicts a 10c earning,
+        // worst 5c (at the LOW price), best 15c (at the HIGH price): Amber { Low=-5, Predicted=-10, High=-15 }.
+        // predicted=10, optimistic bound=-High=15 => 10*0.7 + 15*0.3 = 11.5 (above predicted => eager when full).
+        var seg = SellSeg(48m, sellPrice: 10m, isEstimate: true, advanced: new AdvancedPrice { Low = -5m, Predicted = -10m, High = -15m });
         var weighted = seg.GetWeightedPrice(isBuy: false, Config(), Usage);
-        Assert.Equal(-8.5m, weighted, 6);
-        Assert.True(weighted > -10m); // less-negative => MaxBy ranks it as a better sell (eager when full)
+        Assert.Equal(11.5m, weighted, 6);
+        Assert.True(weighted > 10m); // MaxBy ranks it as a better sell than predicted (eager when full)
+    }
+
+    [Fact]
+    public void Sell_Estimate_ShortRunway_LeansTowardWorstEarning()
+    {
+        // Low battery (charge 20 => hours 12 => pessimism weight +0.35). Same band { Low=-5, Predicted=-10, High=-15 }.
+        // predicted=10, pessimistic bound=-Low=5 => 10*0.65 + 5*0.35 = 8.25 (below predicted => won't bank on an
+        // uncertain future sell when runway is short). Pins the sell-side direction the old code had inverted.
+        var seg = SellSeg(20m, sellPrice: 10m, isEstimate: true, advanced: new AdvancedPrice { Low = -5m, Predicted = -10m, High = -15m });
+        var weighted = seg.GetWeightedPrice(isBuy: false, Config(), Usage);
+        Assert.Equal(8.25m, weighted, 6);
+        Assert.True(weighted < 10m);
     }
 
     // ---- ordering property the greedy optimiser relies on ----

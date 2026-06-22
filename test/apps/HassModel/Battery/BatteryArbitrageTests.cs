@@ -202,7 +202,7 @@ public class BatteryArbitrageTests
             Seg(2, 25, buy: 10, buyLocked: false, advBuy: Adv(8, 10, 40)),
             Seg(3, 25),
             Seg(4, 25),
-            Seg(5, 25, sell: 40m, sellLocked: false, advSell: Adv(-44m, -40m, -4m)),
+            Seg(5, 25, sell: 40m, sellLocked: false, advSell: Adv(-4m, -40m, -44m)),
             Seg(6, 25),
         };
 
@@ -233,7 +233,7 @@ public class BatteryArbitrageTests
             Seg(2, 25, buy: 20, buyLocked: false, advBuy: Adv(18, 20, 30)),
             Seg(3, 25),
             Seg(4, 25),
-            Seg(5, 25, sell: 30m, sellLocked: false, advSell: Adv(-40m, -30m, -2m)),
+            Seg(5, 25, sell: 30m, sellLocked: false, advSell: Adv(-2m, -30m, -40m)),
             Seg(6, 25),
         };
 
@@ -261,7 +261,7 @@ public class BatteryArbitrageTests
         var segs = new List<EnergySegment>
         {
             Seg(0, 25),
-            Seg(1, 25, sell: 30m, sellLocked: false, advSell: Adv(-35m, -30m, -2m)),
+            Seg(1, 25, sell: 30m, sellLocked: false, advSell: Adv(-2m, -30m, -35m)),
             Seg(2, 25),
             Seg(3, 25),
             Seg(4, 25, buy: 10, buyLocked: false, advBuy: Adv(8, 10, 20)),
