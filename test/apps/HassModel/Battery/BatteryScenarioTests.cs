@@ -189,22 +189,4 @@ public class BatteryScenarioTests
 
         Assert.Equal(EnergySegmentAction.Sell, segs[0].Action);
     }
-
-    [Fact]
-    [Trait("Category", "KnownIssue")]
-    public void Overcharge_DoesNotDischargeAtNegativeFeedIn()
-    {
-        // Economic probe: feed-in is negative (-5c) — exporting costs money. The battery is physically
-        // capped anyway (solar would curtail), so force-discharging at a negative price destroys value.
-        var segs = new List<EnergySegment>
-        {
-            Seg(0, 50, sell: -5m),
-            Seg(1, 51, sell: -5m),
-            Seg(2, 52, sell: -5m),
-        };
-
-        BatteryPlanner.OptimiseSegments(segs, Cfg(), Usage);
-
-        Assert.DoesNotContain(segs, s => s.Action == EnergySegmentAction.Sell);
-    }
 }

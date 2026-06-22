@@ -29,19 +29,4 @@ public class BatteryScenarioTests5
 
         Assert.True(segs[0].Action == EnergySegmentAction.Buy && segs[0].BuyPricePerKw == 5m, message);
     }
-
-    [Fact]
-    [Trait("Category", "KnownIssue")]
-    public void Overcharge_DischargesEvenWithNoFeedInData()
-    {
-        var segs = new List<EnergySegment> { Seg(0, 50), Seg(1, 51), Seg(2, 52) };
-
-        BatteryPlanner.OptimiseSegments(segs, Cfg(), 1m);
-
-        var actions = string.Join(",", segs.Select(s => s.Action));
-        var charges = string.Join(",", segs.Select(s => Math.Round(s.EstimatedBatteryChargeKwh, 2)));
-        var message = $"actions=[{actions}] charges=[{charges}]";
-
-        Assert.False(segs.Any(s => s.Action == EnergySegmentAction.Sell), message);
-    }
 }

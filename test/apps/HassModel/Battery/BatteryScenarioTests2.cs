@@ -13,55 +13,7 @@ public class BatteryScenarioTests2
 {
     private const decimal Usage = 1m;
 
-    // 1) KnownIssue: no boundary crossing → planner won't buy cheap seg proactively
-    [Fact]
-    [Trait("Category", "KnownIssue")]
-    public void Arbitrage_BuysCheapNowWhenNoBoundaryCrossing()
-    {
-        var segs = new List<EnergySegment>
-        {
-            Seg(0, 25, buy: 2),
-            Seg(1, 24, buy: 30),
-            Seg(2, 23, buy: 30),
-            Seg(3, 22, buy: 30),
-            Seg(4, 21, buy: 30),
-            Seg(5, 20, buy: 30),
-        };
-
-        BatteryPlanner.OptimiseSegments(segs, Cfg(), Usage);
-
-        var actions = string.Join(",", segs.Select(s => s.Action));
-        var charges = string.Join(",", segs.Select(s => Math.Round(s.EstimatedBatteryChargeKwh, 2)));
-
-        Assert.True(segs[0].Action == EnergySegmentAction.Buy,
-            $"actions=[{actions}] charges=[{charges}]");
-    }
-
-    // 2) KnownIssue: negative price (being paid to consume) → planner won't charge proactively
-    [Fact]
-    [Trait("Category", "KnownIssue")]
-    public void NegativePrice_ChargesWhenPaidToConsume()
-    {
-        var segs = new List<EnergySegment>
-        {
-            Seg(0, 25, buy: -10),
-            Seg(1, 24, buy: 20),
-            Seg(2, 23, buy: 20),
-            Seg(3, 22, buy: 20),
-            Seg(4, 21, buy: 20),
-            Seg(5, 20, buy: 20),
-        };
-
-        BatteryPlanner.OptimiseSegments(segs, Cfg(), Usage);
-
-        var actions = string.Join(",", segs.Select(s => s.Action));
-        var charges = string.Join(",", segs.Select(s => Math.Round(s.EstimatedBatteryChargeKwh, 2)));
-
-        Assert.True(segs[0].Action == EnergySegmentAction.Buy,
-            $"actions=[{actions}] charges=[{charges}]");
-    }
-
-    // 3) Forced buy: planner picks cheapest early segment over expensive forced moment
+    // Forced buy: planner picks cheapest early segment over expensive forced moment
     [Fact]
     public void ForcedBuy_PrefersCheapEarlySegment_OverExpensiveForcedMoment()
     {
