@@ -183,16 +183,16 @@ public class BatteryArbitrageTests
     }
 
     // -----------------------------------------------------------------------------------------
-    // 7. DirectionalPessimism_PricesEarlierLegAtFaceValue
-    //    buy(seg2) before sell(seg5), both estimates. Pessimism (0.5) lands on the LATER leg only (the
-    //    sell): 40*0.5 + 4*0.5 = 22. The earlier leg (buy) is priced at face value (predicted) = 10.
-    //    Gate (margin 0, eff 0.9): net = 22 - 10/0.9 = 10.89 >= 0 → COMMITS.
-    //    (The old both-legs-pessimised pricing used buy ~25 → 22 vs 25/0.9 = 27.78 → would NOT have
-    //    committed; this pins the directional change.)
+    // 7. EstimatePessimism_DiscountsBothForecastLegs
+    //    buy(seg2) before sell(seg5), BOTH estimates. Pessimism (0.5) discounts each forecast leg:
+    //    buy = 10*0.5 + High 40*0.5 = 25; sell = 40*0.5 + low-earning 4*0.5 = 22.
+    //    Gate (margin 0, eff 0.9): net = 22 - 25/0.9 = -5.78 < 0 → NO commit, even though face value
+    //    (40 - 10/0.9 = 28.9) clears it easily. Pins that an all-forecast pair is judged on its
+    //    pessimistic, not predicted, prices.
     // -----------------------------------------------------------------------------------------
 
     [Fact]
-    public void DirectionalPessimism_PricesEarlierLegAtFaceValue()
+    public void EstimatePessimism_DiscountsBothForecastLegs()
     {
         var cfg = Cfg();
         var segs = new List<EnergySegment>
@@ -210,20 +210,19 @@ public class BatteryArbitrageTests
         BatteryPlanner.ApplyArbitrage(segs, cfg);
 
         var actions = string.Join(",", segs.Select(s => s.Action));
-        Assert.True(segs[2].Action == EnergySegmentAction.Buy, $"actions=[{actions}]");
-        Assert.True(segs[5].Action == EnergySegmentAction.Sell, $"actions=[{actions}]");
+        Assert.True(segs.All(s => s.Action == EnergySegmentAction.None), $"actions=[{actions}]");
     }
 
     // -----------------------------------------------------------------------------------------
-    // 8. LaterLegPessimism_StillGatesUncertainPair
-    //    buy(seg2) before sell(seg5), both estimates. Earlier leg (buy) at face value = 20. Later leg
-    //    (sell) pessimised: predicted 30, low-earning bound 2 → 30*0.5 + 2*0.5 = 16.
-    //    Gate (margin 0): net = 16 - 20/0.9 = -6.22 < 0 → NO commit — even though face value alone
-    //    (30 - 20/0.9 = 7.78) would have cleared it. Proves the later leg's pessimism still bites.
+    // 8. EstimatePessimism_GatesUncertainPair
+    //    buy(seg2) before sell(seg5), both estimates. Both legs pessimised: buy = 20*0.5 + 30*0.5 = 25,
+    //    sell = predicted 30*0.5 + low-earning 2*0.5 = 16.
+    //    Gate (margin 0): net = 16 - 25/0.9 = -11.78 < 0 → NO commit — even though face value alone
+    //    (30 - 20/0.9 = 7.78) would have cleared it. Proves the forecast pessimism still bites.
     // -----------------------------------------------------------------------------------------
 
     [Fact]
-    public void LaterLegPessimism_StillGatesUncertainPair()
+    public void EstimatePessimism_GatesUncertainPair()
     {
         var cfg = Cfg();
         var segs = new List<EnergySegment>
@@ -245,23 +244,21 @@ public class BatteryArbitrageTests
     }
 
     // -----------------------------------------------------------------------------------------
-    // 9. SellBeforeBuy_PessimisesLaterBuyNotEarlierSell
-    //    sell(seg1) before buy(seg4), both estimates. Here the BUY is the later leg. The earlier leg
-    //    (sell) is priced at face value (predicted) = 30 — its poor pessimistic bound (2) is NOT used.
-    //    Later leg (buy) pessimised: 10*0.5 + 20*0.5 = 15.
-    //    Gate (margin 0): net = 30 - 15/0.9 = 13.33 >= 0 → COMMITS. (Had the sell been wrongly
-    //    pessimised to 2, net would be -14.7 → blocked, so the commit proves the earlier sell is at
-    //    face value.)
+    // 9. LockedLeg_PricedAtFaceValue_EstimateLegDiscounted
+    //    sell(seg1, LOCKED) before buy(seg4, estimate). The locked sell keeps its face value = 30; only
+    //    the estimate buy is pessimised: 10*0.5 + High 20*0.5 = 15.
+    //    Gate (margin 0): net = 30 - 15/0.9 = 13.33 >= 0 → COMMITS. Pins that a materialised (locked) leg
+    //    is NOT discounted while the forecast leg is — so a certain price now isn't penalised.
     // -----------------------------------------------------------------------------------------
 
     [Fact]
-    public void SellBeforeBuy_PessimisesLaterBuyNotEarlierSell()
+    public void LockedLeg_PricedAtFaceValue_EstimateLegDiscounted()
     {
         var cfg = Cfg();
         var segs = new List<EnergySegment>
         {
             Seg(0, 25),
-            Seg(1, 25, sell: 30m, sellLocked: false, advSell: Adv(-2m, -30m, -35m)),
+            Seg(1, 25, sell: 30m), // locked (default): priced at face value
             Seg(2, 25),
             Seg(3, 25),
             Seg(4, 25, buy: 10, buyLocked: false, advBuy: Adv(8, 10, 20)),
@@ -275,6 +272,36 @@ public class BatteryArbitrageTests
         var actions = string.Join(",", segs.Select(s => s.Action));
         Assert.True(segs[1].Action == EnergySegmentAction.Sell, $"actions=[{actions}]");
         Assert.True(segs[4].Action == EnergySegmentAction.Buy, $"actions=[{actions}]");
+    }
+
+    // -----------------------------------------------------------------------------------------
+    // 14. TakesCertainNowSell_OverHigherButUncertainForecast
+    //    The 2026-06-22 spike-skip repro. A certain locked now-sell (22c) competes with a higher-PREDICTED
+    //    future sell estimate (27c, but worst-earning only 10c) for one cheap buy. Ranked by pessimistic
+    //    earning the certain 22c beats the discounted estimate (27*0.5 + 10*0.5 = 18.5), so the now-sell is
+    //    taken and the uncertain forecast is passed over (it would have won on face value). Regression for
+    //    the spike where good 22c sells were skipped to chase a receding predicted peak.
+    // -----------------------------------------------------------------------------------------
+
+    [Fact]
+    public void TakesCertainNowSell_OverHigherButUncertainForecast()
+    {
+        var cfg = Cfg();
+        var segs = new List<EnergySegment>
+        {
+            Seg(0, 25, sell: 22m),                                                    // certain now-sell, locked
+            Seg(1, 25, sell: 27m, sellLocked: false, advSell: Adv(-10m, -27m, -40m)), // future estimate: pred 27, worst 10
+            Seg(2, 25),
+            Seg(3, 25, buy: 5m),                                                      // single cheap buy
+            Seg(4, 25),
+        };
+
+        BatteryPlanner.OptimiseSegments(segs, cfg, 1m);
+        BatteryPlanner.ApplyArbitrage(segs, cfg);
+
+        var actions = string.Join(",", segs.Select(s => s.Action));
+        Assert.True(segs[0].Action == EnergySegmentAction.Sell, $"actions=[{actions}]");
+        Assert.True(segs[1].Action == EnergySegmentAction.None, $"actions=[{actions}]");
     }
 
     // -----------------------------------------------------------------------------------------

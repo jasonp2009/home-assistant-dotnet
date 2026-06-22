@@ -160,7 +160,7 @@ public static class BatteryPlanner
     ///
     /// Greedy loop:
     ///  1. Among segments with <c>Action == None</c> and a sell price (<c>SellPricePerKw != null</c>), take the
-    ///     one with the highest face-value (predicted) earning.
+    ///     one with the highest pessimistic (estimate-discounted) earning.
     ///  2. Among segments with <c>Action == None</c> and a buy price (<c>BuyPricePerKw != null</c>), other than
     ///     the chosen sell, that form a FEASIBLE pair, take the one giving the best net profit per kWh.
     ///  3. Commit the pair only when it clears the profit gate:
@@ -171,13 +171,14 @@ public static class BatteryPlanner
     ///  4. Repeat until no profitable, feasible pair remains. If the best sell has no profitable feasible buy,
     ///     move on to the next-best sell before stopping (don't give up at the first miss).
     ///
-    /// PESSIMISM IS DIRECTIONAL: the discount (<c>config.ArbitragePessimismWeight</c>) is applied to the LATER
-    /// leg of the pair only — the speculative price we're waiting on — while the earlier, more-imminent leg is
-    /// priced at face value (the same way a materialised "now" price is acted on at face value elsewhere). That
-    /// keeps a near-future leg priced consistently with the current segment, so a sustained run does not drop
-    /// out one segment ahead and re-commit each tick:
-    ///  - buy before sell: the sell (later) is pessimised, the buy (earlier) is priced at predicted.
-    ///  - sell before buy: the buy (later) is pessimised, the sell (earlier) is priced at predicted.
+    /// PESSIMISM IS ESTIMATE-BASED: the discount (<c>config.ArbitragePessimismWeight</c>) is applied to any leg
+    /// whose price is an ESTIMATE (a forecast) — leaning a buy toward its advanced High and a sell toward its
+    /// lowest plausible earning — while a LOCKED (materialised) leg passes through at face value (handled by
+    /// <see cref="EnergySegmentExtensions.WeightedPrice"/>). So an uncertain future price is acted on only when
+    /// even its pessimistic value clears the gate: the planner won't skip a certain good price now to chase a
+    /// higher-but-uncertain forecast. Both legs of an all-forecast pair are discounted; a pair anchored by the
+    /// locked current segment keeps that leg at face value. (Pricing the speculative leg at its worst plausible
+    /// value depends on the sell-side lean being correct — see <see cref="EnergySegmentExtensions.WeightedPrice"/>.)
     ///
     /// FEASIBILITY keeps the round-trip within [MinCapacity, MaxCapacity] (i.e. inside the slack between
     /// boundary crossings), using a small tolerance (e.g. 0.01) to absorb SegmentChargeAmountKwh rounding:
@@ -195,14 +196,15 @@ public static class BatteryPlanner
         var loopGuard = 0;
         while (loopGuard++ < energySegments.Count)
         {
-            // Rank candidate sells (Action==None, SellPricePerKw != null) by face-value (predicted) earning,
-            // DESC. The pessimism discount is applied per-pair to the later leg only, so the sell is ranked at
-            // face value here rather than pre-discounted. Un-actionable legs (estimates past Amber's advanced
-            // horizon, for which WeightedPrice returns the decimal.Min/MaxValue sentinel) are excluded: the net
-            // calculation below does arithmetic on the leg price, which would overflow the decimal range.
+            // Rank candidate sells (Action==None, SellPricePerKw != null) by pessimistic earning, DESC: an
+            // estimate sell is discounted toward its lowest plausible earning, a locked sell is at face value
+            // (WeightedPrice passthrough). That stops a higher-but-uncertain forecast outranking a certain price
+            // now. Un-actionable legs (estimates past Amber's advanced horizon, for which WeightedPrice returns
+            // the decimal.Min/MaxValue sentinel) are excluded: the net calculation below does arithmetic on the
+            // leg price, which would overflow the decimal range.
             var sells = energySegments
                 .Where(s => s.Action == EnergySegmentAction.None && s.SellPricePerKw != null && HasActionableSellPrice(s))
-                .OrderByDescending(s => s.WeightedPrice(isBuy: false, 0m));
+                .OrderByDescending(s => s.WeightedPrice(isBuy: false, config.ArbitragePessimismWeight));
 
             var committed = false;
             foreach (var sell in sells)
@@ -211,17 +213,16 @@ public static class BatteryPlanner
 
                 // Candidate buys: Action==None, BuyPricePerKw != null, not the sell, not a demand window
                 // (buying in a demand window incurs extra charges, so it's disallowed — selling is fine),
-                // and the pair is feasible. Pessimise only the LATER leg (the speculative price we're waiting
-                // on); price the earlier, more-imminent leg at face value. Keep the buy with the best net.
+                // and the pair is feasible. Pessimise each ESTIMATE leg (locked legs pass through at face via
+                // WeightedPrice); keep the buy with the best net.
                 EnergySegment? bestBuy = null;
                 var bestNet = decimal.MinValue;
                 foreach (var buy in energySegments.Where(b => b.Action == EnergySegmentAction.None && b.BuyPricePerKw != null && b != sell && !b.IsDemandWindow && HasActionableBuyPrice(b)))
                 {
                     var buyIndex = energySegments.IndexOf(buy);
                     if (!FeasiblePair(buyIndex, sellIndex, energySegments, config, tol)) continue;
-                    var sellIsLater = sellIndex > buyIndex;
-                    var sellEarning = sell.WeightedPrice(isBuy: false, sellIsLater ? config.ArbitragePessimismWeight : 0m);
-                    var buyCost = buy.WeightedPrice(isBuy: true, sellIsLater ? 0m : config.ArbitragePessimismWeight);
+                    var sellEarning = sell.WeightedPrice(isBuy: false, config.ArbitragePessimismWeight);
+                    var buyCost = buy.WeightedPrice(isBuy: true, config.ArbitragePessimismWeight);
                     var net = sellEarning - buyCost / config.RoundTripEfficiency;
                     if (net > bestNet) { bestNet = net; bestBuy = buy; }
                 }
