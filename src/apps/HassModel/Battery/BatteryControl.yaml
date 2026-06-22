@@ -43,7 +43,7 @@
   NextActionPriceLog: input_number.next_action_price_battery_log
   NextActionAtLog: input_datetime.next_action_at_battery_log
   BatteryCapacity: 53
-  MinCapacity: 5.3
+  MinCapacity: 8
   MaxCapacity: 53
   SegmentSizeMins: 5
   MinForecastHours: 72
