@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using HomeAssistantGenerated;
 using Microsoft.Extensions.Logging;
@@ -40,10 +40,15 @@ public class LightAdjust
                     ? DateTime.Today + TimeSpan.FromDays(1)
                     : DateTime.Today;
 
-                var firstRun = new DateTimeOffset(
-                    DateOnly.FromDateTime(firstRunDate),
-                    adjustment.Time,
-                    TimeSpan.FromHours(11));
+                // Use the machine's actual local offset (DST-aware) rather than a hardcoded +11. With a
+                // hardcoded +11 during AEST (+10), "today at HH:MM" resolves an hour early in absolute
+                // time, so an evening adjustment whose time is within the next hour lands in the past and
+                // RunEvery fires it immediately at startup — snapping the lights to the evening preset
+                // right after a restart instead of holding the current value.
+                var firstRunLocal = firstRunDate + adjustment.Time.ToTimeSpan();
+                var firstRun = new DateTimeOffset(firstRunLocal, TimeZoneInfo.Local.GetUtcOffset(firstRunLocal));
+                _logger.LogDebug("Scheduling {Light} adjustment for {AdjustmentTime}, first run {FirstRun}",
+                    light.EntityId, adjustment.Time, firstRun);
                 scheduler.RunEvery(TimeSpan.FromDays(1), firstRun, () => ApplyAdjustment(light, adjustment));
             }
 
