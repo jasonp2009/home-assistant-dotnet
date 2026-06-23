@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
@@ -29,12 +30,21 @@ public class ForecastSolarClient
     }
 
 
-    public async Task<Dictionary<DateTime, int>?> GetForecastAsync()
+    /// <summary>
+    /// Fetches the watt-hours/period forecast. When <paramref name="actualProductionKwh"/> is supplied,
+    /// today's measured cumulative production (absolute kWh) is passed via Forecast.Solar's <c>actual</c>
+    /// query parameter, which recalibrates the forecast to match real output for the current day only
+    /// (it does not affect later days). See https://doc.forecast.solar/actual.
+    /// </summary>
+    public async Task<Dictionary<DateTime, int>?> GetForecastAsync(decimal? actualProductionKwh = null)
     {
         try
         {
-            var response = await _httpClient.GetFromJsonAsync<ForecastResult>(
-                $"/{_settings.ApiKey}/estimate/watthours/period/{_settings.Latitude}/{_settings.Longitude}/{_settings.Declination}/{_settings.Azimuth}/{_settings.Kilowatts}?time=utc");
+            var url =
+                $"/{_settings.ApiKey}/estimate/watthours/period/{_settings.Latitude}/{_settings.Longitude}/{_settings.Declination}/{_settings.Azimuth}/{_settings.Kilowatts}?time=utc";
+            if (actualProductionKwh is >= 0)
+                url += $"&actual={actualProductionKwh.Value.ToString("0.###", CultureInfo.InvariantCulture)}";
+            var response = await _httpClient.GetFromJsonAsync<ForecastResult>(url);
             _cachedForecast = response?.Result.ToDictionary(v => DateTime.Parse(v.Key).ToUniversalTime(), v => v.Value);
             return _cachedForecast;
         }

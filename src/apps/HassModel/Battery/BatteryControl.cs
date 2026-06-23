@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using HomeAssistantGenerated;
@@ -149,7 +150,8 @@ public class BatteryControl
         var profile = string.Join("  ", new[] { 0, 3, 6, 9, 12, 15, 18, 21 }
             .Select(h => $"{h:00}h={segmentUsageEstimator(profileDate.AddHours(h).ToUniversalTime()):0.###}"));
         _logger.LogInformation("Per-segment usage estimate profile (kWh per 5min, local time-of-day): {Profile}", profile);
-        var solarForecastTask = _forecastSolarClient.GetForecastAsync();
+        var actualSolarKwh = GetTodaySolarProductionKwh();
+        var solarForecastTask = _forecastSolarClient.GetForecastAsync(actualSolarKwh);
         var amberPricesTask = _amberClient.GetCurrentPriceAsync();
         await Task.WhenAll(solarForecastTask, amberPricesTask);
         var solarForecast = solarForecastTask.Result;
@@ -231,6 +233,21 @@ public class BatteryControl
     private decimal GetCurrentBatteryChargeKwh()
     {
         return Convert.ToDecimal(_config.SolarBatteryStateOfChargeEntity.State) / 100 * _config.BatteryCapacity;
+    }
+
+    /// <summary>
+    /// Today's measured cumulative solar production (kWh), passed to Forecast.Solar's <c>actual</c>
+    /// parameter to recalibrate the same-day forecast. Returns null when the sensor is missing or
+    /// non-numeric (e.g. "unknown"/"unavailable") so the request omits the calibration rather than failing.
+    /// </summary>
+    private decimal? GetTodaySolarProductionKwh()
+    {
+        if (decimal.TryParse(_config.SolarProductionTodayEntity.State, NumberStyles.Any, CultureInfo.InvariantCulture, out var kwh)
+            && kwh >= 0)
+            return kwh;
+        _logger.LogWarning("Today's solar production sensor '{Entity}' state '{State}' is not usable; skipping forecast calibration",
+            _config.SolarProductionTodayEntity.EntityId, _config.SolarProductionTodayEntity.State);
+        return null;
     }
 
     private DateTime GetCurrentSegmentStart() => UsageMath.SegmentStart(DateTime.UtcNow, _config.SegmentSize);

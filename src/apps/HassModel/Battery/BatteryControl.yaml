@@ -7,6 +7,7 @@
   GridIn3DaysEntity: sensor.energy_meter_grid_in_3_days
   GridOut3DaysEntity: sensor.energy_meter_grid_out_3_days
   SolarProduction3DaysEntity: sensor.pawar_plant_total_solar_production_3_days
+  SolarProductionTodayEntity: sensor.pawar_plant_total_energy_today
   BatteryChargeDiff3DaysEntity: sensor.solar_battery_battery_diff_3_days
   EstimatedUsageMultiplier: 1
   GridEnergyInTotalEntity: sensor.energy_meter_grid_energy_in_total

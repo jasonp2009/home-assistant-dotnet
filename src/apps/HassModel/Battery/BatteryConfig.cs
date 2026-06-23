@@ -9,6 +9,10 @@ public class BatteryConfig
     public SensorEntity GridIn3DaysEntity { get; set; }
     public SensorEntity GridOut3DaysEntity { get; set; }
     public SensorEntity SolarProduction3DaysEntity { get; set; }
+
+    // Today's cumulative solar production (kWh, resets at midnight). Fed to Forecast.Solar's `actual`
+    // parameter so the same-day forecast is recalibrated against real output. See ForecastSolarClient.
+    public SensorEntity SolarProductionTodayEntity { get; set; }
     public SensorEntity BatteryChargeDiff3DaysEntity { get; set; }
     public decimal EstimatedUsageMultiplier { get; set; }
 
