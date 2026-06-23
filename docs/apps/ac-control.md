@@ -1,0 +1,159 @@
+# AC control app
+
+Controls a single **ducted Mitsubishi air conditioner** with multiple **zones** (one per room), so
+each room behaves like it has its own thermostat. The unit is driven through the Mitsubishi
+[melview](https://api.melview.net) cloud API (not through Home Assistant), while the per-room
+sensors, setpoints, switches and logs are Home Assistant entities.
+
+- Code: [`../../src/apps/HassModel/AC/`](../../src/apps/HassModel/AC/)
+- Config: [`../../src/apps/HassModel/AC/AcControl.yaml`](../../src/apps/HassModel/AC/AcControl.yaml)
+- Mitsubishi client: [`../../src/apps/HassModel/AC/MitsubishiClient/`](../../src/apps/HassModel/AC/MitsubishiClient/)
+
+## How it runs
+
+[`AcControl`](../../src/apps/HassModel/AC/AcControl.cs) is a `[NetDaemonApp]` implementing
+`IAsyncInitializable`. On startup it logs into the melview API, applies the current battery
+state-of-charge profile shift, then runs one full evaluation. After that it re-evaluates whenever
+anything relevant changes:
+
+- a room's **AC toggle**, **set temperature**, **temperature sensor**, or **profile select** changes;
+- a room's **motion** or **contact** sensor changes;
+- the **weather** entity (`weather.forecast_home`) changes;
+- the **battery state-of-charge** sensor changes (recomputes the profile shift — see [SoC profile shift](#soc-profile-shift));
+- a **60-second poll** refreshes the live AC state from melview and re-evaluates if the unit's
+  measured room temperature changed.
+
+Each evaluation is `HandleChange` ([AcControl.cs:107](../../src/apps/HassModel/AC/AcControl.cs#L107)):
+
+1. Choose the unit **mode** (`Cool`/`Heat`) — `GetDesiredAcMode`.
+2. Set the unit's driving **setpoint** — `SetTemperature` (the "aggressiveness" term, below).
+3. For every room, enable/disable its **zone** — `ShouldEnableZone`.
+4. Turn the **whole unit** on iff any zone is on, and set **fan** to `High` when more than two zones
+   are on, otherwise `Low`.
+5. Mirror the resulting state into Home Assistant **log helper entities**.
+
+> The unit has a single shared mode and setpoint; only the **zones** are per-room. So heating one
+> room while cooling another is impossible — `GetDesiredAcMode` picks whichever mode the most rooms
+> currently want, and stays on the current mode as long as at least one room still wants it.
+
+## Per-zone thermostat: `ShouldEnableZone`
+
+[`ShouldEnableZone`](../../src/apps/HassModel/AC/AcControl.cs#L184) is the core decision: should this
+room's zone be open right now? It regulates the room's **measured air temperature**
+(`room.CurrentTemperate`, parsed from the room's temperature sensor) against the user's
+**set temperature**, using a hysteresis band whose widths come from the room's effective **profile**:
+
+For **cooling** (heating mirrors with the signs flipped):
+
+| Point | Value | Meaning |
+|---|---|---|
+| `forcePoint` | `setTemp + ForceTolerance` | when the zone is **off**, how hot the room must get before the zone is forced on |
+| `onPoint` | `setTemp + OnTolerance` | when the unit is already **on**, the (tighter) threshold to keep/turn the zone on |
+| `offPoint` | `setTemp + OffTolerance` | cool past this and the zone turns off |
+| `weatherOffPoint` | `setTemp − WeatherOffset` | **economy gate**: if it is already this cool *outside*, don't cool at all |
+
+So in cooling: if it is cool enough outside the zone stays off; otherwise the zone turns on above the
+on/force point and off below the off point. Heating is the mirror image (turn on when the room is
+*below* the point, gate off when it is already warm enough outside).
+
+The decision is also gated by occupancy — see [Occupancy gating](#occupancy-gating).
+
+## Profiles
+
+A profile is a set of hysteresis widths. The user picks one per room via an `input_select`
+(`AcProfileSelectEntity`). Profiles are ordered from most aggressive to most economical
+([AcControl.yaml](../../src/apps/HassModel/AC/AcControl.yaml)):
+
+| Profile | ForceTolerance | OnTolerance | OffTolerance | WeatherOffset |
+|---|---|---|---|---|
+| Boost Plus | 1 | 1 | 0.5 | 5 |
+| Boost | 1.5 | 1 | 0.5 | 4 |
+| Standard *(default)* | 2 | 1.5 | 1 | 3 |
+| Eco | 4 | 3 | 2 | 2 |
+| Eco Plus | 5 | 4 | 3 | 1 |
+
+A tighter band (Boost) holds the room closer to setpoint at the cost of more runtime; a wider band
+(Eco) lets the room drift further before acting.
+
+## SoC profile shift
+
+The battery's state of charge nudges every room toward a more aggressive or more economical profile,
+so the AC leans on cheap/abundant stored energy when the battery is full and backs off when it is
+low. [`HandleSocChange`](../../src/apps/HassModel/AC/AcControl.cs#L236) maps SoC to a
+`_curSocModifier` via `SocAdjusts` (with a hysteresis `Tolerance` so it doesn't flap at a boundary):
+
+| SoC | Modifier |
+|---|---|
+| 90–100% | +1 (more aggressive) |
+| 50–90% | 0 |
+| 30–50% | −1 |
+| 0–30% | −2 (more economical) |
+
+[`GetEffectiveProfile`](../../src/apps/HassModel/AC/AcControl.cs#L218) then shifts the chosen profile
+by that modifier: `desiredIndex = profileIndex − modifier`. Below the first profile it clamps to the
+most aggressive (Boost Plus); past the last profile it returns `null`, which turns the zone **off**
+entirely (the battery is too low to justify running that room).
+
+## Driving setpoint & "aggressiveness"
+
+`ShouldEnableZone` only decides *whether* a zone runs. *How hard* the unit drives is
+`SetTemperature` ([AcControl.cs:122](../../src/apps/HassModel/AC/AcControl.cs#L122)). It computes an
+**aggressiveness** term from how long the room temperature has been **failing to move in the desired
+direction**:
+
+- Per zone, `_tempLastChangedDict` records the last time the room temperature moved the *right* way
+  (cooler while cooling, warmer while heating).
+- The longer a room has stalled (no helpful movement) since it last changed or since the zone came
+  on, the higher its aggressiveness. It is averaged across the active rooms, floored, and used to
+  push the unit's **actual setpoint** past its measured room temperature:
+  `SetTemp = RoomTemp ∓ aggressiveness`.
+
+This is a time-since-progress feedback term, not a comfort term. Note it drives off the **unit's**
+single `RoomTemp` (its return-air reading), whereas zone enable/disable uses the **per-room** sensors.
+
+## Occupancy gating
+
+[`CheckContactAndMotion`](../../src/apps/HassModel/AC/AcControl.cs#L254) can veto a zone:
+
+- If a room defines a `MotionEnabledFrom`/`MotionEnabledTo` window and **now is outside** it, motion
+  is **not** required (the zone is allowed regardless). Example: a bedroom set to 09:00–21:00 ignores
+  motion overnight so it works while you sleep.
+- Otherwise the zone is allowed **unless** a **contact** sensor has been open for >5 min (a door/
+  window left open) **or** all **motion** sensors have been off for >15 min (room empty).
+
+## Mitsubishi (melview) client
+
+[`MitsubishiClient`](../../src/apps/HassModel/AC/MitsubishiClient/MitsubishiClient.cs) talks to
+`api.melview.net`. It logs in for a cookie, then every command POSTs to `unitcommand.aspx` and parses
+the returned [`AcState`](../../src/apps/HassModel/AC/MitsubishiClient/Models/AcState.cs). Commands are
+short codes: `PW{0/1}` power, `MD{n}` mode, `TS{n}` setpoint, `Z{zone}{0/1}` zone on/off, `FS{n}`
+fan. Each setter is a no-op if the unit is already in the requested state. `UpdateState(null)` just
+refreshes state.
+
+## Home Assistant entities
+
+Per room ([`AcRoomConfig`](../../src/apps/HassModel/AC/AcConfig.cs)): a temperature sensor, a set-
+temperature `input_number`, an on/off `input_boolean`, a profile `input_select`, optional motion/
+contact `binary_sensor`s, and a `ZoneOnLogEntity`. Globally
+([`AcConfig`](../../src/apps/HassModel/AC/AcConfig.cs)): the battery SoC sensor plus log helpers
+(`AcOnLog`, `AcModeLog`, `AcAggressivenessLog`, `SocModifierLog`). The `weather.forecast_home` entity
+supplies the outdoor temperature for the economy gate.
+
+Every room sensor is a **temperature *and* humidity** sensor, so a paired `..._humidity` entity
+exists for each room (see [Felt-temperature control](#felt-temperature-control) for how this is used).
+
+## Gotchas / notes
+
+- **Do not run this app locally** — like the battery app, its scheduler issues real commands to the
+  live AC. Verify with `dotnet test`. See [`../../CLAUDE.md`](../../CLAUDE.md).
+- **Single mode/setpoint** for the whole unit; only zones are per-room (see above).
+- **Two different temperatures**: zone decisions use per-room HA sensors; the aggressiveness/driving
+  setpoint uses the unit's own return-air `RoomTemp`.
+- The log level for `src.apps.HassModel.AC.AcControl` in `appsettings.json` is misspelled `"Waring"`,
+  so it does not take effect (the app logs at the `Default` level).
+
+## Felt-temperature control
+
+> This section describes work in progress. The controller is being extended to regulate an
+> estimated **felt** (apparent) temperature rather than raw air temperature, because comfort depends
+> on more than dry-bulb air temperature. See the sections added with that work below.
