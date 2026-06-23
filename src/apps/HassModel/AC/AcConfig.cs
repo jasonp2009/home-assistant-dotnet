@@ -30,8 +30,12 @@ public class AcConfig
     /// <summary>Reference relative humidity (%) at which the humidity term contributes nothing; only humidity above/below this shifts the felt temperature.</summary>
     public decimal ReferenceHumidity { get; set; } = 50M;
 
-    /// <summary>Coefficient on the Steadman vapour-pressure (humidity) term of the felt-temperature estimate.</summary>
-    public decimal HumidityCoefficient { get; set; } = 0.33M;
+    /// <summary>
+    /// Coefficient on the Steadman vapour-pressure (humidity) term of the felt-temperature estimate.
+    /// Deliberately below the textbook Steadman value of 0.33 — the full coefficient is calibrated for
+    /// outdoor apparent temperature and over-weights humidity at indoor room temperatures.
+    /// </summary>
+    public decimal HumidityCoefficient { get; set; } = 0.15M;
 
     /// <summary>
     /// Time constant (hours) of the outdoor-temperature EMA that feeds the radiant envelope offset.

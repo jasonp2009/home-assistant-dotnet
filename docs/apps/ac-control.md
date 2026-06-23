@@ -237,6 +237,8 @@ where `e` is the water-vapour pressure (`ComfortMath.VapourPressure`, Magnus app
 `refRh` is `ReferenceHumidity` (default 50%). Anchoring to a reference humidity means a typical indoor
 humidity contributes ≈0, so only unusual humidity moves the felt temperature — positive (feels
 hotter) when muggy, slightly negative when very dry. The effect is small at mild winter conditions
-and grows on a hot, humid summer afternoon (e.g. ~+2.8 °C at 30 °C / 70% RH), where it makes cooling
-a little more aggressive. `HumidityCoefficient` defaults to 0.33 (Steadman). Rooms without a humidity
-sensor simply omit this term.
+and grows on a hot, humid summer afternoon (e.g. ~+1.3 °C at 30 °C / 70% RH), where it makes cooling
+a little more aggressive. `HumidityCoefficient` defaults to **0.15** — deliberately below the textbook
+Steadman value of 0.33, which is calibrated for outdoor apparent temperature and over-weights
+humidity at indoor room temperatures (≈0.4 °C per 10% RH at 22 °C, vs ≈0.9 °C at 0.33). Rooms
+without a humidity sensor simply omit this term.
