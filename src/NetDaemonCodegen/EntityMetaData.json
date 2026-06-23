@@ -500,7 +500,7 @@
         {
           "jsonName": "media_content_id",
           "cSharpName": "MediaContentId",
-          "clrType": "System.String"
+          "clrType": "System.Object"
         },
         {
           "jsonName": "media_content_type",
@@ -610,6 +610,41 @@
         {
           "jsonName": "player_source",
           "cSharpName": "PlayerSource",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "media_series_title",
+          "cSharpName": "MediaSeriesTitle",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "media_season",
+          "cSharpName": "MediaSeason",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "media_episode",
+          "cSharpName": "MediaEpisode",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "media_content_rating",
+          "cSharpName": "MediaContentRating",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "media_library_title",
+          "cSharpName": "MediaLibraryTitle",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "media_summary",
+          "cSharpName": "MediaSummary",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "username",
+          "cSharpName": "Username",
           "clrType": "System.String"
         }
       ]
@@ -731,6 +766,16 @@
           "id": "binary_sensor.hallway_temperature_and_humidity_sensor_cloud_connection",
           "friendlyName": "Hallway Temperature and Humidity Sensor Cloud connection",
           "cSharpName": "HallwayTemperatureAndHumiditySensorCloudConnection"
+        },
+        {
+          "id": "binary_sensor.home_demand_window",
+          "friendlyName": "Home - Demand Window",
+          "cSharpName": "HomeDemandWindow"
+        },
+        {
+          "id": "binary_sensor.home_price_spike",
+          "friendlyName": "Home - Price Spike",
+          "cSharpName": "HomePriceSpike"
         },
         {
           "id": "binary_sensor.jason_s_bedroom_light_cloud_connection",
@@ -918,6 +963,16 @@
           "jsonName": "pout",
           "cSharpName": "Pout",
           "clrType": "System.Double"
+        },
+        {
+          "jsonName": "spike_status",
+          "cSharpName": "SpikeStatus",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "attribution",
+          "cSharpName": "Attribution",
+          "clrType": "System.String"
         }
       ]
     },
@@ -1007,9 +1062,9 @@
           "cSharpName": "OllamaConversation2"
         },
         {
-          "id": "conversation.openai_conversation",
+          "id": "conversation.openai_conversation_2",
           "friendlyName": "OpenAI Conversation",
-          "cSharpName": "OpenaiConversation"
+          "cSharpName": "OpenaiConversation2"
         }
       ],
       "attributes": [
@@ -1348,6 +1403,11 @@
           "cSharpName": "BackyardLightSignalLevel"
         },
         {
+          "id": "sensor.battery_until_time_until_battery_log",
+          "friendlyName": "Battery Until Time Until - Battery Log",
+          "cSharpName": "BatteryUntilTimeUntilBatteryLog"
+        },
+        {
           "id": "sensor.bedroom_smart_hub_alarm_source",
           "friendlyName": "Bedroom Smart Hub Alarm source",
           "cSharpName": "BedroomSmartHubAlarmSource"
@@ -1356,6 +1416,11 @@
           "id": "sensor.bedroom_smart_hub_signal_level",
           "friendlyName": "Bedroom Smart Hub Signal level",
           "cSharpName": "BedroomSmartHubSignalLevel"
+        },
+        {
+          "id": "sensor.current_action_end_time_until_battery_log",
+          "friendlyName": "Current Action End Time Until - Battery Log",
+          "cSharpName": "CurrentActionEndTimeUntilBatteryLog"
         },
         {
           "id": "sensor.dining_room_lamp_signal_level",
@@ -1406,6 +1471,16 @@
           "id": "sensor.hallway_temperature_and_humidity_sensor_signal_level",
           "friendlyName": "Hallway Temperature and Humidity Sensor Signal level",
           "cSharpName": "HallwayTemperatureAndHumiditySensorSignalLevel"
+        },
+        {
+          "id": "sensor.home_feed_in_price_descriptor",
+          "friendlyName": "Home - Feed In Price Descriptor",
+          "cSharpName": "HomeFeedInPriceDescriptor"
+        },
+        {
+          "id": "sensor.home_general_price_descriptor",
+          "friendlyName": "Home - General Price Descriptor",
+          "cSharpName": "HomeGeneralPriceDescriptor"
         },
         {
           "id": "sensor.jason_s_bedroom_light_signal_level",
@@ -1546,6 +1621,11 @@
           "id": "sensor.master_bedroom_temperature_and_humidity_sensor_signal_level",
           "friendlyName": "Master Bedroom Temperature and Humidity Sensor Signal level",
           "cSharpName": "MasterBedroomTemperatureAndHumiditySensorSignalLevel"
+        },
+        {
+          "id": "sensor.next_action_at_time_until_battery_log",
+          "friendlyName": "Next Action At Time Until - Battery Log",
+          "cSharpName": "NextActionAtTimeUntilBatteryLog"
         },
         {
           "id": "sensor.office_motion_sensor_signal_level",
@@ -1863,6 +1943,11 @@
           "jsonName": "Zones",
           "cSharpName": "Zones",
           "clrType": "System.Collections.Generic.IReadOnlyList\u00601[System.String]"
+        },
+        {
+          "jsonName": "attribution",
+          "cSharpName": "Attribution",
+          "clrType": "System.String"
         }
       ]
     },
@@ -2191,6 +2276,11 @@
           "cSharpName": "Asw12khT3TotalWorkingHours"
         },
         {
+          "id": "sensor.consumption_power",
+          "friendlyName": "Consumption power",
+          "cSharpName": "ConsumptionPower"
+        },
+        {
           "id": "sensor.dining_room_temperature_and_humidity_sensor_humidity",
           "friendlyName": "Humidity",
           "cSharpName": "DiningRoomTemperatureAndHumiditySensorHumidity"
@@ -2226,6 +2316,11 @@
           "cSharpName": "EnergyMeterGridEnergyInTotal"
         },
         {
+          "id": "sensor.energy_meter_grid_energy_in_total_cost",
+          "friendlyName": "sensor Cost",
+          "cSharpName": "EnergyMeterGridEnergyInTotalCost"
+        },
+        {
           "id": "sensor.energy_meter_grid_energy_out_today",
           "friendlyName": "Energy Meter Grid energy out today",
           "cSharpName": "EnergyMeterGridEnergyOutToday"
@@ -2234,6 +2329,21 @@
           "id": "sensor.energy_meter_grid_energy_out_total",
           "friendlyName": "Energy Meter Grid energy out total",
           "cSharpName": "EnergyMeterGridEnergyOutTotal"
+        },
+        {
+          "id": "sensor.energy_meter_grid_energy_out_total_compensation",
+          "friendlyName": "sensor Compensation",
+          "cSharpName": "EnergyMeterGridEnergyOutTotalCompensation"
+        },
+        {
+          "id": "sensor.energy_meter_grid_in_3_days",
+          "friendlyName": "Energy Meter Grid in 3 days",
+          "cSharpName": "EnergyMeterGridIn3Days"
+        },
+        {
+          "id": "sensor.energy_meter_grid_out_3_days",
+          "friendlyName": "Energy Meter Grid out 3 days",
+          "cSharpName": "EnergyMeterGridOut3Days"
         },
         {
           "id": "sensor.energy_meter_grid_power",
@@ -2281,6 +2391,31 @@
           "cSharpName": "HallwayTemperatureAndHumiditySensorTemperature"
         },
         {
+          "id": "sensor.home_feed_in_forecast",
+          "friendlyName": "Home - Feed In Forecast",
+          "cSharpName": "HomeFeedInForecast"
+        },
+        {
+          "id": "sensor.home_feed_in_price",
+          "friendlyName": "Home - Feed In Price",
+          "cSharpName": "HomeFeedInPrice"
+        },
+        {
+          "id": "sensor.home_general_forecast",
+          "friendlyName": "Home - General Forecast",
+          "cSharpName": "HomeGeneralForecast"
+        },
+        {
+          "id": "sensor.home_general_price",
+          "friendlyName": "Home - General Price",
+          "cSharpName": "HomeGeneralPrice"
+        },
+        {
+          "id": "sensor.home_renewables",
+          "friendlyName": "Home - Renewables",
+          "cSharpName": "HomeRenewables"
+        },
+        {
           "id": "sensor.jason_s_bedroom_temperature_and_humidity_sensor_humidity",
           "friendlyName": "Humidity",
           "cSharpName": "JasonSBedroomTemperatureAndHumiditySensorHumidity"
@@ -2314,6 +2449,11 @@
           "id": "sensor.jason_s_iphone_floors_descended",
           "friendlyName": "Jason\u0027s iPhone Floors Descended",
           "cSharpName": "JasonSIphoneFloorsDescended"
+        },
+        {
+          "id": "sensor.jason_s_iphone_pressure",
+          "friendlyName": "Jason\u0027s iPhone Pressure",
+          "cSharpName": "JasonSIphonePressure"
         },
         {
           "id": "sensor.jason_s_iphone_steps",
@@ -2354,6 +2494,46 @@
           "id": "sensor.master_bedroom_temperature_and_humidity_sensor_temperature",
           "friendlyName": "Master Bedroom Temperature",
           "cSharpName": "MasterBedroomTemperatureAndHumiditySensorTemperature"
+        },
+        {
+          "id": "sensor.pawar_plant_total_energy_today",
+          "friendlyName": "Pawar Plant Total Energy today",
+          "cSharpName": "PawarPlantTotalEnergyToday"
+        },
+        {
+          "id": "sensor.pawar_plant_total_lifetime_energy_output",
+          "friendlyName": "Pawar Plant Total Lifetime energy output",
+          "cSharpName": "PawarPlantTotalLifetimeEnergyOutput"
+        },
+        {
+          "id": "sensor.pawar_plant_total_lifetime_energy_output_persisted",
+          "friendlyName": "Pawar Plant Total Lifetime Energy Output Persisted",
+          "cSharpName": "PawarPlantTotalLifetimeEnergyOutputPersisted"
+        },
+        {
+          "id": "sensor.pawar_plant_total_maximum_power",
+          "friendlyName": "Pawar Plant Total Maximum power",
+          "cSharpName": "PawarPlantTotalMaximumPower"
+        },
+        {
+          "id": "sensor.pawar_plant_total_money_lifetime",
+          "friendlyName": "Pawar Plant Total Money lifetime",
+          "cSharpName": "PawarPlantTotalMoneyLifetime"
+        },
+        {
+          "id": "sensor.pawar_plant_total_output_power",
+          "friendlyName": "Pawar Plant Total Output power",
+          "cSharpName": "PawarPlantTotalOutputPower"
+        },
+        {
+          "id": "sensor.pawar_plant_total_solar_production_3_days",
+          "friendlyName": "Pawar Plant Total Solar Production 3 days",
+          "cSharpName": "PawarPlantTotalSolarProduction3Days"
+        },
+        {
+          "id": "sensor.pawar_plant_total_total_money_today",
+          "friendlyName": "Pawar Plant Total Total money today",
+          "cSharpName": "PawarPlantTotalTotalMoneyToday"
         },
         {
           "id": "sensor.pawar_serve",
@@ -2401,9 +2581,334 @@
           "cSharpName": "PuppyBatteryLevel"
         },
         {
+          "id": "sensor.puppy_pressure",
+          "friendlyName": "puppy Pressure",
+          "cSharpName": "PuppyPressure"
+        },
+        {
           "id": "sensor.puppy_storage",
           "friendlyName": "puppy Storage",
           "cSharpName": "PuppyStorage"
+        },
+        {
+          "id": "sensor.solar_battery_battery_diff_3_days",
+          "friendlyName": "Solar Battery Battery diff 3 days",
+          "cSharpName": "SolarBatteryBatteryDiff3Days"
+        },
+        {
+          "id": "sensor.xtd7a1630f_ac_frequency",
+          "friendlyName": "XTD7A1630F AC frequency",
+          "cSharpName": "Xtd7a1630fAcFrequency"
+        },
+        {
+          "id": "sensor.xtd7a1630f_all_batteries_charged_today",
+          "friendlyName": "XTD7A1630F All batteries charged today",
+          "cSharpName": "Xtd7a1630fAllBatteriesChargedToday"
+        },
+        {
+          "id": "sensor.xtd7a1630f_all_batteries_discharged_today",
+          "friendlyName": "XTD7A1630F All batteries discharged today",
+          "cSharpName": "Xtd7a1630fAllBatteriesDischargedToday"
+        },
+        {
+          "id": "sensor.xtd7a1630f_batteries_charged_from_grid_today",
+          "friendlyName": "XTD7A1630F Batteries charged from grid today",
+          "cSharpName": "Xtd7a1630fBatteriesChargedFromGridToday"
+        },
+        {
+          "id": "sensor.xtd7a1630f_battery_1_charging_w",
+          "friendlyName": "XTD7A1630F Battery 1 charging W",
+          "cSharpName": "Xtd7a1630fBattery1ChargingW"
+        },
+        {
+          "id": "sensor.xtd7a1630f_battery_1_discharging_w",
+          "friendlyName": "XTD7A1630F Battery 1 discharging W",
+          "cSharpName": "Xtd7a1630fBattery1DischargingW"
+        },
+        {
+          "id": "sensor.xtd7a1630f_battery_2_charging_w",
+          "friendlyName": "XTD7A1630F Battery 2 charging W",
+          "cSharpName": "Xtd7a1630fBattery2ChargingW"
+        },
+        {
+          "id": "sensor.xtd7a1630f_battery_2_discharging_w",
+          "friendlyName": "XTD7A1630F Battery 2 discharging W",
+          "cSharpName": "Xtd7a1630fBattery2DischargingW"
+        },
+        {
+          "id": "sensor.xtd7a1630f_energy_today",
+          "friendlyName": "XTD7A1630F Energy today",
+          "cSharpName": "Xtd7a1630fEnergyToday"
+        },
+        {
+          "id": "sensor.xtd7a1630f_energy_today_input_1",
+          "friendlyName": "XTD7A1630F Energy today input 1",
+          "cSharpName": "Xtd7a1630fEnergyTodayInput1"
+        },
+        {
+          "id": "sensor.xtd7a1630f_energy_today_input_2",
+          "friendlyName": "XTD7A1630F Energy today input 2",
+          "cSharpName": "Xtd7a1630fEnergyTodayInput2"
+        },
+        {
+          "id": "sensor.xtd7a1630f_energy_today_input_3",
+          "friendlyName": "XTD7A1630F Energy today input 3",
+          "cSharpName": "Xtd7a1630fEnergyTodayInput3"
+        },
+        {
+          "id": "sensor.xtd7a1630f_energy_today_input_4",
+          "friendlyName": "XTD7A1630F Energy today input 4",
+          "cSharpName": "Xtd7a1630fEnergyTodayInput4"
+        },
+        {
+          "id": "sensor.xtd7a1630f_export_power",
+          "friendlyName": "XTD7A1630F Export power",
+          "cSharpName": "Xtd7a1630fExportPower"
+        },
+        {
+          "id": "sensor.xtd7a1630f_export_to_grid_today",
+          "friendlyName": "XTD7A1630F Export to grid today",
+          "cSharpName": "Xtd7a1630fExportToGridToday"
+        },
+        {
+          "id": "sensor.xtd7a1630f_import_from_grid_today",
+          "friendlyName": "XTD7A1630F Import from grid today",
+          "cSharpName": "Xtd7a1630fImportFromGridToday"
+        },
+        {
+          "id": "sensor.xtd7a1630f_import_power",
+          "friendlyName": "XTD7A1630F Import power",
+          "cSharpName": "Xtd7a1630fImportPower"
+        },
+        {
+          "id": "sensor.xtd7a1630f_input_1_amperage",
+          "friendlyName": "XTD7A1630F Input 1 amperage",
+          "cSharpName": "Xtd7a1630fInput1Amperage"
+        },
+        {
+          "id": "sensor.xtd7a1630f_input_1_voltage",
+          "friendlyName": "XTD7A1630F Input 1 voltage",
+          "cSharpName": "Xtd7a1630fInput1Voltage"
+        },
+        {
+          "id": "sensor.xtd7a1630f_input_1_wattage",
+          "friendlyName": "XTD7A1630F Input 1 wattage",
+          "cSharpName": "Xtd7a1630fInput1Wattage"
+        },
+        {
+          "id": "sensor.xtd7a1630f_input_2_amperage",
+          "friendlyName": "XTD7A1630F Input 2 amperage",
+          "cSharpName": "Xtd7a1630fInput2Amperage"
+        },
+        {
+          "id": "sensor.xtd7a1630f_input_2_voltage",
+          "friendlyName": "XTD7A1630F Input 2 voltage",
+          "cSharpName": "Xtd7a1630fInput2Voltage"
+        },
+        {
+          "id": "sensor.xtd7a1630f_input_2_wattage",
+          "friendlyName": "XTD7A1630F Input 2 wattage",
+          "cSharpName": "Xtd7a1630fInput2Wattage"
+        },
+        {
+          "id": "sensor.xtd7a1630f_input_3_amperage",
+          "friendlyName": "XTD7A1630F Input 3 amperage",
+          "cSharpName": "Xtd7a1630fInput3Amperage"
+        },
+        {
+          "id": "sensor.xtd7a1630f_input_3_voltage",
+          "friendlyName": "XTD7A1630F Input 3 voltage",
+          "cSharpName": "Xtd7a1630fInput3Voltage"
+        },
+        {
+          "id": "sensor.xtd7a1630f_input_3_wattage",
+          "friendlyName": "XTD7A1630F Input 3 wattage",
+          "cSharpName": "Xtd7a1630fInput3Wattage"
+        },
+        {
+          "id": "sensor.xtd7a1630f_input_4_amperage",
+          "friendlyName": "XTD7A1630F Input 4 amperage",
+          "cSharpName": "Xtd7a1630fInput4Amperage"
+        },
+        {
+          "id": "sensor.xtd7a1630f_input_4_voltage",
+          "friendlyName": "XTD7A1630F Input 4 voltage",
+          "cSharpName": "Xtd7a1630fInput4Voltage"
+        },
+        {
+          "id": "sensor.xtd7a1630f_input_4_wattage",
+          "friendlyName": "XTD7A1630F Input 4 wattage",
+          "cSharpName": "Xtd7a1630fInput4Wattage"
+        },
+        {
+          "id": "sensor.xtd7a1630f_internal_wattage",
+          "friendlyName": "XTD7A1630F Internal wattage",
+          "cSharpName": "Xtd7a1630fInternalWattage"
+        },
+        {
+          "id": "sensor.xtd7a1630f_lifetime_batteries_charged_from_grid",
+          "friendlyName": "XTD7A1630F Lifetime batteries charged from grid",
+          "cSharpName": "Xtd7a1630fLifetimeBatteriesChargedFromGrid"
+        },
+        {
+          "id": "sensor.xtd7a1630f_lifetime_energy_output",
+          "friendlyName": "XTD7A1630F Lifetime energy output",
+          "cSharpName": "Xtd7a1630fLifetimeEnergyOutput"
+        },
+        {
+          "id": "sensor.xtd7a1630f_lifetime_import_from_grid",
+          "friendlyName": "XTD7A1630F Lifetime import from grid",
+          "cSharpName": "Xtd7a1630fLifetimeImportFromGrid"
+        },
+        {
+          "id": "sensor.xtd7a1630f_lifetime_self_consumption",
+          "friendlyName": "XTD7A1630F Lifetime self consumption",
+          "cSharpName": "Xtd7a1630fLifetimeSelfConsumption"
+        },
+        {
+          "id": "sensor.xtd7a1630f_lifetime_system_production",
+          "friendlyName": "XTD7A1630F Lifetime system production",
+          "cSharpName": "Xtd7a1630fLifetimeSystemProduction"
+        },
+        {
+          "id": "sensor.xtd7a1630f_lifetime_total_all_batteries_charged",
+          "friendlyName": "XTD7A1630F Lifetime total all batteries charged",
+          "cSharpName": "Xtd7a1630fLifetimeTotalAllBatteriesCharged"
+        },
+        {
+          "id": "sensor.xtd7a1630f_lifetime_total_all_batteries_discharged",
+          "friendlyName": "XTD7A1630F Lifetime total all batteries discharged",
+          "cSharpName": "Xtd7a1630fLifetimeTotalAllBatteriesDischarged"
+        },
+        {
+          "id": "sensor.xtd7a1630f_lifetime_total_battery_1_charged",
+          "friendlyName": "XTD7A1630F Lifetime total battery 1 charged",
+          "cSharpName": "Xtd7a1630fLifetimeTotalBattery1Charged"
+        },
+        {
+          "id": "sensor.xtd7a1630f_lifetime_total_battery_1_discharged",
+          "friendlyName": "XTD7A1630F Lifetime total battery 1 discharged",
+          "cSharpName": "Xtd7a1630fLifetimeTotalBattery1Discharged"
+        },
+        {
+          "id": "sensor.xtd7a1630f_lifetime_total_battery_2_charged",
+          "friendlyName": "XTD7A1630F Lifetime total battery 2 charged",
+          "cSharpName": "Xtd7a1630fLifetimeTotalBattery2Charged"
+        },
+        {
+          "id": "sensor.xtd7a1630f_lifetime_total_battery_2_discharged",
+          "friendlyName": "XTD7A1630F Lifetime total battery 2 discharged",
+          "cSharpName": "Xtd7a1630fLifetimeTotalBattery2Discharged"
+        },
+        {
+          "id": "sensor.xtd7a1630f_lifetime_total_energy_input_1",
+          "friendlyName": "XTD7A1630F Lifetime total energy input 1",
+          "cSharpName": "Xtd7a1630fLifetimeTotalEnergyInput1"
+        },
+        {
+          "id": "sensor.xtd7a1630f_lifetime_total_energy_input_2",
+          "friendlyName": "XTD7A1630F Lifetime total energy input 2",
+          "cSharpName": "Xtd7a1630fLifetimeTotalEnergyInput2"
+        },
+        {
+          "id": "sensor.xtd7a1630f_lifetime_total_energy_input_3",
+          "friendlyName": "XTD7A1630F Lifetime total energy input 3",
+          "cSharpName": "Xtd7a1630fLifetimeTotalEnergyInput3"
+        },
+        {
+          "id": "sensor.xtd7a1630f_lifetime_total_energy_input_4",
+          "friendlyName": "XTD7A1630F Lifetime total energy input 4",
+          "cSharpName": "Xtd7a1630fLifetimeTotalEnergyInput4"
+        },
+        {
+          "id": "sensor.xtd7a1630f_lifetime_total_export_to_grid",
+          "friendlyName": "XTD7A1630F Lifetime total export to grid",
+          "cSharpName": "Xtd7a1630fLifetimeTotalExportToGrid"
+        },
+        {
+          "id": "sensor.xtd7a1630f_lifetime_total_load_consumption",
+          "friendlyName": "XTD7A1630F Lifetime total load consumption",
+          "cSharpName": "Xtd7a1630fLifetimeTotalLoadConsumption"
+        },
+        {
+          "id": "sensor.xtd7a1630f_lifetime_total_solar_energy",
+          "friendlyName": "XTD7A1630F Lifetime total solar energy",
+          "cSharpName": "Xtd7a1630fLifetimeTotalSolarEnergy"
+        },
+        {
+          "id": "sensor.xtd7a1630f_load_consumption_today",
+          "friendlyName": "XTD7A1630F Load consumption today",
+          "cSharpName": "Xtd7a1630fLoadConsumptionToday"
+        },
+        {
+          "id": "sensor.xtd7a1630f_local_load_power",
+          "friendlyName": "XTD7A1630F Local load power",
+          "cSharpName": "Xtd7a1630fLocalLoadPower"
+        },
+        {
+          "id": "sensor.xtd7a1630f_output_power",
+          "friendlyName": "XTD7A1630F Output power",
+          "cSharpName": "Xtd7a1630fOutputPower"
+        },
+        {
+          "id": "sensor.xtd7a1630f_reactive_voltage",
+          "friendlyName": "XTD7A1630F Reactive voltage",
+          "cSharpName": "Xtd7a1630fReactiveVoltage"
+        },
+        {
+          "id": "sensor.xtd7a1630f_self_consumption_today",
+          "friendlyName": "XTD7A1630F Self consumption today",
+          "cSharpName": "Xtd7a1630fSelfConsumptionToday"
+        },
+        {
+          "id": "sensor.xtd7a1630f_self_power",
+          "friendlyName": "XTD7A1630F Self power",
+          "cSharpName": "Xtd7a1630fSelfPower"
+        },
+        {
+          "id": "sensor.xtd7a1630f_solar_energy_today",
+          "friendlyName": "XTD7A1630F Solar energy today",
+          "cSharpName": "Xtd7a1630fSolarEnergyToday"
+        },
+        {
+          "id": "sensor.xtd7a1630f_statement_of_charge_soc",
+          "friendlyName": "XTD7A1630F State of charge (SoC)",
+          "cSharpName": "Xtd7a1630fStatementOfChargeSoc"
+        },
+        {
+          "id": "sensor.xtd7a1630f_system_power",
+          "friendlyName": "XTD7A1630F System power",
+          "cSharpName": "Xtd7a1630fSystemPower"
+        },
+        {
+          "id": "sensor.xtd7a1630f_system_production_today",
+          "friendlyName": "XTD7A1630F System production today",
+          "cSharpName": "Xtd7a1630fSystemProductionToday"
+        },
+        {
+          "id": "sensor.xtd7a1630f_temperature_1",
+          "friendlyName": "XTD7A1630F Temperature 1",
+          "cSharpName": "Xtd7a1630fTemperature1"
+        },
+        {
+          "id": "sensor.xtd7a1630f_temperature_2",
+          "friendlyName": "XTD7A1630F Temperature 2",
+          "cSharpName": "Xtd7a1630fTemperature2"
+        },
+        {
+          "id": "sensor.xtd7a1630f_temperature_3",
+          "friendlyName": "XTD7A1630F Temperature 3",
+          "cSharpName": "Xtd7a1630fTemperature3"
+        },
+        {
+          "id": "sensor.xtd7a1630f_temperature_4",
+          "friendlyName": "XTD7A1630F Temperature 4",
+          "cSharpName": "Xtd7a1630fTemperature4"
+        },
+        {
+          "id": "sensor.xtd7a1630f_temperature_5",
+          "friendlyName": "XTD7A1630F Temperature 5",
+          "cSharpName": "Xtd7a1630fTemperature5"
         }
       ],
       "attributes": [
@@ -2496,6 +3001,91 @@
           "jsonName": "attribution",
           "cSharpName": "Attribution",
           "clrType": "System.String"
+        },
+        {
+          "jsonName": "last_reset",
+          "cSharpName": "LastReset",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "duration",
+          "cSharpName": "Duration",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "date",
+          "cSharpName": "Date",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "per_kwh",
+          "cSharpName": "PerKwh",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "nem_date",
+          "cSharpName": "NemDate",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "spot_per_kwh",
+          "cSharpName": "SpotPerKwh",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "start_time",
+          "cSharpName": "StartTime",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "end_time",
+          "cSharpName": "EndTime",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "renewables",
+          "cSharpName": "Renewables",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "estimate",
+          "cSharpName": "Estimate",
+          "clrType": "System.Boolean"
+        },
+        {
+          "jsonName": "spike_status",
+          "cSharpName": "SpikeStatus",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "channel_type",
+          "cSharpName": "ChannelType",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "forecasts",
+          "cSharpName": "Forecasts",
+          "clrType": "System.Collections.Generic.IReadOnlyList\u00601[System.Object]"
+        },
+        {
+          "jsonName": "age_coverage_ratio",
+          "cSharpName": "AgeCoverageRatio",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "source_value_valid",
+          "cSharpName": "SourceValueValid",
+          "clrType": "System.Boolean"
+        },
+        {
+          "jsonName": "entity_id",
+          "cSharpName": "EntityId",
+          "clrType": "System.Collections.Generic.IReadOnlyList\u00601[System.String]"
+        },
+        {
+          "jsonName": "arjun.ja5 - Plex for Samsung",
+          "cSharpName": "Arjun_ja5PlexforSamsung",
+          "clrType": "System.String"
         }
       ]
     },
@@ -2513,9 +3103,9 @@
           "cSharpName": "HomeAssistantCloud"
         },
         {
-          "id": "stt.openai_stt",
+          "id": "stt.openai_stt_2",
           "friendlyName": "OpenAI STT",
-          "cSharpName": "OpenaiStt"
+          "cSharpName": "OpenaiStt2"
         }
       ],
       "attributes": [
@@ -2751,9 +3341,9 @@
           "cSharpName": "HomeAssistantCloud"
         },
         {
-          "id": "tts.openai_tts",
+          "id": "tts.openai_tts_2",
           "friendlyName": "OpenAI TTS",
-          "cSharpName": "OpenaiTts"
+          "cSharpName": "OpenaiTts2"
         },
         {
           "id": "tts.piper",
@@ -2813,9 +3403,9 @@
           "cSharpName": "MatterServerUpdate"
         },
         {
-          "id": "update.netdaemon_v5_net_9_update",
-          "friendlyName": "NetDaemon V5 (.NET 9) Update",
-          "cSharpName": "NetdaemonV5Net9Update"
+          "id": "update.netdaemon_v6_net_10_update",
+          "friendlyName": "NetDaemon V6 (.NET 10) Update",
+          "cSharpName": "NetdaemonV6Net10Update"
         },
         {
           "id": "update.piper_update",
@@ -3094,46 +3684,6 @@
           "cSharpName": "AclogZoneonMasterbedroom"
         },
         {
-          "id": "input_boolean.dev_netdaemon_app_model_hello_yaml_app",
-          "friendlyName": "dev_netdaemon_app_model_hello_yaml_app",
-          "cSharpName": "DevNetdaemonAppModelHelloYamlApp"
-        },
-        {
-          "id": "input_boolean.dev_netdaemon_extensions_scheduling_scheduling_app",
-          "friendlyName": "dev_netdaemon_extensions_scheduling_scheduling_app",
-          "cSharpName": "DevNetdaemonExtensionsSchedulingSchedulingApp"
-        },
-        {
-          "id": "input_boolean.dev_netdaemon_hass_model_hello_world_app",
-          "friendlyName": "dev_netdaemon_hass_model_hello_world_app",
-          "cSharpName": "DevNetdaemonHassModelHelloWorldApp"
-        },
-        {
-          "id": "input_boolean.dev_netdaemon_hass_model_light_on_movement",
-          "friendlyName": "dev_netdaemon_hass_model_light_on_movement",
-          "cSharpName": "DevNetdaemonHassModelLightOnMovement"
-        },
-        {
-          "id": "input_boolean.dev_netdaemon_src_apps_hass_model_ac_ac_control",
-          "friendlyName": "dev_netdaemon_src_apps_hass_model_ac_ac_control",
-          "cSharpName": "DevNetdaemonSrcAppsHassModelAcAcControl"
-        },
-        {
-          "id": "input_boolean.dev_netdaemon_src_apps_hass_model_alarm_light_alarm_light",
-          "friendlyName": "dev_netdaemon_src_apps_hass_model_alarm_light_alarm_light",
-          "cSharpName": "DevNetdaemonSrcAppsHassModelAlarmLightAlarmLight"
-        },
-        {
-          "id": "input_boolean.dev_netdaemon_src_apps_hass_model_light_adjust_light_adjust",
-          "friendlyName": "dev_netdaemon_src_apps_hass_model_light_adjust_light_adjust",
-          "cSharpName": "DevNetdaemonSrcAppsHassModelLightAdjustLightAdjust"
-        },
-        {
-          "id": "input_boolean.dev_netdaemon_src_apps_hass_model_light_sync_light_sync",
-          "friendlyName": "dev_netdaemon_src_apps_hass_model_light_sync_light_sync",
-          "cSharpName": "DevNetdaemonSrcAppsHassModelLightSyncLightSync"
-        },
-        {
           "id": "input_boolean.dining_room_ac_switch",
           "friendlyName": "Dining Room AC Switch",
           "cSharpName": "DiningRoomAcSwitch"
@@ -3197,6 +3747,11 @@
           "id": "input_boolean.netdaemon_src_apps_hass_model_alarm_light_alarm_light",
           "friendlyName": "netdaemon_src_apps_hass_model_alarm_light_alarm_light",
           "cSharpName": "NetdaemonSrcAppsHassModelAlarmLightAlarmLight"
+        },
+        {
+          "id": "input_boolean.netdaemon_src_apps_hass_model_battery_battery_control",
+          "friendlyName": "netdaemon_src_apps_hass_model_battery_battery_control",
+          "cSharpName": "NetdaemonSrcAppsHassModelBatteryBatteryControl"
         },
         {
           "id": "input_boolean.netdaemon_src_apps_hass_model_light_adjust_light_adjust",
@@ -3275,6 +3830,11 @@
           "id": "input_number.master_bedroom_set_temperature",
           "friendlyName": "Master Bedroom Set Temperature",
           "cSharpName": "MasterBedroomSetTemperature"
+        },
+        {
+          "id": "input_number.next_action_price_battery_log",
+          "friendlyName": "Next Action Price - Battery Log",
+          "cSharpName": "NextActionPriceBatteryLog"
         }
       ],
       "attributes": [
@@ -3441,6 +4001,11 @@
           "cSharpName": "EnableEnabledAtLateNight"
         },
         {
+          "id": "automation.growatt_refresh",
+          "friendlyName": "Growatt Refresh",
+          "cSharpName": "GrowattRefresh"
+        },
+        {
           "id": "automation.jason_s_bedroom_ac_adjustment_day",
           "friendlyName": "Jason\u0027s Bedroom AC Adjustment Day",
           "cSharpName": "JasonSBedroomAcAdjustmentDay"
@@ -3499,6 +4064,11 @@
           "id": "automation.sunset_lights",
           "friendlyName": "Enable \u0027Enabled at Night\u0027",
           "cSharpName": "SunsetLights"
+        },
+        {
+          "id": "automation.turn_off_grid_in",
+          "friendlyName": "Turn off grid in",
+          "cSharpName": "TurnOffGridIn"
         },
         {
           "id": "automation.tv_playing_lights",
@@ -3585,6 +4155,16 @@
           "cSharpName": "AclogMode"
         },
         {
+          "id": "input_select.current_action_battery_log",
+          "friendlyName": "Current Action - Battery Log",
+          "cSharpName": "CurrentActionBatteryLog"
+        },
+        {
+          "id": "input_select.current_action_reason_battery_log",
+          "friendlyName": "Current Action Reason - Battery Log",
+          "cSharpName": "CurrentActionReasonBatteryLog"
+        },
+        {
           "id": "input_select.dining_room_ac_mode",
           "friendlyName": "AC Mode",
           "cSharpName": "DiningRoomAcMode"
@@ -3618,6 +4198,21 @@
           "id": "input_select.master_bedroom_ac_mode",
           "friendlyName": "AC Mode",
           "cSharpName": "MasterBedroomAcMode"
+        },
+        {
+          "id": "input_select.next_action_battery_log",
+          "friendlyName": "Next Action - Battery Log",
+          "cSharpName": "NextActionBatteryLog"
+        },
+        {
+          "id": "input_select.next_action_reason_battery_log",
+          "friendlyName": "Next Action Reason - Battery Log",
+          "cSharpName": "NextActionReasonBatteryLog"
+        },
+        {
+          "id": "input_select.time_display",
+          "friendlyName": "Time Display",
+          "cSharpName": "TimeDisplay"
         }
       ],
       "attributes": [
@@ -3978,9 +4573,9 @@
           "cSharpName": "OllamaAiTask"
         },
         {
-          "id": "ai_task.openai_ai_task",
+          "id": "ai_task.openai_ai_task_2",
           "friendlyName": "OpenAI AI Task",
-          "cSharpName": "OpenaiAiTask"
+          "cSharpName": "OpenaiAiTask2"
         }
       ],
       "attributes": [
@@ -4052,6 +4647,125 @@
           "jsonName": "supported_features",
           "cSharpName": "SupportedFeatures",
           "clrType": "System.Double"
+        }
+      ]
+    },
+    {
+      "domain": "input_datetime",
+      "entities": [
+        {
+          "id": "input_datetime.battery_until_battery_log",
+          "friendlyName": "Battery Until - Battery Log",
+          "cSharpName": "BatteryUntilBatteryLog"
+        },
+        {
+          "id": "input_datetime.current_action_end_battery_log",
+          "friendlyName": "Current Action End - Battery Log",
+          "cSharpName": "CurrentActionEndBatteryLog"
+        },
+        {
+          "id": "input_datetime.next_action_at_battery_log",
+          "friendlyName": "Next Action At - Battery Log",
+          "cSharpName": "NextActionAtBatteryLog"
+        }
+      ],
+      "attributes": [
+        {
+          "jsonName": "has_date",
+          "cSharpName": "HasDate",
+          "clrType": "System.Boolean"
+        },
+        {
+          "jsonName": "has_time",
+          "cSharpName": "HasTime",
+          "clrType": "System.Boolean"
+        },
+        {
+          "jsonName": "editable",
+          "cSharpName": "Editable",
+          "clrType": "System.Boolean"
+        },
+        {
+          "jsonName": "year",
+          "cSharpName": "Year",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "month",
+          "cSharpName": "Month",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "day",
+          "cSharpName": "Day",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "hour",
+          "cSharpName": "Hour",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "minute",
+          "cSharpName": "Minute",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "second",
+          "cSharpName": "Second",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "timestamp",
+          "cSharpName": "Timestamp",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "friendly_name",
+          "cSharpName": "FriendlyName",
+          "clrType": "System.String"
+        }
+      ]
+    },
+    {
+      "domain": "input_text",
+      "entities": [
+        {
+          "id": "input_text.current_action_with_price_battery_log",
+          "friendlyName": "Current Action With Price - Battery Log",
+          "cSharpName": "CurrentActionWithPriceBatteryLog"
+        }
+      ],
+      "attributes": [
+        {
+          "jsonName": "editable",
+          "cSharpName": "Editable",
+          "clrType": "System.Boolean"
+        },
+        {
+          "jsonName": "min",
+          "cSharpName": "Min",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "max",
+          "cSharpName": "Max",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "pattern",
+          "cSharpName": "Pattern",
+          "clrType": null
+        },
+        {
+          "jsonName": "mode",
+          "cSharpName": "Mode",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "friendly_name",
+          "cSharpName": "FriendlyName",
+          "clrType": "System.String"
         }
       ]
     }

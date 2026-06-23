@@ -29,6 +29,10 @@
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
             <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
         </None>
+        <None Update="apps\HassModel\BatteryControl\AcControl.yaml">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+          <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        </None>
     </ItemGroup>
 
     <Target Name="nd-codegen" BeforeTargets="BeforeBuild" Condition="'$(Configuration)' == 'Debug'">
@@ -47,5 +51,9 @@
         <PackageReference Include="NetDaemon.Extensions.Scheduling" Version="26.21.0" />
         <PackageReference Include="NetDaemon.Extensions.Logging" Version="26.21.0" />
         <PackageReference Include="NetDaemon.Extensions.Tts" Version="26.21.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="apps\HassModel\Battery\Clients\" />
     </ItemGroup>
 </Project>

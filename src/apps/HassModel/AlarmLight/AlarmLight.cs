@@ -36,13 +36,13 @@ public class AlarmLight
 
         if (schedule is not null && schedule.IsExecuting)
         {
-            _logger.LogInformation("Schedule executing for {GroupName}. Ignoring next alarm change", group.Name);
+            _logger.LogDebug("Schedule executing for {GroupName}. Ignoring next alarm change", group.Name);
             return;
         }
 
         if (!DateTime.TryParse(group.NextAlarm.State, out var alarmTime)) return;
 
-        _logger.LogInformation("Scheduling alarm light for {GroupName} at {AlarmTime}", group.Name, alarmTime);
+        _logger.LogDebug("Scheduling alarm light for {GroupName} at {AlarmTime}", group.Name, alarmTime);
         _schedules.Add(new AlarmLightSchedule
         {
             AlarmTime = alarmTime,
@@ -59,7 +59,7 @@ public class AlarmLight
             var alarmOffset = DateTime.Now - schedule.AlarmTime;
             var temperaturePct = 100 * (alarmOffset <= TimeSpan.Zero ? 0 : alarmOffset / TimeSpan.FromMinutes(30));
             var brightnessPct = 100 * (alarmOffset >= TimeSpan.Zero ? 1 : 1 + alarmOffset / TimeSpan.FromMinutes(30));
-            _logger.LogInformation(
+            _logger.LogDebug(
                 "Settings lights for {GroupName} to temperature: {TemperaturePct}% and brightness: {BrightnessPct}%",
                 schedule.Group.Name, temperaturePct, brightnessPct);
             foreach (var light in schedule.Group.Lights)
