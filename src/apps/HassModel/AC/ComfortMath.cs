@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace src.apps.HassModel.AC;
 
@@ -65,5 +66,41 @@ public static class ComfortMath
             offset += HumidityOffset(airTemp, relHumidityPct.Value, referenceHumidityPct, humidityCoefficient);
         offset = Math.Clamp(offset, -maxOffset, maxOffset);
         return airTemp + offset;
+    }
+
+    /// <summary>
+    /// One exponential-moving-average step for an irregularly-sampled signal. Moves
+    /// <paramref name="previousEma"/> toward <paramref name="reading"/> by the fraction
+    /// <c>α = 1 − exp(−Δt/τ)</c>, where Δt is the elapsed time and τ is
+    /// <paramref name="timeConstantHours"/>. This is the discretised first-order (RC) response, so τ
+    /// is literally the building envelope's thermal time constant: larger τ = heavier smoothing and
+    /// more lag. τ ≤ 0 disables smoothing (returns the raw reading); a non-positive Δt holds the
+    /// previous value (ignores out-of-order samples).
+    /// </summary>
+    public static decimal EmaStep(decimal previousEma, DateTime previousUtc, decimal reading, DateTime nowUtc, decimal timeConstantHours)
+    {
+        if (timeConstantHours <= 0M) return reading;
+        var dtHours = (nowUtc - previousUtc).TotalHours;
+        if (dtHours <= 0) return previousEma;
+        var alpha = (decimal)(1.0 - Math.Exp(-dtHours / (double)timeConstantHours));
+        return previousEma + alpha * (reading - previousEma);
+    }
+
+    /// <summary>
+    /// Seeds the outdoor-temperature EMA by replaying a time-ordered history of readings through
+    /// <see cref="EmaStep"/>. The first sample initialises the average; later ones smooth it. Returns
+    /// the resulting EMA and the timestamp of the last sample, or null when the history is empty.
+    /// </summary>
+    public static (decimal Ema, DateTime AsOfUtc)? SeedEma(IReadOnlyList<(DateTime TimeUtc, decimal Value)> samples, decimal timeConstantHours)
+    {
+        if (samples.Count == 0) return null;
+        var ema = samples[0].Value;
+        var asOf = samples[0].TimeUtc;
+        for (var i = 1; i < samples.Count; i++)
+        {
+            ema = EmaStep(ema, asOf, samples[i].Value, samples[i].TimeUtc, timeConstantHours);
+            asOf = samples[i].TimeUtc;
+        }
+        return (ema, asOf);
     }
 }

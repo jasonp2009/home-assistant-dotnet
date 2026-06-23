@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using src.apps.HassModel.AC;
 using Xunit;
 
@@ -125,5 +127,69 @@ public class ComfortMathTests
             airTemp: 28m, outdoorTemp: 34m, kEnv: 0.1m, maxOffset: 5m,
             relHumidityPct: 75m, referenceHumidityPct: 50m, humidityCoefficient: 0.33m);
         Assert.True(humid > envelopeOnly);
+    }
+
+    // ---- EmaStep -----------------------------------------------------------------------------
+
+    private static readonly DateTime T0 = new(2026, 6, 23, 0, 0, 0, DateTimeKind.Utc);
+
+    [Fact]
+    public void EmaStep_DisabledTimeConstant_ReturnsRawReading()
+    {
+        Assert.Equal(20m, ComfortMath.EmaStep(previousEma: 10m, previousUtc: T0, reading: 20m, nowUtc: T0.AddHours(5), timeConstantHours: 0m));
+    }
+
+    [Fact]
+    public void EmaStep_NonPositiveElapsed_HoldsPreviousValue()
+    {
+        Assert.Equal(10m, ComfortMath.EmaStep(previousEma: 10m, previousUtc: T0, reading: 20m, nowUtc: T0, timeConstantHours: 15m));
+    }
+
+    [Fact]
+    public void EmaStep_OneTimeConstantElapsed_MovesAbout63Percent()
+    {
+        // dt == tau -> alpha = 1 - e^-1 = 0.632; 10 + 0.632 * (20 - 10) = 16.32
+        var ema = ComfortMath.EmaStep(previousEma: 10m, previousUtc: T0, reading: 20m, nowUtc: T0.AddHours(15), timeConstantHours: 15m);
+        Assert.Equal(16.3m, ema, 1);
+    }
+
+    [Fact]
+    public void EmaStep_ShortStepRelativeToTau_BarelyMoves()
+    {
+        // 1 h step with tau 15 h -> alpha ~= 0.065; a single hot reading barely shifts the average.
+        var ema = ComfortMath.EmaStep(previousEma: 12m, previousUtc: T0, reading: 20m, nowUtc: T0.AddHours(1), timeConstantHours: 15m);
+        Assert.InRange(ema, 12.4m, 12.7m);
+    }
+
+    // ---- SeedEma -----------------------------------------------------------------------------
+
+    [Fact]
+    public void SeedEma_EmptyHistory_ReturnsNull()
+    {
+        Assert.Null(ComfortMath.SeedEma(new List<(DateTime, decimal)>(), timeConstantHours: 15m));
+    }
+
+    [Fact]
+    public void SeedEma_SingleSample_ReturnsThatSample()
+    {
+        var seed = ComfortMath.SeedEma(new List<(DateTime, decimal)> { (T0, 17m) }, timeConstantHours: 15m);
+        Assert.NotNull(seed);
+        Assert.Equal(17m, seed!.Value.Ema);
+        Assert.Equal(T0, seed.Value.AsOfUtc);
+    }
+
+    [Fact]
+    public void SeedEma_DiurnalSwing_SettlesNearTheDailyMean()
+    {
+        // 48 hourly samples oscillating +/-6 C around a mean of 12 C; the EMA should flatten close to
+        // the mean, well inside the raw 6..18 range.
+        var samples = new List<(DateTime, decimal)>();
+        for (var h = 0; h < 48; h++)
+            samples.Add((T0.AddHours(h), 12m + 6m * (decimal)Math.Sin(2 * Math.PI * h / 24.0)));
+
+        var seed = ComfortMath.SeedEma(samples, timeConstantHours: 15m);
+        Assert.NotNull(seed);
+        Assert.InRange(seed!.Value.Ema, 10.5m, 13.5m);
+        Assert.Equal(T0.AddHours(47), seed.Value.AsOfUtc);
     }
 }
