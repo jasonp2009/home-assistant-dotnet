@@ -187,3 +187,19 @@ moves slowly, so the offset drifts gently and does not cause mode/zone thrash.
 > This is distinct from the profile's `WeatherOffset`, which stays an independent on/off **economy
 > gate** on the outdoor temperature; the envelope offset is a continuous **comfort** correction on
 > the regulated temperature.
+
+### Humidity offset
+
+Humid air feels warmer than dry air at the same temperature (sweat evaporates less freely). Each room
+sensor is a temperature **and humidity** sensor, so when a room has a `HumiditySensorEntity` the felt
+temperature also includes the Steadman apparent-temperature vapour-pressure term:
+
+`HumidityOffset = HumidityCoefficient · (e(T, rh) − e(T, refRh))`
+
+where `e` is the water-vapour pressure (`ComfortMath.VapourPressure`, Magnus approximation) and
+`refRh` is `ReferenceHumidity` (default 50%). Anchoring to a reference humidity means a typical indoor
+humidity contributes ≈0, so only unusual humidity moves the felt temperature — positive (feels
+hotter) when muggy, slightly negative when very dry. The effect is small at mild winter conditions
+and grows on a hot, humid summer afternoon (e.g. ~+2.8 °C at 30 °C / 70% RH), where it makes cooling
+a little more aggressive. `HumidityCoefficient` defaults to 0.33 (Steadman). Rooms without a humidity
+sensor simply omit this term.

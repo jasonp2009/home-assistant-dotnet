@@ -26,6 +26,12 @@ public class AcConfig
 
     /// <summary>Clamp (°C) on the total felt-temperature offset, so a bad outdoor reading can't drive the unit to extremes.</summary>
     public decimal MaxComfortOffset { get; set; } = 3M;
+
+    /// <summary>Reference relative humidity (%) at which the humidity term contributes nothing; only humidity above/below this shifts the felt temperature.</summary>
+    public decimal ReferenceHumidity { get; set; } = 50M;
+
+    /// <summary>Coefficient on the Steadman vapour-pressure (humidity) term of the felt-temperature estimate.</summary>
+    public decimal HumidityCoefficient { get; set; } = 0.33M;
 }
 
 public class AcProfileConfig
@@ -64,11 +70,23 @@ public class AcRoomConfig
     /// — use 0 for an internal room (e.g. a hallway), higher for rooms with large or exposed glazing.
     /// </summary>
     public decimal? EnvCoefficient { get; set; }
+
+    /// <summary>
+    /// Optional humidity sensor paired with the room's temperature sensor. When present, it enables
+    /// the humidity ("mugginess") term of the felt-temperature estimate.
+    /// </summary>
+    public SensorEntity? HumiditySensorEntity { get; set; }
+
     public bool IsOn => AcToggleEntity?.EntityState.IsOn() ?? false;
     public decimal? SetTemperature => Convert.ToDecimal(SetTemperatureEntity?.EntityState?.State);
 
     public decimal? CurrentTemperate =>
         decimal.TryParse(TemperatureSensorEntity?.EntityState?.State, out var currentTemperature)
             ? currentTemperature
+            : null;
+
+    public decimal? CurrentHumidity =>
+        decimal.TryParse(HumiditySensorEntity?.EntityState?.State, out var currentHumidity)
+            ? currentHumidity
             : null;
 }

@@ -198,12 +198,16 @@ public class AcControl : IAsyncInitializable
         var weatherOffPoint = room.SetTemperature.Value + (isCooling ? -profile.WeatherOffset : profile.WeatherOffset);
 
         // Regulate the estimated *felt* temperature, not raw air temperature: cold surfaces in winter
-        // make a room feel colder than the sensor reads, warm surfaces in summer warmer.
+        // make a room feel colder than the sensor reads, warm surfaces in summer warmer, and humid
+        // air feels warmer than dry air at the same temperature.
         var feltTemp = ComfortMath.FeltTemperature(
             room.CurrentTemperate.Value,
             CurrentWeatherTemperature,
             room.EnvCoefficient ?? _config.Value.EnvCoefficient,
-            _config.Value.MaxComfortOffset);
+            _config.Value.MaxComfortOffset,
+            room.CurrentHumidity,
+            _config.Value.ReferenceHumidity,
+            _config.Value.HumidityCoefficient);
 
         var isAcOn = _mitsubishiClient.State.Power;
 

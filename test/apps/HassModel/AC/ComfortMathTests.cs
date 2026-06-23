@@ -66,4 +66,64 @@ public class ComfortMathTests
         // raw offset 0.5 * (50 - 22) = 14, clamped to 3 -> 25
         Assert.Equal(25m, ComfortMath.FeltTemperature(airTemp: 22m, outdoorTemp: 50m, kEnv: 0.5m, maxOffset: 3m));
     }
+
+    // ---- HumidityOffset ----------------------------------------------------------------------
+
+    [Fact]
+    public void HumidityOffset_AtReferenceHumidity_IsZero()
+    {
+        Assert.Equal(0m, ComfortMath.HumidityOffset(tempC: 25m, relHumidityPct: 50m, referenceHumidityPct: 50m, coefficient: 0.33m));
+    }
+
+    [Fact]
+    public void HumidityOffset_MoreHumidThanReference_FeelsHotter()
+    {
+        Assert.True(ComfortMath.HumidityOffset(tempC: 30m, relHumidityPct: 70m, referenceHumidityPct: 50m, coefficient: 0.33m) > 0m);
+    }
+
+    [Fact]
+    public void HumidityOffset_DrierThanReference_FeelsCooler()
+    {
+        Assert.True(ComfortMath.HumidityOffset(tempC: 30m, relHumidityPct: 30m, referenceHumidityPct: 50m, coefficient: 0.33m) < 0m);
+    }
+
+    [Fact]
+    public void HumidityOffset_HotMuggyAfternoon_IsAFewDegrees()
+    {
+        // 30 C, 70% vs 50% ref: ~0.33 * (29.6 - 21.1) hPa ~= +2.8 C
+        var offset = ComfortMath.HumidityOffset(tempC: 30m, relHumidityPct: 70m, referenceHumidityPct: 50m, coefficient: 0.33m);
+        Assert.InRange(offset, 2.4m, 3.2m);
+    }
+
+    // ---- FeltTemperature with humidity -------------------------------------------------------
+
+    [Fact]
+    public void FeltTemperature_HumidityAtReference_MatchesEnvelopeOnly()
+    {
+        var envelopeOnly = ComfortMath.FeltTemperature(airTemp: 22m, outdoorTemp: 14m, kEnv: 0.1m, maxOffset: 3m);
+        var withRefHumidity = ComfortMath.FeltTemperature(
+            airTemp: 22m, outdoorTemp: 14m, kEnv: 0.1m, maxOffset: 3m,
+            relHumidityPct: 50m, referenceHumidityPct: 50m, humidityCoefficient: 0.33m);
+        Assert.Equal(envelopeOnly, withRefHumidity);
+    }
+
+    [Fact]
+    public void FeltTemperature_NullHumidity_MatchesEnvelopeOnly()
+    {
+        var envelopeOnly = ComfortMath.FeltTemperature(airTemp: 22m, outdoorTemp: 14m, kEnv: 0.1m, maxOffset: 3m);
+        var withNullHumidity = ComfortMath.FeltTemperature(
+            airTemp: 22m, outdoorTemp: 14m, kEnv: 0.1m, maxOffset: 3m, relHumidityPct: null);
+        Assert.Equal(envelopeOnly, withNullHumidity);
+    }
+
+    [Fact]
+    public void FeltTemperature_HotHumidSummer_FeelsHotterThanEnvelopeAlone()
+    {
+        // Same hot conditions; adding high humidity should raise the felt temperature.
+        var envelopeOnly = ComfortMath.FeltTemperature(airTemp: 28m, outdoorTemp: 34m, kEnv: 0.1m, maxOffset: 5m);
+        var humid = ComfortMath.FeltTemperature(
+            airTemp: 28m, outdoorTemp: 34m, kEnv: 0.1m, maxOffset: 5m,
+            relHumidityPct: 75m, referenceHumidityPct: 50m, humidityCoefficient: 0.33m);
+        Assert.True(humid > envelopeOnly);
+    }
 }
