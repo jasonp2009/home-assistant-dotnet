@@ -1,5 +1,11 @@
 ﻿src.apps.HassModel.AC.AcConfig:
   DefaultProfileName: Standard
+  EnvCoefficient: 0.1
+  MaxComfortOffset: 3
+  ReferenceHumidity: 50
+  HumidityCoefficient: 0.15  # below the Steadman 0.33: that value over-weights humidity at room temperature
+  OutdoorTempTimeConstantHours: 15
+  OutdoorTempBackfillHours: 48
   Profiles:
     - Name: Boost Plus
       ForceTolerance: 1
@@ -52,6 +58,7 @@
     - Name: JasonsBedroom
       ZoneId: 7
       TemperatureSensorEntity: sensor.jason_s_bedroom_temperature_and_humidity_sensor_temperature
+      HumiditySensorEntity: sensor.jason_s_bedroom_temperature_and_humidity_sensor_humidity
       SetTemperatureEntity: input_number.jason_s_bedroom_set_temperature
       AcToggleEntity: input_boolean.jason_s_bedroom_ac_switch
       AcProfileSelectEntity: input_select.jason_s_bedroom_ac_mode
@@ -63,6 +70,7 @@
     - Name: Lounge
       ZoneId: 1
       TemperatureSensorEntity: sensor.lounge_room_temperature_and_humidity_sensor_temperature
+      HumiditySensorEntity: sensor.lounge_room_temperature_and_humidity_sensor_humidity
       SetTemperatureEntity: input_number.lounge_set_temperature
       AcToggleEntity: input_boolean.lounge_ac_switch
       AcProfileSelectEntity: input_select.lounge_room_ac_mode
@@ -72,6 +80,7 @@
     - Name: Kitchen
       ZoneId: 3
       TemperatureSensorEntity: sensor.kitchen_temperature_and_humidity_sensor_temperature
+      HumiditySensorEntity: sensor.kitchen_temperature_and_humidity_sensor_humidity
       SetTemperatureEntity: input_number.kitchen_set_temperature
       AcToggleEntity: input_boolean.kitchen_ac_switch
       AcProfileSelectEntity: input_select.kitchen_ac_mode
@@ -84,6 +93,7 @@
     - Name: DiningRoom
       ZoneId: 2
       TemperatureSensorEntity: sensor.dining_room_temperature_and_humidity_sensor_temperature
+      HumiditySensorEntity: sensor.dining_room_temperature_and_humidity_sensor_humidity
       SetTemperatureEntity: input_number.dining_room_set_temperature
       AcToggleEntity: input_boolean.dining_room_ac_switch
       AcProfileSelectEntity: input_select.dining_room_ac_mode
@@ -97,13 +107,16 @@
     - Name: Hallway
       ZoneId: 4
       TemperatureSensorEntity: sensor.hallway_temperature_and_humidity_sensor_temperature
+      HumiditySensorEntity: sensor.hallway_temperature_and_humidity_sensor_humidity
       SetTemperatureEntity: input_number.hallway_set_temperature
       AcToggleEntity: input_boolean.hallway_ac_switch
       AcProfileSelectEntity: input_select.hallway_ac_mode
       ZoneOnLogEntity: input_boolean.aclog_zoneon_hallway
+      EnvCoefficient: 0  # internal room — no external surfaces, so no radiant felt-temperature offset
     - Name: MasterBedroom
       ZoneId: 5
       TemperatureSensorEntity: sensor.master_bedroom_temperature_and_humidity_sensor_temperature
+      HumiditySensorEntity: sensor.master_bedroom_temperature_and_humidity_sensor_humidity
       SetTemperatureEntity: input_number.master_bedroom_set_temperature
       AcToggleEntity: input_boolean.master_bedroom_ac_switch
       AcProfileSelectEntity: input_select.master_bedroom_ac_mode
@@ -111,6 +124,7 @@
     - Name: GuestBedroom
       ZoneId: 6
       TemperatureSensorEntity: sensor.guest_bedroom_temperature_and_humidity_sensor_temperature
+      HumiditySensorEntity: sensor.guest_bedroom_temperature_and_humidity_sensor_humidity
       SetTemperatureEntity: input_number.guest_bedroom_set_temperature
       AcToggleEntity: input_boolean.guest_bedroom_ac_switch
       AcProfileSelectEntity: input_select.guest_bedroom_ac_mode

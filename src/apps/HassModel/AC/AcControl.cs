@@ -8,6 +8,7 @@ using NetDaemon.Extensions.Scheduler;
 using NetDaemon.HassModel.Entities;
 using src.apps.HassModel.AC.MitsubishiClient;
 using src.apps.HassModel.AC.MitsubishiClient.Models;
+using src.apps.HassModel.Battery.Clients.HaHistoryClient;
 
 namespace src.apps.HassModel.AC;
 
@@ -18,14 +19,18 @@ public class AcControl : IAsyncInitializable
     private readonly WeatherEntity _forecastHome;
     private readonly ILogger<AcControl> _logger;
     private readonly IMitsubishiClient _mitsubishiClient;
+    private readonly HaHistoryClient _historyClient;
     private readonly Dictionary<int, DateTime> _tempLastChangedDict = new();
     private int _curSocModifier = 0;
+    private decimal? _outdoorTempEma;
+    private DateTime _outdoorTempEmaUpdatedUtc;
 
     public AcControl(IHaContext ha, INetDaemonScheduler scheduler, IAppConfig<AcConfig> config,
-        ILogger<AcControl> logger, IMitsubishiClient mitsubishiClient)
+        ILogger<AcControl> logger, IMitsubishiClient mitsubishiClient, HaHistoryClient historyClient)
     {
         _forecastHome = new WeatherEntities(ha).ForecastHome;
         _mitsubishiClient = mitsubishiClient;
+        _historyClient = historyClient;
         _config = config;
         _logger = logger;
         foreach (var room in config.Value.Rooms)
@@ -81,11 +86,16 @@ public class AcControl : IAsyncInitializable
                 .SubscribeAsync(_ => HandleChange(), _logger);
         }
 
-        _forecastHome.StateChanges().SubscribeAsync(_ => HandleChange(), _logger);
+        _forecastHome.StateChanges().SubscribeAsync(_ =>
+        {
+            UpdateOutdoorTempEma();
+            return HandleChange();
+        }, _logger);
         _config.Value.SolarBatteryStateOfChargeEntity.StateChanges().SubscribeAsync(_ => HandleSocChange(), _logger);
 
         scheduler.RunEvery(TimeSpan.FromSeconds(60), () =>
         {
+            UpdateOutdoorTempEma();
             var currentMeasuredTemp = _mitsubishiClient.State?.RoomTemp;
             _mitsubishiClient.UpdateState().Wait();
             if (currentMeasuredTemp != _mitsubishiClient.State?.RoomTemp) HandleChange().Wait();
@@ -94,14 +104,62 @@ public class AcControl : IAsyncInitializable
 
     private decimal CurrentWeatherTemperature => Convert.ToDecimal(_forecastHome.Attributes?.Temperature);
 
+    private decimal? CurrentWeatherTemperatureOrNull =>
+        _forecastHome.Attributes?.Temperature is { } t ? Convert.ToDecimal(t) : null;
+
+    // Outdoor temperature smoothed by the EMA (models the building's thermal mass); falls back to the
+    // instantaneous reading until the EMA is seeded. Used only by the radiant envelope offset — the
+    // WeatherOffset economy gate keeps using the instantaneous CurrentWeatherTemperature.
+    private decimal SmoothedWeatherTemperature => _outdoorTempEma ?? CurrentWeatherTemperature;
+
     public async Task InitializeAsync(CancellationToken cancellationToken)
     {
         _logger.LogDebug("Attempting to login to mitsubishi client");
         await _mitsubishiClient.Login(cancellationToken);
         _logger.LogDebug("Successfully logged in to mitsubishi client");
 
+        _logger.LogInformation(
+            "Felt-temperature control: EnvCoefficient {Env}, MaxComfortOffset {Max}°C, humidity coef {HumCoef} @ ref {RefRh}%, outdoor EMA τ {Tau}h (backfill {Backfill}h)",
+            _config.Value.EnvCoefficient, _config.Value.MaxComfortOffset, _config.Value.HumidityCoefficient,
+            _config.Value.ReferenceHumidity, _config.Value.OutdoorTempTimeConstantHours, _config.Value.OutdoorTempBackfillHours);
+
+        await SeedOutdoorTempEmaAsync();
         await HandleSocChange(cancellationToken);
         await HandleChange(cancellationToken);
+    }
+
+    /// <summary>
+    /// Seeds the outdoor-temperature EMA from recent weather history so it starts at a sensible
+    /// smoothed value rather than the instantaneous reading after a restart. Falls back to the current
+    /// reading when no history is available; either way it then advances to "now".
+    /// </summary>
+    private async Task SeedOutdoorTempEmaAsync()
+    {
+        var startUtc = DateTime.UtcNow.AddHours(-_config.Value.OutdoorTempBackfillHours);
+        var history = await _historyClient.GetAttributeHistoryAsync(_forecastHome.EntityId, "temperature", startUtc);
+        var seed = history is not null ? ComfortMath.SeedEma(history, _config.Value.OutdoorTempTimeConstantHours) : null;
+        if (seed is { } s)
+        {
+            _outdoorTempEma = s.Ema;
+            _outdoorTempEmaUpdatedUtc = s.AsOfUtc;
+        }
+
+        UpdateOutdoorTempEma(); // advance the seed to the current reading/time (or seed it when there was no history)
+
+        _logger.LogInformation(
+            "Outdoor temp EMA seeded from {Count} weather history sample(s) over {Hours}h: smoothed {Smoothed:0.0}°C vs instantaneous {Raw:0.0}°C",
+            history?.Count ?? 0, _config.Value.OutdoorTempBackfillHours, SmoothedWeatherTemperature, CurrentWeatherTemperature);
+    }
+
+    /// <summary>Folds the current outdoor reading into the EMA (or initialises it on the first call).</summary>
+    private void UpdateOutdoorTempEma()
+    {
+        if (CurrentWeatherTemperatureOrNull is not { } reading) return;
+        var nowUtc = DateTime.UtcNow;
+        _outdoorTempEma = _outdoorTempEma is { } prev
+            ? ComfortMath.EmaStep(prev, _outdoorTempEmaUpdatedUtc, reading, nowUtc, _config.Value.OutdoorTempTimeConstantHours)
+            : reading;
+        _outdoorTempEmaUpdatedUtc = nowUtc;
     }
 
     private async Task HandleChange(CancellationToken cancellationToken = default)
@@ -110,7 +168,7 @@ public class AcControl : IAsyncInitializable
         await SetTemperature(cancellationToken);
 
         foreach (var room in _config.Value.Rooms)
-            await _mitsubishiClient.ToggleZone(room.ZoneId, ShouldEnableZone(room), cancellationToken);
+            await _mitsubishiClient.ToggleZone(room.ZoneId, ShouldEnableZone(room, log: true), cancellationToken);
 
         await _mitsubishiClient.ToggleAc(_mitsubishiClient.State.IsAnyZoneOn(), cancellationToken);
         await _mitsubishiClient.SetFanMode(
@@ -181,7 +239,7 @@ public class AcControl : IAsyncInitializable
         return currentMode;
     }
 
-    private bool ShouldEnableZone(AcRoomConfig room, AcMode? mode = null)
+    private bool ShouldEnableZone(AcRoomConfig room, AcMode? mode = null, bool log = false)
     {
         if (!CheckContactAndMotion(room)) return false;
         mode ??= _mitsubishiClient.State.SetMode;
@@ -197,19 +255,44 @@ public class AcControl : IAsyncInitializable
         var offPoint = room.SetTemperature.Value + (isCooling ? profile.OffTolerance : -profile.OffTolerance);
         var weatherOffPoint = room.SetTemperature.Value + (isCooling ? -profile.WeatherOffset : profile.WeatherOffset);
 
+        // Regulate the estimated *felt* temperature, not raw air temperature: cold surfaces in winter
+        // make a room feel colder than the sensor reads, warm surfaces in summer warmer, and humid
+        // air feels warmer than dry air at the same temperature.
+        var feltTemp = ComfortMath.FeltTemperature(
+            room.CurrentTemperate.Value,
+            SmoothedWeatherTemperature,
+            room.EnvCoefficient ?? _config.Value.EnvCoefficient,
+            _config.Value.MaxComfortOffset,
+            room.CurrentHumidity,
+            _config.Value.ReferenceHumidity,
+            _config.Value.HumidityCoefficient);
+
         var isAcOn = _mitsubishiClient.State.Power;
+
+        if (log && _logger.IsEnabled(LogLevel.Debug))
+        {
+            var kEnv = room.EnvCoefficient ?? _config.Value.EnvCoefficient;
+            var envOffset = ComfortMath.EnvelopeOffset(room.CurrentTemperate.Value, SmoothedWeatherTemperature, kEnv);
+            var humOffset = room.CurrentHumidity is { } rh
+                ? ComfortMath.HumidityOffset(room.CurrentTemperate.Value, rh, _config.Value.ReferenceHumidity, _config.Value.HumidityCoefficient)
+                : 0M;
+            _logger.LogDebug(
+                "Felt temp {Room} ({Mode}): air {Air:0.0}°C + envelope {Env:+0.0;-0.0} (outdoor {Outdoor:0.0}°C smoothed, raw {Raw:0.0}°C, kEnv {KEnv}) + humidity {Hum:+0.0;-0.0} (RH {Rh:0}%) = felt {Felt:0.0}°C; set {Set:0.0}°C, force/on/off {Force:0.0}/{On:0.0}/{Off:0.0}, weatherGate {Gate:0.0}°C, acOn {AcOn}",
+                room.Name, mode, room.CurrentTemperate.Value, envOffset, SmoothedWeatherTemperature, CurrentWeatherTemperature,
+                kEnv, humOffset, room.CurrentHumidity, feltTemp, room.SetTemperature, forcePoint, onPoint, offPoint, weatherOffPoint, isAcOn);
+        }
 
         if (isCooling)
         {
             if (CurrentWeatherTemperature <= weatherOffPoint) return false;
-            if (room.CurrentTemperate >= (isAcOn ? onPoint : forcePoint)) return true;
-            if (room.CurrentTemperate <= offPoint) return false;
+            if (feltTemp >= (isAcOn ? onPoint : forcePoint)) return true;
+            if (feltTemp <= offPoint) return false;
         }
         else
         {
             if (CurrentWeatherTemperature >= weatherOffPoint) return false;
-            if (room.CurrentTemperate <= (isAcOn ? onPoint : forcePoint)) return true;
-            if (room.CurrentTemperate >= offPoint) return false;
+            if (feltTemp <= (isAcOn ? onPoint : forcePoint)) return true;
+            if (feltTemp >= offPoint) return false;
         }
 
         return _mitsubishiClient.State.IsZoneOn(room.ZoneId) && mode == _mitsubishiClient.State.SetMode;
