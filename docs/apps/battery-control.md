@@ -34,7 +34,10 @@ accordingly.
    - [`ApplyPrice`](../../src/apps/HassModel/Battery/Extensions/EnergySegmentExtensions.cs) assigns
      each segment its buy price (Amber `General`/`ControlledLoad` channels) and sell price (`FeedIn`
      channel, **stored negated**), picking the Amber interval with the greatest time overlap.
-     `ApplySolarForecast` adds expected solar generation.
+     `ApplySolarForecast` adds expected solar generation. The forecast request also passes today's
+     measured production (`SolarProductionTodayEntity`) via Forecast.Solar's
+     [`actual`](https://doc.forecast.solar/actual) parameter, which recalibrates the **current day's**
+     forecast to real output (later days are unaffected); a missing/non-numeric sensor simply omits it.
 
 2. **Greedy boundary solver.** While the projected charge crosses a capacity limit
    (`CalculateBoundaryResult`):
@@ -189,6 +192,7 @@ would make hours-to-empty effectively infinite.
 | `GridIn3DaysEntity` | `sensor.energy_meter_grid_in_3_days` |
 | `GridOut3DaysEntity` | `sensor.energy_meter_grid_out_3_days` |
 | `SolarProduction3DaysEntity` | `sensor.pawar_plant_total_solar_production_3_days` |
+| `SolarProductionTodayEntity` | `sensor.pawar_plant_total_energy_today` (today's kWh, resets at midnight; Forecast.Solar `actual` calibration) |
 | `BatteryChargeDiff3DaysEntity` | `sensor.solar_battery_battery_diff_3_days` |
 | `GridEnergyInTotalEntity` | `sensor.energy_meter_grid_energy_in_total` (lifetime kWh) |
 | `GridEnergyOutTotalEntity` | `sensor.energy_meter_grid_energy_out_total` (lifetime kWh) |
