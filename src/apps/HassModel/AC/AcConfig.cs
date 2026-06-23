@@ -32,6 +32,16 @@ public class AcConfig
 
     /// <summary>Coefficient on the Steadman vapour-pressure (humidity) term of the felt-temperature estimate.</summary>
     public decimal HumidityCoefficient { get; set; } = 0.33M;
+
+    /// <summary>
+    /// Time constant (hours) of the outdoor-temperature EMA that feeds the radiant envelope offset.
+    /// Models the building's thermal mass: larger = smoother and slower (the walls lag the air). 0
+    /// disables smoothing (uses the instantaneous outdoor temperature).
+    /// </summary>
+    public decimal OutdoorTempTimeConstantHours { get; set; } = 15M;
+
+    /// <summary>Hours of weather history replayed on startup to seed the outdoor-temperature EMA.</summary>
+    public int OutdoorTempBackfillHours { get; set; } = 48;
 }
 
 public class AcProfileConfig

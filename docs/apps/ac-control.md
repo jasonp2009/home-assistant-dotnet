@@ -188,6 +188,26 @@ moves slowly, so the offset drifts gently and does not cause mode/zone thrash.
 > gate** on the outdoor temperature; the envelope offset is a continuous **comfort** correction on
 > the regulated temperature.
 
+#### Smoothing the outdoor temperature
+
+The surfaces driving the radiant offset have **thermal mass**, so they respond slowly — they don't
+track the daily air-temperature swing. Feeding the *instantaneous* outdoor reading into the envelope
+offset would make the correction oscillate on the day/night cycle (and push `feltTemp` across the
+hysteresis band on the weather's clock). So the envelope offset uses an **exponentially-smoothed**
+outdoor temperature, `SmoothedWeatherTemperature`, not the raw reading.
+
+The smoother is a standard EMA (`ComfortMath.EmaStep`), updated on each weather change and on the
+60 s loop: `ema += (1 − exp(−Δt/τ)) · (reading − ema)`. Because it is the discretised first-order
+(RC) response, the time constant `τ` (`OutdoorTempTimeConstantHours`, default 15 h) *is* the
+envelope's thermal time constant — larger = smoother and slower. On startup `SeedOutdoorTempEmaAsync`
+backfills it by replaying `OutdoorTempBackfillHours` (default 48 h) of `weather.forecast_home`
+temperature history (via `HaHistoryClient.GetAttributeHistoryAsync` — temperature is a weather
+*attribute*, so this reads attributes rather than state) through `ComfortMath.SeedEma`, so it boots
+at a sensible value instead of cold-starting at the current reading. The weather entity's recorded
+history is sparse (~a dozen irregular points over 48 h), which the irregular-Δt EMA handles fine; if
+the backfill returns nothing it simply starts from the current reading. Setting `τ = 0` disables
+smoothing. The `WeatherOffset` economy gate continues to use the *instantaneous* outdoor temperature.
+
 ### Humidity offset
 
 Humid air feels warmer than dry air at the same temperature (sweat evaporates less freely). Each room

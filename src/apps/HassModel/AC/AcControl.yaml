@@ -4,6 +4,8 @@
   MaxComfortOffset: 3
   ReferenceHumidity: 50
   HumidityCoefficient: 0.33
+  OutdoorTempTimeConstantHours: 15
+  OutdoorTempBackfillHours: 48
   Profiles:
     - Name: Boost Plus
       ForceTolerance: 1

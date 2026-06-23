@@ -8,6 +8,7 @@ using NetDaemon.Extensions.Scheduler;
 using NetDaemon.HassModel.Entities;
 using src.apps.HassModel.AC.MitsubishiClient;
 using src.apps.HassModel.AC.MitsubishiClient.Models;
+using src.apps.HassModel.Battery.Clients.HaHistoryClient;
 
 namespace src.apps.HassModel.AC;
 
@@ -18,14 +19,18 @@ public class AcControl : IAsyncInitializable
     private readonly WeatherEntity _forecastHome;
     private readonly ILogger<AcControl> _logger;
     private readonly IMitsubishiClient _mitsubishiClient;
+    private readonly HaHistoryClient _historyClient;
     private readonly Dictionary<int, DateTime> _tempLastChangedDict = new();
     private int _curSocModifier = 0;
+    private decimal? _outdoorTempEma;
+    private DateTime _outdoorTempEmaUpdatedUtc;
 
     public AcControl(IHaContext ha, INetDaemonScheduler scheduler, IAppConfig<AcConfig> config,
-        ILogger<AcControl> logger, IMitsubishiClient mitsubishiClient)
+        ILogger<AcControl> logger, IMitsubishiClient mitsubishiClient, HaHistoryClient historyClient)
     {
         _forecastHome = new WeatherEntities(ha).ForecastHome;
         _mitsubishiClient = mitsubishiClient;
+        _historyClient = historyClient;
         _config = config;
         _logger = logger;
         foreach (var room in config.Value.Rooms)
@@ -81,11 +86,16 @@ public class AcControl : IAsyncInitializable
                 .SubscribeAsync(_ => HandleChange(), _logger);
         }
 
-        _forecastHome.StateChanges().SubscribeAsync(_ => HandleChange(), _logger);
+        _forecastHome.StateChanges().SubscribeAsync(_ =>
+        {
+            UpdateOutdoorTempEma();
+            return HandleChange();
+        }, _logger);
         _config.Value.SolarBatteryStateOfChargeEntity.StateChanges().SubscribeAsync(_ => HandleSocChange(), _logger);
 
         scheduler.RunEvery(TimeSpan.FromSeconds(60), () =>
         {
+            UpdateOutdoorTempEma();
             var currentMeasuredTemp = _mitsubishiClient.State?.RoomTemp;
             _mitsubishiClient.UpdateState().Wait();
             if (currentMeasuredTemp != _mitsubishiClient.State?.RoomTemp) HandleChange().Wait();
@@ -94,14 +104,58 @@ public class AcControl : IAsyncInitializable
 
     private decimal CurrentWeatherTemperature => Convert.ToDecimal(_forecastHome.Attributes?.Temperature);
 
+    private decimal? CurrentWeatherTemperatureOrNull =>
+        _forecastHome.Attributes?.Temperature is { } t ? Convert.ToDecimal(t) : null;
+
+    // Outdoor temperature smoothed by the EMA (models the building's thermal mass); falls back to the
+    // instantaneous reading until the EMA is seeded. Used only by the radiant envelope offset — the
+    // WeatherOffset economy gate keeps using the instantaneous CurrentWeatherTemperature.
+    private decimal SmoothedWeatherTemperature => _outdoorTempEma ?? CurrentWeatherTemperature;
+
     public async Task InitializeAsync(CancellationToken cancellationToken)
     {
         _logger.LogDebug("Attempting to login to mitsubishi client");
         await _mitsubishiClient.Login(cancellationToken);
         _logger.LogDebug("Successfully logged in to mitsubishi client");
 
+        await SeedOutdoorTempEmaAsync();
         await HandleSocChange(cancellationToken);
         await HandleChange(cancellationToken);
+    }
+
+    /// <summary>
+    /// Seeds the outdoor-temperature EMA from recent weather history so it starts at a sensible
+    /// smoothed value rather than the instantaneous reading after a restart. Falls back to the current
+    /// reading when no history is available; either way it then advances to "now".
+    /// </summary>
+    private async Task SeedOutdoorTempEmaAsync()
+    {
+        var startUtc = DateTime.UtcNow.AddHours(-_config.Value.OutdoorTempBackfillHours);
+        var history = await _historyClient.GetAttributeHistoryAsync(_forecastHome.EntityId, "temperature", startUtc);
+        var seed = history is not null ? ComfortMath.SeedEma(history, _config.Value.OutdoorTempTimeConstantHours) : null;
+        if (seed is { } s)
+        {
+            _outdoorTempEma = s.Ema;
+            _outdoorTempEmaUpdatedUtc = s.AsOfUtc;
+            _logger.LogDebug("Seeded outdoor temp EMA from {Count} weather history samples: {Ema}", history!.Count, s.Ema);
+        }
+        else
+        {
+            _logger.LogDebug("No weather history to seed outdoor temp EMA; starting from the current reading");
+        }
+
+        UpdateOutdoorTempEma(); // advance the seed to the current reading/time (or seed it when there was no history)
+    }
+
+    /// <summary>Folds the current outdoor reading into the EMA (or initialises it on the first call).</summary>
+    private void UpdateOutdoorTempEma()
+    {
+        if (CurrentWeatherTemperatureOrNull is not { } reading) return;
+        var nowUtc = DateTime.UtcNow;
+        _outdoorTempEma = _outdoorTempEma is { } prev
+            ? ComfortMath.EmaStep(prev, _outdoorTempEmaUpdatedUtc, reading, nowUtc, _config.Value.OutdoorTempTimeConstantHours)
+            : reading;
+        _outdoorTempEmaUpdatedUtc = nowUtc;
     }
 
     private async Task HandleChange(CancellationToken cancellationToken = default)
@@ -202,7 +256,7 @@ public class AcControl : IAsyncInitializable
         // air feels warmer than dry air at the same temperature.
         var feltTemp = ComfortMath.FeltTemperature(
             room.CurrentTemperate.Value,
-            CurrentWeatherTemperature,
+            SmoothedWeatherTemperature,
             room.EnvCoefficient ?? _config.Value.EnvCoefficient,
             _config.Value.MaxComfortOffset,
             room.CurrentHumidity,

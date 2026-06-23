@@ -84,4 +84,64 @@ public class HaHistoryClient
             return null;
         }
     }
+
+    /// <summary>
+    /// Like <see cref="GetHistoryAsync"/> but reads a numeric <em>attribute</em> (e.g. a weather
+    /// entity's <c>temperature</c>) rather than the entity state. Fetches with attributes included
+    /// (no <c>minimal_response</c>) and returns a time-ordered series of (UTC timestamp, value); rows
+    /// missing the attribute or with a non-numeric value are skipped. Returns null on any failure.
+    /// </summary>
+    public async Task<List<(DateTime TimeUtc, decimal Value)>?> GetAttributeHistoryAsync(
+        string entityId, string attribute, DateTime startUtc)
+    {
+        try
+        {
+            var start = startUtc.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss", CultureInfo.InvariantCulture) + "Z";
+            // end_time is required: HA defaults it to start + 1 day, which would truncate the backfill.
+            var end = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss", CultureInfo.InvariantCulture) + "Z";
+            // No minimal_response here: it strips attributes, and the value we want lives in them.
+            var apiPath = $"history/period/{start}?filter_entity_id={entityId}&end_time={Uri.EscapeDataString(end)}";
+
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+            var root = await _apiManager.GetApiCallAsync<JsonElement>(apiPath, cts.Token);
+            if (root is not { ValueKind: JsonValueKind.Array } entities)
+            {
+                _logger.LogWarning("HA attribute history returned no array (kind {Kind})", root.ValueKind);
+                return null;
+            }
+
+            var series = new List<(DateTime, decimal)>();
+            foreach (var entityArray in entities.EnumerateArray())
+            foreach (var point in entityArray.EnumerateArray())
+            {
+                if (!point.TryGetProperty("attributes", out var attrs) || attrs.ValueKind != JsonValueKind.Object ||
+                    !attrs.TryGetProperty(attribute, out var attrEl))
+                    continue;
+
+                decimal value;
+                if (attrEl.ValueKind == JsonValueKind.Number)
+                {
+                    if (!attrEl.TryGetDecimal(out value)) continue;
+                }
+                else if (attrEl.ValueKind == JsonValueKind.String)
+                {
+                    if (!decimal.TryParse(attrEl.GetString(), NumberStyles.Any, CultureInfo.InvariantCulture, out value)) continue;
+                }
+                else continue;
+
+                var timeEl = point.TryGetProperty("last_changed", out var lc) ? lc
+                    : point.TryGetProperty("last_updated", out var lu) ? lu : default;
+                if (timeEl.ValueKind == JsonValueKind.Undefined || !timeEl.TryGetDateTimeOffset(out var dto))
+                    continue;
+
+                series.Add((dto.UtcDateTime, value));
+            }
+            return series;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("Failed to get HA attribute history: {Message}", ex.Message);
+            return null;
+        }
+    }
 }
