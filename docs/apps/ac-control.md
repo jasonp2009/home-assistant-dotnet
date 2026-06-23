@@ -150,7 +150,24 @@ exists for each room (see [Felt-temperature control](#felt-temperature-control) 
 - **Two different temperatures**: zone decisions use per-room HA sensors; the aggressiveness/driving
   setpoint uses the unit's own return-air `RoomTemp`.
 - The log level for `src.apps.HassModel.AC.AcControl` in `appsettings.json` is misspelled `"Waring"`,
-  so it does not take effect (the app logs at the `Default` level).
+  so it does not take effect — the category falls back to `Default` (`Debug`). This is why the
+  felt-temperature `Debug` lines below are visible in production today; if that key is ever corrected
+  to `Warning`, set it to `Debug` instead to keep them.
+
+## Debugging the felt temperature (deployed)
+
+Read the deployed add-on logs over the HA REST API (see [deployed-logs.md](../deployed-logs.md)) and
+look for:
+
+- **`Felt-temperature control: …`** (`Information`, once at startup) — confirms the bound config
+  (`EnvCoefficient`, `MaxComfortOffset`, humidity coefficient/reference, EMA τ and backfill window).
+- **`Outdoor temp EMA seeded from N … sample(s) …`** (`Information`, once at startup) — how many
+  weather-history points seeded the EMA and the resulting `smoothed` vs `instantaneous` outdoor temp.
+- **`Felt temp <Room> (<Mode>): air … + envelope … + humidity … = felt …°C; set …, force/on/off …`**
+  (`Debug`, once per room per evaluation) — the full per-room breakdown: the air temperature, each
+  offset component (so you can see whether the radiant or the humidity term is driving the gap), the
+  smoothed vs raw outdoor temperature, the resulting felt temperature, and the thresholds it is
+  compared against. This is the line to grep when a room feels off.
 
 ## Felt-temperature control
 
