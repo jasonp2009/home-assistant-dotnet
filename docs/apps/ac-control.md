@@ -154,6 +154,36 @@ exists for each room (see [Felt-temperature control](#felt-temperature-control) 
 
 ## Felt-temperature control
 
-> This section describes work in progress. The controller is being extended to regulate an
-> estimated **felt** (apparent) temperature rather than raw air temperature, because comfort depends
-> on more than dry-bulb air temperature. See the sections added with that work below.
+The dry-bulb air temperature a sensor reads is only one input to how warm or cold a room actually
+*feels*. The controller therefore regulates an estimated **felt** (apparent) temperature: it runs the
+[hysteresis above](#per-zone-thermostat-shouldenablezone) against
+`ComfortMath.FeltTemperature(...)` instead of the raw `room.CurrentTemperate`. The felt temperature
+is the air temperature plus a set of physically-motivated offsets (clamped to ±`MaxComfortOffset`).
+
+[`ComfortMath`](../../src/apps/HassModel/AC/ComfortMath.cs) is pure, IO-free math (unit-tested in
+[`test/.../AC/ComfortMathTests.cs`](../../test/apps/HassModel/AC/ComfortMathTests.cs)).
+
+### Radiant (envelope) offset
+
+The dominant indoor comfort factor besides air temperature is **mean radiant temperature** — the
+temperature of the surfaces around you. A room's external walls and windows sit between the indoor
+air and the outdoor air, so the colder it is outside the more those surfaces draw body heat away
+(the room *feels* colder than the sensor reads); the hotter it is outside, the warmer they radiate.
+
+`EnvelopeOffset = kEnv · (outdoorTemp − airTemp)`:
+
+- **Winter** — outdoor < air → negative offset → felt temp below air temp → the controller heats
+  more. *Example:* air 21 °C, outdoor 8 °C, `kEnv` 0.1 → felt ≈ 19.7 °C, so a 22 °C setpoint keeps
+  heating where raw air temp alone would have let it coast.
+- **Summer** — outdoor > air → positive offset → felt temp above air temp → cools more.
+
+`kEnv` (config `EnvCoefficient`) rolls each room's exposure (window area / insulation) into one
+number. It is global by default (`AcConfig.EnvCoefficient`, 0.1) with an optional per-room override
+(`AcRoomConfig.EnvCoefficient`) — the internal **Hallway** is set to `0` (no external surfaces, no
+correction). The total offset is clamped to ±`MaxComfortOffset` (default 3 °C) so a glitched outdoor
+reading can't drive the unit to extremes. Start from the default and tune; the outdoor temperature
+moves slowly, so the offset drifts gently and does not cause mode/zone thrash.
+
+> This is distinct from the profile's `WeatherOffset`, which stays an independent on/off **economy
+> gate** on the outdoor temperature; the envelope offset is a continuous **comfort** correction on
+> the regulated temperature.

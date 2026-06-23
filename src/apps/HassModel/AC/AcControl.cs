@@ -197,19 +197,27 @@ public class AcControl : IAsyncInitializable
         var offPoint = room.SetTemperature.Value + (isCooling ? profile.OffTolerance : -profile.OffTolerance);
         var weatherOffPoint = room.SetTemperature.Value + (isCooling ? -profile.WeatherOffset : profile.WeatherOffset);
 
+        // Regulate the estimated *felt* temperature, not raw air temperature: cold surfaces in winter
+        // make a room feel colder than the sensor reads, warm surfaces in summer warmer.
+        var feltTemp = ComfortMath.FeltTemperature(
+            room.CurrentTemperate.Value,
+            CurrentWeatherTemperature,
+            room.EnvCoefficient ?? _config.Value.EnvCoefficient,
+            _config.Value.MaxComfortOffset);
+
         var isAcOn = _mitsubishiClient.State.Power;
 
         if (isCooling)
         {
             if (CurrentWeatherTemperature <= weatherOffPoint) return false;
-            if (room.CurrentTemperate >= (isAcOn ? onPoint : forcePoint)) return true;
-            if (room.CurrentTemperate <= offPoint) return false;
+            if (feltTemp >= (isAcOn ? onPoint : forcePoint)) return true;
+            if (feltTemp <= offPoint) return false;
         }
         else
         {
             if (CurrentWeatherTemperature >= weatherOffPoint) return false;
-            if (room.CurrentTemperate <= (isAcOn ? onPoint : forcePoint)) return true;
-            if (room.CurrentTemperate >= offPoint) return false;
+            if (feltTemp <= (isAcOn ? onPoint : forcePoint)) return true;
+            if (feltTemp >= offPoint) return false;
         }
 
         return _mitsubishiClient.State.IsZoneOn(room.ZoneId) && mode == _mitsubishiClient.State.SetMode;

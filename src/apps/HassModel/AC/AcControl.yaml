@@ -1,5 +1,7 @@
 ﻿src.apps.HassModel.AC.AcConfig:
   DefaultProfileName: Standard
+  EnvCoefficient: 0.1
+  MaxComfortOffset: 3
   Profiles:
     - Name: Boost Plus
       ForceTolerance: 1
@@ -101,6 +103,7 @@
       AcToggleEntity: input_boolean.hallway_ac_switch
       AcProfileSelectEntity: input_select.hallway_ac_mode
       ZoneOnLogEntity: input_boolean.aclog_zoneon_hallway
+      EnvCoefficient: 0  # internal room — no external surfaces, so no radiant felt-temperature offset
     - Name: MasterBedroom
       ZoneId: 5
       TemperatureSensorEntity: sensor.master_bedroom_temperature_and_humidity_sensor_temperature

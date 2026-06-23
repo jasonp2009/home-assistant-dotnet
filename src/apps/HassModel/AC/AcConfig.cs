@@ -17,6 +17,15 @@ public class AcConfig
     public InputNumberEntity SocModifierLogEntity { get; set; }
     public SensorEntity SolarBatteryStateOfChargeEntity { get; set; }
     public IEnumerable<SocAdjustConfig> SocAdjusts { get; set; }
+
+    /// <summary>
+    /// Default radiant "envelope" coefficient used for the felt-temperature estimate: how strongly a
+    /// room's felt temperature leans toward the outdoor temperature. Rooms may override it.
+    /// </summary>
+    public decimal EnvCoefficient { get; set; } = 0.1M;
+
+    /// <summary>Clamp (°C) on the total felt-temperature offset, so a bad outdoor reading can't drive the unit to extremes.</summary>
+    public decimal MaxComfortOffset { get; set; } = 3M;
 }
 
 public class AcProfileConfig
@@ -49,6 +58,12 @@ public class AcRoomConfig
     public TimeOnly? MotionEnabledTo { get; set; }
     public InputBooleanEntity? ZoneOnLogEntity { get; set; }
     public int ZoneId { get; set; }
+
+    /// <summary>
+    /// Optional per-room override of <see cref="AcConfig.EnvCoefficient"/>. Exposure differs by room
+    /// — use 0 for an internal room (e.g. a hallway), higher for rooms with large or exposed glazing.
+    /// </summary>
+    public decimal? EnvCoefficient { get; set; }
     public bool IsOn => AcToggleEntity?.EntityState.IsOn() ?? false;
     public decimal? SetTemperature => Convert.ToDecimal(SetTemperatureEntity?.EntityState?.State);
 
