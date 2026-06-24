@@ -60,6 +60,12 @@ public class BatteryConfig
     //   pessimisticSell >= pessimisticBuy / RoundTripEfficiency + ArbitrageMinMarginPerKwh.
     public bool ArbitrageEnabled { get; set; }
     public decimal ArbitragePessimismWeight { get; set; }  // 0..1: how far arbitrage prices lean to High (buy) / low-earning (sell)
+    // Pessimism for BUY-BEFORE-SELL pairs (charge now, export later). Charging is low-regret — if the
+    // forecast sell never materialises the bought energy still displaces household load — so these are judged
+    // less conservatively than sell-before-buy (discharge now, refill later) pairs, which keep
+    // ArbitragePessimismWeight. Set <= ArbitragePessimismWeight; not 0, so a receding forecast spike can't
+    // charge the battery full at face value.
+    public decimal ArbitrageBuyBeforeSellWeight { get; set; }
     public decimal RoundTripEfficiency { get; set; }       // charge->discharge efficiency, used only in the profit gate
     public decimal ArbitrageMinMarginPerKwh { get; set; }  // minimum profit (price units) required to commit a pair
 

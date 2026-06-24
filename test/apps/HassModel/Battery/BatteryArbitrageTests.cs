@@ -214,6 +214,69 @@ public class BatteryArbitrageTests
     }
 
     // -----------------------------------------------------------------------------------------
+    // 7b. BuyBeforeSell_LowerWeight_CommitsWhereSymmetricWouldNot
+    //    SAME fixture as test 7 (which does NOT commit at the symmetric 0.5 weight), but with the buy-before-sell
+    //    weight lowered to 0.25. buy = 10*0.75 + High 40*0.25 = 17.5; sell = 40*0.75 + low-earning 4*0.25 = 31.
+    //    Gate (margin 0): net = 31 - 17.5/0.9 = 11.56 >= 0 → COMMITS. Pins that a charge-first pair the symmetric
+    //    pessimism would have gated out is unlocked once buy-before-sell is judged less conservatively.
+    // -----------------------------------------------------------------------------------------
+
+    [Fact]
+    public void BuyBeforeSell_LowerWeight_CommitsWhereSymmetricWouldNot()
+    {
+        var cfg = Cfg();
+        cfg.ArbitrageBuyBeforeSellWeight = 0.25m; // less pessimistic than the 0.5 sell-before-buy weight
+        var segs = new List<EnergySegment>
+        {
+            Seg(0, 25),
+            Seg(1, 25),
+            Seg(2, 25, buy: 10, buyLocked: false, advBuy: Adv(8, 10, 40)),
+            Seg(3, 25),
+            Seg(4, 25),
+            Seg(5, 25, sell: 40m, sellLocked: false, advSell: Adv(-4m, -40m, -44m)),
+            Seg(6, 25),
+        };
+
+        BatteryPlanner.OptimiseSegments(segs, cfg, 1m);
+        BatteryPlanner.ApplyArbitrage(segs, cfg);
+
+        var actions = string.Join(",", segs.Select(s => s.Action));
+        Assert.True(segs[2].Action == EnergySegmentAction.Buy, $"actions=[{actions}]");
+        Assert.True(segs[5].Action == EnergySegmentAction.Sell, $"actions=[{actions}]");
+    }
+
+    // -----------------------------------------------------------------------------------------
+    // 7c. SellBeforeBuy_IgnoresLowerBuyBeforeSellWeight
+    //    SAME band values as test 7b but the SELL comes first (discharge now, refill later), so the lower
+    //    buy-before-sell weight must NOT apply — the pair keeps the full 0.5 pessimism: buy = 10*0.5 + 40*0.5 = 25,
+    //    sell = 40*0.5 + 4*0.5 = 22, net = 22 - 25/0.9 = -5.78 < 0 → NO commit. Pins that direction, not just the
+    //    config value, selects the weight: sell-before-buy stays conservative even when the new knob is lowered.
+    // -----------------------------------------------------------------------------------------
+
+    [Fact]
+    public void SellBeforeBuy_IgnoresLowerBuyBeforeSellWeight()
+    {
+        var cfg = Cfg();
+        cfg.ArbitrageBuyBeforeSellWeight = 0.25m; // would commit the SAME bands as a buy-before-sell pair
+        var segs = new List<EnergySegment>
+        {
+            Seg(0, 25),
+            Seg(1, 25, sell: 40m, sellLocked: false, advSell: Adv(-4m, -40m, -44m)), // sell first
+            Seg(2, 25),
+            Seg(3, 25),
+            Seg(4, 25, buy: 10, buyLocked: false, advBuy: Adv(8, 10, 40)),           // refill later
+            Seg(5, 25),
+            Seg(6, 25),
+        };
+
+        BatteryPlanner.OptimiseSegments(segs, cfg, 1m);
+        BatteryPlanner.ApplyArbitrage(segs, cfg);
+
+        var actions = string.Join(",", segs.Select(s => s.Action));
+        Assert.True(segs.All(s => s.Action == EnergySegmentAction.None), $"actions=[{actions}]");
+    }
+
+    // -----------------------------------------------------------------------------------------
     // 8. EstimatePessimism_GatesUncertainPair
     //    buy(seg2) before sell(seg5), both estimates. Both legs pessimised: buy = 20*0.5 + 30*0.5 = 25,
     //    sell = predicted 30*0.5 + low-earning 2*0.5 = 16.

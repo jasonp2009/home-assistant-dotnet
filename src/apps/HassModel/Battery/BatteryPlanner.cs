@@ -171,14 +171,21 @@ public static class BatteryPlanner
     ///  4. Repeat until no profitable, feasible pair remains. If the best sell has no profitable feasible buy,
     ///     move on to the next-best sell before stopping (don't give up at the first miss).
     ///
-    /// PESSIMISM IS ESTIMATE-BASED: the discount (<c>config.ArbitragePessimismWeight</c>) is applied to any leg
-    /// whose price is an ESTIMATE (a forecast) — leaning a buy toward its advanced High and a sell toward its
-    /// lowest plausible earning — while a LOCKED (materialised) leg passes through at face value (handled by
-    /// <see cref="EnergySegmentExtensions.WeightedPrice"/>). So an uncertain future price is acted on only when
-    /// even its pessimistic value clears the gate: the planner won't skip a certain good price now to chase a
-    /// higher-but-uncertain forecast. Both legs of an all-forecast pair are discounted; a pair anchored by the
-    /// locked current segment keeps that leg at face value. (Pricing the speculative leg at its worst plausible
-    /// value depends on the sell-side lean being correct — see <see cref="EnergySegmentExtensions.WeightedPrice"/>.)
+    /// PESSIMISM IS ESTIMATE-BASED: the discount is applied to any leg whose price is an ESTIMATE (a forecast)
+    /// — leaning a buy toward its advanced High and a sell toward its lowest plausible earning — while a LOCKED
+    /// (materialised) leg passes through at face value (handled by <see cref="EnergySegmentExtensions.WeightedPrice"/>).
+    /// So an uncertain future price is acted on only when even its pessimistic value clears the gate: the planner
+    /// won't skip a certain good price now to chase a higher-but-uncertain forecast. Both legs of an all-forecast
+    /// pair are discounted; a pair anchored by the locked current segment keeps that leg at face value. (Pricing
+    /// the speculative leg at its worst plausible value depends on the sell-side lean being correct — see
+    /// <see cref="EnergySegmentExtensions.WeightedPrice"/>.)
+    ///
+    /// PESSIMISM IS DIRECTIONAL: buy-before-sell pairs (charge now, export later) use the lower
+    /// <c>config.ArbitrageBuyBeforeSellWeight</c>; sell-before-buy pairs (discharge now, refill later) use the full
+    /// <c>config.ArbitragePessimismWeight</c>. Charging is low-regret — if the forecast sell never materialises the
+    /// bought energy still displaces household load — whereas a sell-before-buy that misjudges the refill leaves the
+    /// battery short and forces a dearer top-up, so it is treated more cautiously. This lets the planner pre-charge
+    /// cheap for a several-hours-ahead peak that the symmetric weight would have gated out.
     ///
     /// FEASIBILITY keeps the round-trip within [MinCapacity, MaxCapacity] (i.e. inside the slack between
     /// boundary crossings), using a small tolerance (e.g. 0.01) to absorb SegmentChargeAmountKwh rounding:
@@ -221,8 +228,12 @@ public static class BatteryPlanner
                 {
                     var buyIndex = energySegments.IndexOf(buy);
                     if (!FeasiblePair(buyIndex, sellIndex, energySegments, config, tol)) continue;
-                    var sellEarning = sell.WeightedPrice(isBuy: false, config.ArbitragePessimismWeight);
-                    var buyCost = buy.WeightedPrice(isBuy: true, config.ArbitragePessimismWeight);
+                    // Direction picks the pessimism: buy-before-sell (charge first) is low-regret and uses the
+                    // lower ArbitrageBuyBeforeSellWeight; sell-before-buy (discharge first) keeps the full
+                    // ArbitragePessimismWeight. Both legs of the pair share the chosen weight (see remarks).
+                    var weight = buyIndex < sellIndex ? config.ArbitrageBuyBeforeSellWeight : config.ArbitragePessimismWeight;
+                    var sellEarning = sell.WeightedPrice(isBuy: false, weight);
+                    var buyCost = buy.WeightedPrice(isBuy: true, weight);
                     var net = sellEarning - buyCost / config.RoundTripEfficiency;
                     if (net > bestNet) { bestNet = net; bestBuy = buy; }
                 }

@@ -37,6 +37,9 @@ internal static class BatteryTestData
         OptimismMaxWeight = 0.3m,
         ArbitrageEnabled = true,
         ArbitragePessimismWeight = 0.5m,
+        // Kept equal to ArbitragePessimismWeight in the baseline so existing pessimism tests are
+        // direction-agnostic; the deployed YAML sets a lower value. Tests exercising the asymmetry set it explicitly.
+        ArbitrageBuyBeforeSellWeight = 0.5m,
         RoundTripEfficiency = 0.9m,
         ArbitrageMinMarginPerKwh = 0m
     };

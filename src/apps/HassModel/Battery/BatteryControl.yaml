@@ -32,6 +32,7 @@
   OptimismMaxWeight: 0.2
   ArbitrageEnabled: true
   ArbitragePessimismWeight: 0.5
+  ArbitrageBuyBeforeSellWeight: 0.25
   RoundTripEfficiency: 0.9
   ArbitrageMinMarginPerKwh: 2
   CurrentActionLog: input_select.current_action_battery_log
