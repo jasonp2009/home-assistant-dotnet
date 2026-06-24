@@ -53,7 +53,19 @@ accordingly.
      sunny segment rises by the rate (solar surplus and load met through the grid within the cap); a
      forced discharge on a high-usage segment falls by the rate (the load served from the discharge).
 
-3. **Act + log.** Set the inverter `BatteryModeSelectEntity` to the charge/discharge/none mode for
+3. **Opportunistic price arbitrage** ([`ApplyArbitrage`](../../src/apps/HassModel/Battery/BatteryPlanner.cs)).
+   After the boundary solver, greedily pair an un-actioned **buy** segment (cheap) with an un-actioned
+   **sell** segment (dear) and commit the pair when its net clears the gate:
+   `sellEarning − buyCost / RoundTripEfficiency ≥ ArbitrageMinMarginPerKwh`. Each pair moves one segment's
+   worth of charge; a feasibility check keeps the held round-trip inside `[MinCapacity, MaxCapacity]`.
+   Forecast (estimate) legs are **pessimised** — a buy leaned toward its advanced `High`, a sell toward its
+   lowest plausible earning — so the planner won't chase a higher-but-uncertain forecast over a certain
+   price; locked (materialised) legs pass through at face value. The pessimism is **directional**:
+   buy-before-sell pairs (charge now, export later) use the lower `ArbitrageBuyBeforeSellWeight` because
+   charging is low-regret — energy that never gets sold still serves household load — while sell-before-buy
+   pairs keep the full `ArbitragePessimismWeight`. No-op when `ArbitrageEnabled` is false.
+
+4. **Act + log.** Set the inverter `BatteryModeSelectEntity` to the charge/discharge/none mode for
    the current segment, and write the next action, its price, its time, and the projected
    "battery until empty" time to Home Assistant helper entities.
 
@@ -119,7 +131,7 @@ would make hours-to-empty effectively infinite.
 | File | Role |
 |---|---|
 | [`BatteryControl.cs`](../../src/apps/HassModel/Battery/BatteryControl.cs) | Scheduler + Home Assistant I/O (reads state, sets inverter mode, logs); delegates planning to `BatteryPlanner` |
-| [`BatteryPlanner.cs`](../../src/apps/HassModel/Battery/BatteryPlanner.cs) | Pure, unit-testable planning: `BuildSegments`, `OptimiseSegments` (greedy boundary solver), `CalculateBoundaryResult`, `GetBatteryUntil` |
+| [`BatteryPlanner.cs`](../../src/apps/HassModel/Battery/BatteryPlanner.cs) | Pure, unit-testable planning: `BuildSegments`, `OptimiseSegments` (greedy boundary solver), `ApplyArbitrage` (opportunistic buy-low/sell-high), `CalculateBoundaryResult`, `GetBatteryUntil` |
 | [`BatteryConfig.cs`](../../src/apps/HassModel/Battery/BatteryConfig.cs) | Typed config bound from the YAML |
 | [`BatteryControl.yaml`](../../src/apps/HassModel/Battery/BatteryControl.yaml) | Entity ids + tuning values |
 | [`Models/EnergySegment.cs`](../../src/apps/HassModel/Battery/Models/EnergySegment.cs) | A 5-minute slot: projected charge, prices, solar, action |
@@ -137,9 +149,10 @@ would make hours-to-empty effectively infinite.
 - **Inverter:** it exports surplus to the grid at 100% SoC (it does **not** curtail), so relieving an
   over-charge by discharging at the best available feed-in is the correct, loss-minimising action.
 - **No charging during demand windows** is intentional (the home draws from the grid; demand windows carry
-  excess usage charges).
-- **Not yet implemented:** proactive price arbitrage (buy low / sell high without a capacity-boundary trigger)
-  — planned in [`../battery-arbitrage-plan.md`](../battery-arbitrage-plan.md).
+  excess usage charges). Selling in a demand window is allowed; only buying is disallowed.
+- **Price arbitrage** (buy import low / export high *without* a capacity-boundary trigger) runs after the
+  boundary solver — see step 3 of the [decision flow](#decision-flow) and the **Price arbitrage** config
+  table below. The original design notes are in [`../battery-arbitrage-plan.md`](../battery-arbitrage-plan.md).
 
 ## Configuration reference (`BatteryControl.yaml`)
 
@@ -166,6 +179,16 @@ would make hours-to-empty effectively infinite.
 | `OptimismStartHours` | 26 | Runway above which optimism begins ramping |
 | `OptimismMaxAtHours` | 32 | Runway at/above which optimism is maxed |
 | `OptimismMaxWeight` | 0.3 | Max optimism blend fraction |
+
+**Price arbitrage** — opportunistic buy-low/sell-high layered on top of the boundary solver
+
+| Key | Default | Meaning |
+|---|---|---|
+| `ArbitrageEnabled` | true | Master switch for the arbitrage pass |
+| `ArbitragePessimismWeight` | 0.5 | How far a forecast leg leans to its worst plausible price (buy `High` / sell lowest-earning); used for sell-before-buy pairs |
+| `ArbitrageBuyBeforeSellWeight` | 0.25 | Lower pessimism for buy-before-sell (charge-first) pairs — charging is low-regret, so they are judged less conservatively. Set ≤ `ArbitragePessimismWeight`, and not 0 |
+| `RoundTripEfficiency` | 0.9 | Charge→discharge efficiency; divides the buy cost in the profit gate only |
+| `ArbitrageMinMarginPerKwh` | 2 | Minimum net profit (c/kWh) required to commit a pair |
 
 **Segmented usage estimate**
 
@@ -236,4 +259,6 @@ the [segmented usage estimate](#segmented-usage-estimate).
   optimism clamp, the sell side, and the uncertainty-ordering property the solver relies on.
 - `Extensions/ApplyPriceTests.cs` — channel routing, price selection, negated sell price, demand
   window, overlap selection.
+- `BatteryArbitrageTests.cs` — the arbitrage profit gate, feasibility, estimate-based pessimism, locked
+  vs forecast legs, demand-window rules, and the directional buy-before-sell weight.
 - `Clients/AmberClient/Extensions/BaseIntervalExtensionsTests.cs` — interval price helpers.
