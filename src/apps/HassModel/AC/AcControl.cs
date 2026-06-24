@@ -164,6 +164,16 @@ public class AcControl : IAsyncInitializable
 
     private async Task HandleChange(CancellationToken cancellationToken = default)
     {
+        // Entity StateChanges() subscriptions are wired up in the constructor, so a HA state change can
+        // arrive before Login() (awaited in InitializeAsync) has populated the Mitsubishi state. Every
+        // branch below dereferences _mitsubishiClient.State, so bail out until it's available rather than
+        // throwing a NullReferenceException out of the subscription callback.
+        if (_mitsubishiClient.State is null)
+        {
+            _logger.LogDebug("Mitsubishi client state not yet available, skipping change");
+            return;
+        }
+
         await _mitsubishiClient.SetMode(GetDesiredAcMode(), cancellationToken);
         await SetTemperature(cancellationToken);
 
