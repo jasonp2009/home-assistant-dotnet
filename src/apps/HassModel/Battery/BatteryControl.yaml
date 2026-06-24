@@ -51,5 +51,5 @@
   MinForecastHours: 72
   MaxPriceLockInWaitSecs: 30
   MaxPriceLockInRetryDelaySecs: 2
-  ChargeRateKw: 12
-  DischargeRateKw: 12
+  ChargeRateKw: 10
+  DischargeRateKw: 10
