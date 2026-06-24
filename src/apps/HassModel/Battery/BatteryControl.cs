@@ -90,7 +90,12 @@ public class BatteryControl
         var currentAction = currentSegment.Action;
         LogDecision(energySegments, currentSegment, currentAction, currentChargeKwh);
         _config.CurrentActionLog.SelectOption(currentAction.ToString());
-        _config.CurrentActionReasonLog.SelectOption(currentSegment.ActionReason.ToString());
+        // Only surface a meaningful reason (Usage/Arbitrage). When the current segment has no action the
+        // reason is NotApplicable; leave the previous value in place rather than overwriting it.
+        if (currentSegment.ActionReason is EnergySegmentActionReason.Usage or EnergySegmentActionReason.Arbitrage)
+        {
+            _config.CurrentActionReasonLog.SelectOption(currentSegment.ActionReason.ToString());
+        }
         _config.CurrentActionWithPriceLog.SetValue(currentAction switch
         {
             EnergySegmentAction.Buy => $"Buy at {Math.Round(currentSegment.BuyPricePerKw ?? 0)}c",
