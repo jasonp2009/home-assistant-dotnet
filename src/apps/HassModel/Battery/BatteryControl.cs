@@ -211,24 +211,36 @@ public class BatteryControl
             _config.MinCapacity + _config.SegmentDischargeAmountKwh, _config.MaxCapacity - _config.SegmentChargeAmountKwh,
             Math.Round(now.BuyPricePerKw ?? 0), Math.Round(now.SellPricePerKw ?? 0), now.SolarForecastKwh);
 
-        LogLegs(segments, EnergySegmentActionReason.Usage, "Usage");
+        // Usage legs are capped to the next 24 h: near the floor the boundary solver places a buy most
+        // nights across the 72 h horizon, so an uncapped line is dominated by far-out keep-alive legs that
+        // re-plan well before they fire. Arbitrage legs are sparse (priced spikes), so they stay uncapped.
+        LogLegs(segments, EnergySegmentActionReason.Usage, "Usage", within: TimeSpan.FromHours(24));
         LogLegs(segments, EnergySegmentActionReason.Arbitrage, "Arbitrage");
     }
 
     /// <summary>
-    /// Lists every leg the planner committed for a given reason (Usage = boundary solver, Arbitrage =
+    /// Lists the legs the planner committed for a given reason (Usage = boundary solver, Arbitrage =
     /// price arbitrage) as "{Action} {local time}@{price}c", in chronological order, on one line. Buys
-    /// show the buy price, sells the sell price. No-op when there are no legs of that reason.
+    /// show the buy price, sells the sell price. No-op when there are no legs of that reason. When
+    /// <paramref name="within"/> is set, only legs starting within that span of the plan's first segment
+    /// are listed; any further-out legs are summarised as a trailing "(+N more beyond Hh)" count.
     /// </summary>
-    private void LogLegs(List<EnergySegment> segments, EnergySegmentActionReason reason, string label)
+    private void LogLegs(List<EnergySegment> segments, EnergySegmentActionReason reason, string label, TimeSpan? within = null)
     {
-        var legs = segments
+        var matching = segments
             .Where(s => s.Action != EnergySegmentAction.None && s.ActionReason == reason)
             .OrderBy(s => s.StartUtc)
-            .Select(s => $"{s.Action} {s.StartUtc.ToLocalTime().ToShortTimeString()}@{Math.Round((s.Action == EnergySegmentAction.Buy ? s.BuyPricePerKw : s.SellPricePerKw) ?? 0)}c")
             .ToList();
-        if (legs.Count > 0)
-            _logger.LogInformation("{Label} legs this plan: {Legs}", label, string.Join(", ", legs));
+        if (matching.Count == 0) return;
+
+        var cutoff = within is null ? DateTime.MaxValue : segments.First().StartUtc + within.Value;
+        var shown = matching.Where(s => s.StartUtc < cutoff).ToList();
+        var omitted = matching.Count - shown.Count;
+
+        var legs = string.Join(", ", shown.Select(s =>
+            $"{s.Action} {s.StartUtc.ToLocalTime().ToShortTimeString()}@{Math.Round((s.Action == EnergySegmentAction.Buy ? s.BuyPricePerKw : s.SellPricePerKw) ?? 0)}c"));
+        var more = omitted > 0 ? $" (+{omitted} more beyond {within!.Value.TotalHours:0}h)" : "";
+        _logger.LogInformation("{Label} legs this plan: {Legs}{More}", label, legs, more);
     }
 
     private decimal GetAverageSegmentUsage()
