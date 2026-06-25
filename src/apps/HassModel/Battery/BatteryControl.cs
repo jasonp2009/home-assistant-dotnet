@@ -199,8 +199,9 @@ public class BatteryControl
     /// Logs the action chosen for "now" with its reason, the resulting projected charge, and the action
     /// band [MinCapacity + step, MaxCapacity - step]. The one-step buffer means a Buy must land at or
     /// below the band top and a Sell at or above the band bottom — a projected charge sitting on a limit
-    /// (50 or 8) would mean the buffer regressed. Also lists any arbitrage legs so price-arbitrage churn
-    /// is distinguishable from boundary churn in the log alone.
+    /// (50 or 8) would mean the buffer regressed. Also lists the boundary-solver (Usage) legs and any
+    /// arbitrage legs so the full plan — and whether churn is boundary- or price-arbitrage-driven — is
+    /// readable from the log alone.
     /// </summary>
     private void LogDecision(List<EnergySegment> segments, EnergySegment now, EnergySegmentAction action, decimal currentChargeKwh)
     {
@@ -210,12 +211,24 @@ public class BatteryControl
             _config.MinCapacity + _config.SegmentDischargeAmountKwh, _config.MaxCapacity - _config.SegmentChargeAmountKwh,
             Math.Round(now.BuyPricePerKw ?? 0), Math.Round(now.SellPricePerKw ?? 0), now.SolarForecastKwh);
 
-        var arbitrageLegs = segments
-            .Where(s => s.Action != EnergySegmentAction.None && s.ActionReason == EnergySegmentActionReason.Arbitrage)
+        LogLegs(segments, EnergySegmentActionReason.Usage, "Usage");
+        LogLegs(segments, EnergySegmentActionReason.Arbitrage, "Arbitrage");
+    }
+
+    /// <summary>
+    /// Lists every leg the planner committed for a given reason (Usage = boundary solver, Arbitrage =
+    /// price arbitrage) as "{Action} {local time}@{price}c", in chronological order, on one line. Buys
+    /// show the buy price, sells the sell price. No-op when there are no legs of that reason.
+    /// </summary>
+    private void LogLegs(List<EnergySegment> segments, EnergySegmentActionReason reason, string label)
+    {
+        var legs = segments
+            .Where(s => s.Action != EnergySegmentAction.None && s.ActionReason == reason)
+            .OrderBy(s => s.StartUtc)
             .Select(s => $"{s.Action} {s.StartUtc.ToLocalTime().ToShortTimeString()}@{Math.Round((s.Action == EnergySegmentAction.Buy ? s.BuyPricePerKw : s.SellPricePerKw) ?? 0)}c")
             .ToList();
-        if (arbitrageLegs.Count > 0)
-            _logger.LogInformation("Arbitrage legs this plan: {Legs}", string.Join(", ", arbitrageLegs));
+        if (legs.Count > 0)
+            _logger.LogInformation("{Label} legs this plan: {Legs}", label, string.Join(", ", legs));
     }
 
     private decimal GetAverageSegmentUsage()
