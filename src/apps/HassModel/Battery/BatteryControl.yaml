@@ -9,7 +9,7 @@
   SolarProduction3DaysEntity: sensor.pawar_plant_total_solar_production_3_days
   SolarProductionTodayEntity: sensor.pawar_plant_total_energy_today
   BatteryChargeDiff3DaysEntity: sensor.solar_battery_battery_diff_3_days
-  EstimatedUsageMultiplier: 1.1
+  EstimatedUsageMultiplier: 1
   GridEnergyInTotalEntity: sensor.energy_meter_grid_energy_in_total
   GridEnergyOutTotalEntity: sensor.energy_meter_grid_energy_out_total
   SolarLifetimeOutputEntity: sensor.pawar_plant_total_lifetime_energy_output
@@ -24,12 +24,12 @@
   UsageWindow2Weight: 0.3
   UsageWindow3Days: 7
   UsageWindow3Weight: 0.3
-  PessimismStartHours: 18
-  PessimismMaxAtHours: 2
-  PessimismMaxWeight: 0.5
-  OptimismStartHours: 24
-  OptimismMaxAtHours: 30
-  OptimismMaxWeight: 0.2
+  PessimismStartHours: 12
+  PessimismMaxAtHours: 3
+  PessimismMaxWeight: 1
+  OptimismStartHours: 20
+  OptimismMaxAtHours: 24
+  OptimismMaxWeight: 0.3
   ArbitrageEnabled: true
   ArbitragePessimismWeight: 0.5
   ArbitrageBuyBeforeSellWeight: 0.25
@@ -45,7 +45,7 @@
   NextActionPriceLog: input_number.next_action_price_battery_log
   NextActionAtLog: input_datetime.next_action_at_battery_log
   BatteryCapacity: 53
-  MinCapacity: 8
+  MinCapacity: 5.3
   MaxCapacity: 53
   SegmentSizeMins: 5
   MinForecastHours: 72
