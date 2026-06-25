@@ -42,13 +42,17 @@
       SocMax: 90
       Tolerance: 2
     - ProfileModifier: -1
-      SocMin: 30
+      SocMin: 25
       SocMax: 50
       Tolerance: 2
     - ProfileModifier: -2
+      SocMin: 15
+      SocMax: 25
+      Tolerance: 1
+    - ProfileModifier: -5
       SocMin: 0
-      SocMax: 30
-      Tolerance: 2
+      SocMax: 15
+      Tolerance: 1
   AcOnLogEntity: input_boolean.aclog_ison
   AcModeLogEntity: input_select.aclog_mode
   AcAggressivenessLogEntity: input_number.aclog_aggressiveness
