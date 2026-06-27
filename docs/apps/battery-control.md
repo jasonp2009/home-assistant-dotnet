@@ -84,10 +84,13 @@ Amber price by a **risk weight** derived from how much battery runway is left:
      prices as worse, so the controller prefers to act at known-good prices now.
    - **Deep runway → optimism** (negative weight, up to `OptimismMaxWeight`): lean the other way.
    - **In between → neutral** (0): use Amber's `predicted` price as-is.
-   - The defaults make pessimism **stronger and wider** than optimism.
+   - The defaults make pessimism **much stronger and wider** than optimism — it maxes at `2`
+     (extrapolating past the bound, see below), but only right at the floor.
 3. **Application:**
    - Locked-in (non-estimate) prices are returned **raw**, ignoring the weight.
-   - With an advanced price, blend: `predicted·(1−|w|) + (High|Low)·|w|`.
+   - With an advanced price, blend: `predicted·(1−|w|) + (High|Low)·|w|`. With a weight `|w| > 1` the
+     blend **extrapolates past the bound** (e.g. `w = 2` → `2·High − predicted`), pricing a near-floor
+     buy *above* the advanced `High` so floor-defense buys prefer to charge early rather than wait.
    - Without an advanced price (Amber only provides one for ~the first 24 h; beyond that just
      `perKwh`), scale `perKwh` by **pessimism only** — optimism is clamped off, so the controller
      never optimistically waits for an un-forecast far-future price.
@@ -173,12 +176,17 @@ would make hours-to-empty effectively infinite.
 
 | Key | Default | Meaning |
 |---|---|---|
-| `PessimismStartHours` | 20 | Runway below which pessimism begins ramping |
-| `PessimismMaxAtHours` | 4 | Runway at/below which pessimism is maxed |
-| `PessimismMaxWeight` | 0.7 | Max pessimism blend fraction |
-| `OptimismStartHours` | 26 | Runway above which optimism begins ramping |
-| `OptimismMaxAtHours` | 32 | Runway at/above which optimism is maxed |
+| `PessimismStartHours` | 12 | Runway (h) below which pessimism begins ramping |
+| `PessimismMaxAtHours` | 0 | Runway (h) at/below which pessimism is maxed (`0` = full weight only right at the floor) |
+| `PessimismMaxWeight` | 2 | Max pessimism blend fraction. **A value >1 extrapolates *past* the bound** (`w=2` → `2·High − predicted`), so near-floor buy estimates are priced **above** the advanced `High`. This is deliberate: it makes floor-defense buys **prefer charging early** — a later, lower-SoC segment must beat the locked "now" price even after this markup before the solver will defer to it |
+| `OptimismStartHours` | 20 | Runway (h) above which optimism begins ramping |
+| `OptimismMaxAtHours` | 24 | Runway (h) at/above which optimism is maxed |
 | `OptimismMaxWeight` | 0.3 | Max optimism blend fraction |
+
+The ramp is linear: weight `= MaxWeight · (StartHours − runway) / (StartHours − MaxAtHours)`, clamped. With the
+defaults that is `0` at ≥12 h runway → `1.0` at 6 h → `1.5` at 3 h → `2.0` at the floor. Because the full
+`2` is reached only at 0 h runway, the *effective* weight at the runways where buys are actually placed
+(≈2–6 h) is ~`1.0`–`1.5`.
 
 **Price arbitrage** — opportunistic buy-low/sell-high layered on top of the boundary solver
 

@@ -25,8 +25,8 @@
   UsageWindow3Days: 7
   UsageWindow3Weight: 0.3
   PessimismStartHours: 12
-  PessimismMaxAtHours: 3
-  PessimismMaxWeight: 1
+  PessimismMaxAtHours: 0
+  PessimismMaxWeight: 2
   OptimismStartHours: 20
   OptimismMaxAtHours: 24
   OptimismMaxWeight: 0.3
