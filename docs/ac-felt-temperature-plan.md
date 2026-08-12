@@ -7,9 +7,24 @@ temperature "is not low enough" — the AC is not heating enough.
 Investigation against live Home Assistant data, 2026-08-02 → 2026-08-12. App background:
 [`apps/ac-control.md`](apps/ac-control.md).
 
-> **Status: plan only, nothing implemented.** Revised after owner review — see
-> [Owner constraints](#owner-constraints), which withdraw the original "humidity taper" proposal and
-> re-frame the aggressiveness and SoC items around their intended purpose.
+> **Status (2026-08-12): Phases 0–3 implemented, Phase 4 not started.** Revised after owner review —
+> see [Owner constraints](#owner-constraints), which withdrew the original "humidity taper" proposal
+> and re-framed the aggressiveness and SoC items around their intended purpose.
+>
+> | Phase | State | Commit |
+> |---|---|---|
+> | 3a humidity coefficient 0.15 → 0.10 | done | `Calibrate the humidity term against PMV` |
+> | 2 neutral SoC band → 30–90 | done | `Widen the neutral SoC band down to 30%` |
+> | 1 coil-residual coast re-targeted | done | `Confine the coil-residual coast to the end of a cycle` |
+> | 0 rate-limited telemetry + veto logging | done | `Rate-limit the felt-temperature telemetry…` |
+> | 3b/3c draught term + clamp 3 → 5 | done | `Add a draught (wind) term and widen the offset clamp` |
+> | 3d retune `kEnv` | **deferred by design** — needs a fortnight of Phase 0 data first |
+> | 3e solar-gain term | not started |
+> | 4 overnight recovery | not started — only if a morning gap remains |
+>
+> Two things are **not** in the commits and need doing by hand: `appsettings.json` is untracked, so
+> the `"Waring"` log level must be changed to `"Information"` there (not `"Warning"`, which would
+> suppress the new summaries); and the add-on has to be deployed.
 
 ## TL;DR
 
