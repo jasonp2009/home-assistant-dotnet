@@ -106,22 +106,62 @@ by that modifier: `desiredIndex = profileIndex − modifier`. Below the first pr
 most aggressive (Boost Plus); past the last profile it returns `null`, which turns the zone **off**
 entirely (the battery is too low to justify running that room).
 
-## Driving setpoint & "aggressiveness"
+## Driving setpoint & the coil-residual coast
 
-`ShouldEnableZone` only decides *whether* a zone runs. *How hard* the unit drives is
-`SetTemperature` ([AcControl.cs:122](../../src/apps/HassModel/AC/AcControl.cs#L122)). It computes an
-**aggressiveness** term from how long the room temperature has been **failing to move in the desired
-direction**:
+`ShouldEnableZone` only decides *whether* a zone runs. *How hard* the unit drives is `SetTemperature`,
+which sets the unit's setpoint as an offset from its own return-air reading:
+`SetTemp = RoomTemp ± drive`. The maths is pure and unit-tested in
+[`DriveMath`](../../src/apps/HassModel/AC/DriveMath.cs).
 
-- Per zone, `_tempLastChangedDict` records the last time the room temperature moved the *right* way
-  (cooler while cooling, warmer while heating).
-- The longer a room has stalled (no helpful movement) since it last changed or since the zone came
-  on, the higher its aggressiveness. It is averaged across the active rooms, floored, and used to
-  push the unit's **actual setpoint** past its measured room temperature:
-  `SetTemp = RoomTemp ∓ aggressiveness`.
+The drive has two terms, per room:
 
-This is a time-since-progress feedback term, not a comfort term. Note it drives off the **unit's**
-single `RoomTemp` (its return-air reading), whereas zone enable/disable uses the **per-room** sensors.
+| Term | Meaning |
+|---|---|
+| **proportional** | `DriveErrorGain × error`, where `error` is how far the room's **felt** temperature still is from its `offPoint` — the point at which its zone would switch off |
+| **stall** | `minutes since the room last made progress ÷ 5 − 1`, floored at −1 — the original time-since-progress feedback |
+
+They are aggregated across active rooms with **`Max`**, not an average: the unit has one setpoint and
+the zones gate delivery, so a room that is already satisfied has its zone shut anyway and must not be
+able to dilute a room that is still cold.
+
+### Why a *negative* drive exists
+
+A negative drive commands a setpoint past the unit's own return-air temperature, which idles the
+compressor while the fan keeps running. That is deliberate — it blows the heat (or cold) still stored
+in the coil into the house rather than stranding it, and avoids paying to warm the coil only to shut
+down moments later.
+
+**But that only pays off at the end of a cycle.** Residual harvested mid-cycle, while the room is
+still well short of target, is simply re-heated minutes later. So the stall term's sign is gated on
+`DriveCoastWindow`:
+
+- **Within `DriveCoastWindow` (default 1 °C) of the off-point** — the cycle is ending, the stall term
+  applies in full and may pull the drive negative. The coast behaves exactly as it always did.
+- **Further out** — the stall term is clamped to a *bonus*: it can still add drive to a room that is
+  failing to respond, but it can no longer subtract. The unit is never told to stop while a room is
+  still well short of its target.
+
+### Progress must be sustained, not a single tick
+
+`_tempLastChangedDict` records when a room last made progress, and the stall clock resets from it. The
+room sensors quantise at **0.1 °C**, so resetting on any single favourable tick pinned the drive at −1
+right through the middle of heating cycles. Instead, `DriveMath.AccumulateProgress` accumulates *net*
+movement in the conditioned direction — the wrong way subtracts, and the total is floored at zero — and
+only resets the clock once it clears `DriveProgressThreshold` (default 0.3 °C). A room oscillating on
+sensor noise therefore never registers as responding.
+
+### Rounding
+
+`DriveMath` deliberately returns a **fractional** drive. `MitsubishiClient.SetTemperature` already
+integerises the final setpoint, and does so *in the conditioning direction* (`Ceiling` when heating,
+`Floor` when cooling). Rounding in the drive as well would round the wrong way first and discard up to
+a degree before the client ever saw it.
+
+> Note the drive works off the **unit's** single `RoomTemp` (its return-air reading), whereas zone
+> enable/disable and the drive's own `error` term use the **per-room** felt temperatures.
+
+`AcAggressivenessLogEntity` logs the **unrounded, uncapped** drive, so the fractional detail stays
+visible in history and it is obvious when `MaxDrive` binds.
 
 ## Occupancy gating
 

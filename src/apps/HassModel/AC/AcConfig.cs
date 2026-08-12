@@ -49,6 +49,30 @@ public class AcConfig
 
     /// <summary>Hours of weather history replayed on startup to seed the outdoor-temperature EMA.</summary>
     public int OutdoorTempBackfillHours { get; set; } = 48;
+
+    /// <summary>
+    /// How close (°C) a room must be to its off-point before the unit is allowed a <em>negative</em>
+    /// drive — i.e. before it may coast on the heat/cold still stored in the coil. Coasting only pays
+    /// off at the end of a cycle, where that residual would otherwise be stranded; further out it is
+    /// simply re-heated minutes later, so the drive is floored at zero instead. See <see cref="DriveMath"/>.
+    /// </summary>
+    public decimal DriveCoastWindow { get; set; } = 1M;
+
+    /// <summary>
+    /// Degrees of unit setpoint per degree a room is short of its off-point. 1.0 asks the unit to push
+    /// exactly as far past its return-air temperature as the coldest active room still has to travel.
+    /// </summary>
+    public decimal DriveErrorGain { get; set; } = 1M;
+
+    /// <summary>Cap (°C) on how far past its own return-air temperature the unit may be driven.</summary>
+    public decimal MaxDrive { get; set; } = 5M;
+
+    /// <summary>
+    /// Net movement (°C) in the conditioned direction a room must accumulate before it counts as having
+    /// responded and the stall clock resets. The room sensors quantise at 0.1 °C, so resetting on a
+    /// single tick pinned the drive at −1 through the middle of heating cycles.
+    /// </summary>
+    public decimal DriveProgressThreshold { get; set; } = 0.3M;
 }
 
 public class AcProfileConfig
