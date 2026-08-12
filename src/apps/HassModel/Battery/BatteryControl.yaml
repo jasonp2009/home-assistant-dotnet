@@ -25,6 +25,23 @@
   UsageWindow2Weight: 0.3
   UsageWindow3Days: 7
   UsageWindow3Weight: 0.3
+  UsageRecencyEnabled: true
+  UsageRecencyWindow1Hours: 1
+  UsageRecencyWindow1Weight: 0.35
+  UsageRecencyWindow2Hours: 3
+  UsageRecencyWindow2Weight: 0.25
+  UsageRecencyWindow3Hours: 6
+  UsageRecencyWindow3Weight: 0.2
+  UsageRecencyWindow4Hours: 12
+  UsageRecencyWindow4Weight: 0.12
+  UsageRecencyWindow5Hours: 24
+  UsageRecencyWindow5Weight: 0.08
+  UsageRecencyMinScale: 0.7
+  UsageRecencyMaxScale: 2
+  UsageRecencyDownwardGain: 0.5
+  UsageRecencyMinSamples: 6
+  UsageRecencyBaselineLagHours: 24
+  UsageRecencyBaselineDays: 7
   PessimismStartHours: 12
   PessimismMaxAtHours: 0
   PessimismMaxWeight: 2

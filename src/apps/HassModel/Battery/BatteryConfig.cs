@@ -51,6 +51,44 @@ public class BatteryConfig
         (UsageWindow3Days, UsageWindow3Weight)
     ];
 
+    // Recency scaling. The time-of-day estimate above only learns from PRIOR days, so a day running
+    // hotter than usual doesn't shift the rest-of-today projection until those samples become
+    // "yesterday" a day later. This multiplier closes that gap: it compares recent MEASURED
+    // consumption against the learned time-of-day norm over several trailing horizons (most-recent
+    // weighted heaviest — a gradient), and scales the whole estimate (and the runway usage) up when
+    // recent usage runs high. See UsageMath.ComputeRecencyScale and docs/apps/battery-control.md.
+    public bool UsageRecencyEnabled { get; set; }
+    // Trailing horizons (hours back) and their blend weights. Weights are renormalised over horizons
+    // that have enough sample coverage, so absolute values don't need to sum to 1. Defaults put the
+    // most weight on the last hour and taper out to 24 h.
+    public int UsageRecencyWindow1Hours { get; set; }
+    public decimal UsageRecencyWindow1Weight { get; set; }
+    public int UsageRecencyWindow2Hours { get; set; }
+    public decimal UsageRecencyWindow2Weight { get; set; }
+    public int UsageRecencyWindow3Hours { get; set; }
+    public decimal UsageRecencyWindow3Weight { get; set; }
+    public int UsageRecencyWindow4Hours { get; set; }
+    public decimal UsageRecencyWindow4Weight { get; set; }
+    public int UsageRecencyWindow5Hours { get; set; }
+    public decimal UsageRecencyWindow5Weight { get; set; }
+    public decimal UsageRecencyMinScale { get; set; }        // hard floor on the scale (below-normal cap)
+    public decimal UsageRecencyMaxScale { get; set; }        // hard ceiling on the scale (above-normal cap)
+    // Fraction of a BELOW-normal deviation that is applied (an above-normal deviation is always applied
+    // in full). <1 makes the estimate react faster to high usage than to low; 1 = symmetric; 0 = only up.
+    public decimal UsageRecencyDownwardGain { get; set; }
+    public int UsageRecencyMinSamples { get; set; }          // min covered samples for a horizon's ratio to count
+    public int UsageRecencyBaselineLagHours { get; set; }    // exclude the last N h from the "normal" baseline
+    public int UsageRecencyBaselineDays { get; set; }        // how far back the "normal" baseline looks
+
+    public IEnumerable<(int Hours, decimal Weight)> UsageRecencyWindows =>
+    [
+        (UsageRecencyWindow1Hours, UsageRecencyWindow1Weight),
+        (UsageRecencyWindow2Hours, UsageRecencyWindow2Weight),
+        (UsageRecencyWindow3Hours, UsageRecencyWindow3Weight),
+        (UsageRecencyWindow4Hours, UsageRecencyWindow4Weight),
+        (UsageRecencyWindow5Hours, UsageRecencyWindow5Weight)
+    ];
+
     // Risk weighting based on battery runway (hours-to-empty). Pessimism leans an estimated
     // price toward Amber's High bound (buy)/Low bound (sell); optimism leans the other way.
     // Thresholds are absolute hours, so higher usage shifts pessimism in at a higher state of charge.

@@ -255,4 +255,141 @@ public class UsageMathTests
 
         Assert.Equal(42m, estimate);
     }
+
+    // ---- ComputeRecencyScale -----------------------------------------------------------------
+
+    private static BatteryConfig RecencyCfg(
+        bool enabled = true, decimal minScale = 0.7m, decimal maxScale = 2m, decimal downwardGain = 0.5m,
+        int minSamples = 1, int baselineLagHours = 24, int baselineDays = 7,
+        (int Hours, decimal Weight)[]? windows = null)
+    {
+        var cfg = UsageCfg();
+        cfg.UsageRecencyEnabled = enabled;
+        cfg.UsageRecencyMinScale = minScale;
+        cfg.UsageRecencyMaxScale = maxScale;
+        cfg.UsageRecencyDownwardGain = downwardGain;
+        cfg.UsageRecencyMinSamples = minSamples;
+        cfg.UsageRecencyBaselineLagHours = baselineLagHours;
+        cfg.UsageRecencyBaselineDays = baselineDays;
+        windows ??= [(1, 0.35m), (3, 0.25m), (6, 0.2m), (12, 0.12m), (24, 0.08m)];
+        var w = new (int, decimal)[5];
+        for (var i = 0; i < 5; i++) w[i] = i < windows.Length ? windows[i] : (0, 0m);
+        (cfg.UsageRecencyWindow1Hours, cfg.UsageRecencyWindow1Weight) = w[0];
+        (cfg.UsageRecencyWindow2Hours, cfg.UsageRecencyWindow2Weight) = w[1];
+        (cfg.UsageRecencyWindow3Hours, cfg.UsageRecencyWindow3Weight) = w[2];
+        (cfg.UsageRecencyWindow4Hours, cfg.UsageRecencyWindow4Weight) = w[3];
+        (cfg.UsageRecencyWindow5Hours, cfg.UsageRecencyWindow5Weight) = w[4];
+        return cfg;
+    }
+
+    // Recency now = 12:00 UTC (reuses `Now`). Builds a set of 5-minute samples over the last `hours`
+    // hours (the "recent" actuals) plus one prior-day sample per matching time-of-day for each of the
+    // preceding `baselineDays` days (the "normal" baseline, older than the 24h lag). `recentKwh` and
+    // `baselineKwh` set the per-segment values so the ratio is recentKwh/baselineKwh.
+    private static List<UsageSample> RecencySamples(decimal recentKwh, decimal baselineKwh, int hours = 24, int baselineDays = 7)
+    {
+        var samples = new List<UsageSample>();
+        var segs = hours * 12; // 5-min segments in the trailing window
+        for (var i = 1; i <= segs; i++)
+        {
+            var t = Now.AddMinutes(-5 * i); // within [now - hours, now)
+            samples.Add(new UsageSample(t, recentKwh));
+            for (var d = 1; d <= baselineDays; d++)
+                samples.Add(new UsageSample(t.AddDays(-d), baselineKwh)); // same time-of-day, prior days
+        }
+        return samples;
+    }
+
+    [Fact]
+    public void ComputeRecencyScale_Disabled_ReturnsOne()
+    {
+        var samples = RecencySamples(recentKwh: 2m, baselineKwh: 1m);
+        Assert.Equal(1m, UsageMath.ComputeRecencyScale(samples, Now, RecencyCfg(enabled: false)));
+    }
+
+    [Fact]
+    public void ComputeRecencyScale_NormalUsage_ReturnsOne()
+    {
+        var samples = RecencySamples(recentKwh: 1m, baselineKwh: 1m);
+        Assert.Equal(1m, UsageMath.ComputeRecencyScale(samples, Now, RecencyCfg()), precision: 6);
+    }
+
+    [Fact]
+    public void ComputeRecencyScale_ElevatedRecentUsage_ScalesUpByRatio()
+    {
+        // Every horizon sees the same 1.5x ratio -> blend is 1.5 -> above-normal applied in full.
+        var samples = RecencySamples(recentKwh: 1.5m, baselineKwh: 1m);
+        Assert.Equal(1.5m, UsageMath.ComputeRecencyScale(samples, Now, RecencyCfg()), precision: 6);
+    }
+
+    [Fact]
+    public void ComputeRecencyScale_AboveMax_ClampedToMaxScale()
+    {
+        var samples = RecencySamples(recentKwh: 3m, baselineKwh: 1m); // ratio 3 -> clamp to 2
+        Assert.Equal(2m, UsageMath.ComputeRecencyScale(samples, Now, RecencyCfg(maxScale: 2m)));
+    }
+
+    [Fact]
+    public void ComputeRecencyScale_LowUsage_DampedByDownwardGain()
+    {
+        // ratio 0.5 -> deviation -0.5, damped by gain 0.5 -> -0.25 -> scale 0.75 (above the 0.7 floor).
+        var samples = RecencySamples(recentKwh: 0.5m, baselineKwh: 1m);
+        Assert.Equal(0.75m, UsageMath.ComputeRecencyScale(samples, Now, RecencyCfg(downwardGain: 0.5m)), precision: 6);
+    }
+
+    [Fact]
+    public void ComputeRecencyScale_LowUsage_ClampedToMinScale()
+    {
+        // ratio 0 -> deviation -1, damped -0.5 -> scale 0.5, clamped up to the 0.7 floor.
+        var samples = RecencySamples(recentKwh: 0m, baselineKwh: 1m);
+        Assert.Equal(0.7m, UsageMath.ComputeRecencyScale(samples, Now, RecencyCfg(minScale: 0.7m, downwardGain: 0.5m)));
+    }
+
+    [Fact]
+    public void ComputeRecencyScale_SymmetricGain_AppliesDownwardInFull()
+    {
+        // gain 1 -> ratio 0.5 gives scale 0.5 (would clamp at floor 0.4 here, so keep floor lower).
+        var samples = RecencySamples(recentKwh: 0.5m, baselineKwh: 1m);
+        Assert.Equal(0.5m, UsageMath.ComputeRecencyScale(samples, Now, RecencyCfg(minScale: 0.4m, downwardGain: 1m)), precision: 6);
+    }
+
+    [Fact]
+    public void ComputeRecencyScale_InsufficientCoverage_ReturnsOne()
+    {
+        // Plenty of hot recent samples, but MinSamples set above the coverage of every horizon.
+        var samples = RecencySamples(recentKwh: 2m, baselineKwh: 1m, hours: 1); // ~12 recent segments
+        Assert.Equal(1m, UsageMath.ComputeRecencyScale(samples, Now, RecencyCfg(minSamples: 1000)));
+    }
+
+    [Fact]
+    public void ComputeRecencyScale_NoBaseline_ReturnsOne()
+    {
+        // Recent samples only (no prior-day baseline) -> every recent sample is uncovered -> neutral.
+        var samples = RecencySamples(recentKwh: 2m, baselineKwh: 1m, baselineDays: 0);
+        Assert.Equal(1m, UsageMath.ComputeRecencyScale(samples, Now, RecencyCfg()));
+    }
+
+    [Fact]
+    public void ComputeRecencyScale_Gradient_WeightsRecentHoursMoreHeavily()
+    {
+        // Hot only in the last hour (2x), normal before it. A recent-heavy gradient must yield a
+        // higher scale than a far-heavy one, proving the horizon weighting biases toward recent hours.
+        var samples = new List<UsageSample>();
+        for (var i = 1; i <= 24 * 12; i++)
+        {
+            var t = Now.AddMinutes(-5 * i);
+            var recent = t >= Now.AddHours(-1) ? 2m : 1m; // last hour hot, rest normal
+            samples.Add(new UsageSample(t, recent));
+            for (var d = 1; d <= 7; d++)
+                samples.Add(new UsageSample(t.AddDays(-d), 1m));
+        }
+
+        var recentHeavy = UsageMath.ComputeRecencyScale(samples, Now, RecencyCfg(
+            windows: [(1, 1m), (3, 0m), (6, 0m), (12, 0m), (24, 0m)]));
+        var farHeavy = UsageMath.ComputeRecencyScale(samples, Now, RecencyCfg(
+            windows: [(1, 0m), (3, 0m), (6, 0m), (12, 0m), (24, 1m)]));
+
+        Assert.True(recentHeavy > farHeavy, $"recent-heavy {recentHeavy} should exceed far-heavy {farHeavy}");
+        Assert.Equal(2m, recentHeavy, precision: 6); // 1h horizon is entirely the 2x hour
+    }
 }

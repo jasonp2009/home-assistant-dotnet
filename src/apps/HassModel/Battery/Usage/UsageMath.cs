@@ -149,6 +149,88 @@ public static class UsageMath
         return weightedSum / weightUsed * config.EstimatedUsageMultiplier;
     }
 
+    /// <summary>
+    /// Recency scale: a multiplier on the forward usage estimate that reacts to recent MEASURED
+    /// consumption running above (or below) the learned time-of-day norm — so a day running hotter
+    /// than usual pulls the projection tighter WITHIN the day, instead of only a day later once those
+    /// samples age into the time-of-day windows.
+    ///
+    /// For each configured trailing horizon (e.g. 1/3/6/12/24 h) it forms a ratio of measured usage to
+    /// the time-of-day <see cref="BaselineMean">baseline</see> over the same clock-times, then blends
+    /// the ratios by the configured gradient weights (most-recent heaviest), renormalising over the
+    /// horizons that have enough coverage (<c>UsageRecencyMinSamples</c>). The blended ratio is turned
+    /// into a scale asymmetrically: an ABOVE-normal deviation is applied in full, a BELOW-normal one is
+    /// damped by <c>UsageRecencyDownwardGain</c> (so it reacts faster to high usage than low). The
+    /// result is clamped to [<c>UsageRecencyMinScale</c>, <c>UsageRecencyMaxScale</c>]. Returns 1
+    /// (neutral) when disabled, or when no horizon has enough measured/baseline data.
+    /// </summary>
+    public static decimal ComputeRecencyScale(
+        IReadOnlyCollection<UsageSample> samples,
+        DateTime nowUtc,
+        BatteryConfig config)
+    {
+        if (!config.UsageRecencyEnabled) return 1m;
+
+        // The "normal" excludes the last UsageRecencyBaselineLagHours so today's anomaly (which is
+        // exactly what we're measuring) can't raise its own reference and damp the signal.
+        var baselineCutoff = nowUtc - TimeSpan.FromHours(config.UsageRecencyBaselineLagHours);
+
+        decimal weightedSum = 0m, weightUsed = 0m;
+        foreach (var (hours, weight) in config.UsageRecencyWindows)
+        {
+            if (hours <= 0 || weight <= 0m) continue;
+            var horizonStart = nowUtc - TimeSpan.FromHours(hours);
+
+            decimal actual = 0m, baseline = 0m;
+            var covered = 0;
+            foreach (var s in samples)
+            {
+                if (s.SegmentStartUtc < horizonStart || s.SegmentStartUtc >= nowUtc) continue;
+                var normal = BaselineMean(samples, s.SegmentStartUtc, baselineCutoff, config);
+                if (normal is null or <= 0m) continue;
+                actual += s.ConsumptionKwh;
+                baseline += normal.Value;
+                covered++;
+            }
+            if (covered < config.UsageRecencyMinSamples || baseline <= 0m) continue;
+
+            weightedSum += actual / baseline * weight;
+            weightUsed += weight;
+        }
+        if (weightUsed <= 0m) return 1m;
+
+        var deviation = weightedSum / weightUsed - 1m;           // >0 hot, <0 cool, relative to normal
+        if (deviation < 0m) deviation *= config.UsageRecencyDownwardGain; // damp the below-normal side
+        var scale = 1m + deviation;
+        return Math.Clamp(scale, config.UsageRecencyMinScale, config.UsageRecencyMaxScale);
+    }
+
+    /// <summary>
+    /// The "normal" measured consumption for the time-of-day bucket of <paramref name="segmentStartUtc"/>:
+    /// the average of matching-time-of-day samples strictly older than <paramref name="baselineCutoffUtc"/>
+    /// (and no older than <c>UsageRecencyBaselineDays</c>). Null when no such sample exists. Excluding the
+    /// recent window keeps a hot spell from inflating its own baseline (see <see cref="ComputeRecencyScale"/>).
+    /// </summary>
+    private static decimal? BaselineMean(
+        IReadOnlyCollection<UsageSample> samples,
+        DateTime segmentStartUtc,
+        DateTime baselineCutoffUtc,
+        BatteryConfig config)
+    {
+        var key = LocalTimeOfDayKey(segmentStartUtc, config.SegmentSizeMins);
+        var floor = baselineCutoffUtc - TimeSpan.FromDays(config.UsageRecencyBaselineDays);
+        decimal sum = 0m;
+        var n = 0;
+        foreach (var s in samples)
+        {
+            if (s.SegmentStartUtc >= baselineCutoffUtc || s.SegmentStartUtc < floor) continue;
+            if (LocalTimeOfDayKey(s.SegmentStartUtc, config.SegmentSizeMins) != key) continue;
+            sum += s.ConsumptionKwh;
+            n++;
+        }
+        return n == 0 ? null : sum / n;
+    }
+
     /// <summary>The UTC start of the segment containing <paramref name="utc"/>, aligned to <paramref name="segment"/>.</summary>
     public static DateTime SegmentStart(DateTime utc, TimeSpan segment)
         => utc - TimeSpan.FromTicks(utc.Ticks % segment.Ticks);

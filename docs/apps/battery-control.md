@@ -128,10 +128,28 @@ The per-segment **drain** in `BuildSegments` is a learned, time-of-day consumpti
    `EstimatedUsageMultiplier` for the higher `DemandWindowUsageMultiplier` (1.5) — inflating the
    projected drain there so the plan reserves more charge and doesn't get forced into an expensive
    grid import mid-window if load spikes. Left unset (0) demand windows drain like any other segment.
+6. **Recency scaling** ([`UsageMath.ComputeRecencyScale`](../../src/apps/HassModel/Battery/Usage/UsageMath.cs)).
+   Because step 4 only learns from **prior** days, a day running hotter than usual doesn't shift the
+   *rest-of-today* projection until those samples age into the time-of-day windows a day later. The
+   recency scale closes that gap: a single multiplier applied on top of the time-of-day estimate that
+   reacts to how recent **measured** consumption compares to the learned norm. For each trailing
+   horizon (`1 / 3 / 6 / 12 / 24 h`) it forms a ratio of measured usage to the time-of-day
+   [baseline](../../src/apps/HassModel/Battery/Usage/UsageMath.cs) over the same clock-times — the
+   baseline deliberately **excludes the last `UsageRecencyBaselineLagHours`** so today's anomaly can't
+   inflate its own reference — then blends the ratios by a **gradient** of weights (most-recent
+   heaviest). The blended ratio becomes a scale **asymmetrically**: an above-normal deviation is applied
+   in full, a below-normal one is damped by `UsageRecencyDownwardGain` (so it reacts faster to high
+   usage than to low), clamped to `[UsageRecencyMinScale, UsageRecencyMaxScale]`. A horizon with too few
+   covered samples (`UsageRecencyMinSamples`) is dropped; with none, the scale is a neutral `1`.
 
-The **runway** risk weight (above) still uses the flat 3-day *average* hourly usage, not the
-time-of-day estimate: runway is an average-rate concept, and an instantaneous near-zero overnight rate
-would make hours-to-empty effectively infinite.
+The scale multiplies **both** the forward per-segment estimate (so a hot day pulls the projected
+`MinCapacity` crossing earlier → earlier/more floor-defense buys) **and** the runway hourly usage (so
+hours-to-empty shrinks and the risk-weight pessimism engages at a higher SoC). Set
+`UsageRecencyEnabled: false` to fall back to the exact prior behaviour.
+
+The **runway** risk weight (above) uses the flat 3-day *average* hourly usage (now × the recency
+scale), not the time-of-day estimate: runway is an average-rate concept, and an instantaneous near-zero
+overnight rate would make hours-to-empty effectively infinite.
 
 ## Key files
 
@@ -216,6 +234,20 @@ defaults that is `0` at ≥12 h runway → `1.0` at 6 h → `1.5` at 3 h → `2.
 | `UsageWindow1Days` / `UsageWindow1Weight` | 1 / 0.4 | Recent window (days back) and blend weight |
 | `UsageWindow2Days` / `UsageWindow2Weight` | 3 / 0.3 | Mid window |
 | `UsageWindow3Days` / `UsageWindow3Weight` | 7 / 0.3 | Long window |
+
+**Recency scaling** — react to a hotter/cooler-than-usual day within the day (see [Segmented usage estimate](#segmented-usage-estimate) step 5)
+
+| Key | Default | Meaning |
+|---|---|---|
+| `UsageRecencyEnabled` | true | Master switch; `false` = exact prior behaviour (scale fixed at 1) |
+| `UsageRecencyWindow{1..5}Hours` | 1 / 3 / 6 / 12 / 24 | Trailing horizons compared against the norm |
+| `UsageRecencyWindow{1..5}Weight` | 0.35 / 0.25 / 0.2 / 0.12 / 0.08 | Gradient blend weights — most-recent heaviest (renormalised over horizons with data) |
+| `UsageRecencyMinScale` | 0.7 | Hard floor on the scale (caps the below-normal reaction) |
+| `UsageRecencyMaxScale` | 2 | Hard ceiling on the scale (caps the above-normal reaction) |
+| `UsageRecencyDownwardGain` | 0.5 | Fraction of a **below**-normal deviation applied (above-normal is always full). `<1` reacts faster up than down; `1` symmetric; `0` up-only |
+| `UsageRecencyMinSamples` | 6 | Min covered samples for a horizon's ratio to count |
+| `UsageRecencyBaselineLagHours` | 24 | Exclude the last N h from the "normal" baseline (so today's anomaly doesn't dilute it) |
+| `UsageRecencyBaselineDays` | 7 | How far back the "normal" baseline looks |
 
 **Inverter modes** — strings matching the work-mode `select` options:
 `BatteryNoneMode` = `Self-consumption mode`, `BatteryChargeMode` = `Reserve power mode`,
