@@ -262,9 +262,52 @@ air and the outdoor air, so the colder it is outside the more those surfaces dra
 `kEnv` (config `EnvCoefficient`) rolls each room's exposure (window area / insulation) into one
 number. It is global by default (`AcConfig.EnvCoefficient`, 0.1) with an optional per-room override
 (`AcRoomConfig.EnvCoefficient`) — the internal **Hallway** is set to `0` (no external surfaces, no
-correction). The total offset is clamped to ±`MaxComfortOffset` (default 3 °C) so a glitched outdoor
+correction). The total offset is clamped to ±`MaxComfortOffset` (default 5 °C) so a glitched outdoor
 reading can't drive the unit to extremes. Start from the default and tune; the outdoor temperature
 moves slowly, so the offset drifts gently and does not cause mode/zone thrash.
+
+> `MaxComfortOffset` is a **sanity guard, not a tuning knob**. If it binds in ordinary weather it is
+> silently flattening the correction, which hands back exactly the weather dependence the felt
+> temperature exists to remove. A test asserts it stays clear in the harshest plausible local winter
+> (0 °C outdoors, 21 °C indoors, 50 km/h wind).
+
+#### How far can `kEnv` go?
+
+Holding the felt temperature constant requires `air = set + kEnv/(1−kEnv)·(set − outdoor)`:
+
+| `kEnv` | extra air °C per °C outdoor deficit | required air at set 23 °C, outdoor 8 °C |
+|---|---|---|
+| 0.10 | +0.11 | 24.7 °C |
+| 0.15 | +0.18 | 25.6 °C |
+| 0.20 | +0.25 | 26.8 °C |
+
+Beyond ~0.15 the model demands implausible air temperatures on cold days. For reference, an
+order-of-magnitude operative-temperature calculation (`T_op = (T_air + MRT)/2`, single-glazed windows
+over ~6% of enclosure area) puts the *pure radiant* value near **0.03**, so the configured 0.1 is
+already generous — if the house still feels cold on cold days, suspect delivery before this
+coefficient.
+
+### Draught (wind) offset
+
+Wind drives cold outside air through the envelope and raises air movement indoors, both of which carry
+heat away from skin — which is why a cold *windy* day feels markedly worse than a cold still day at
+the same temperature. Local wind ranges roughly 8–46 km/h, and none of it reached the felt temperature
+before this term existed.
+
+`WindOffset = −WindCoefficient · max(0, windKmh − CalmWindKmh)`
+
+- Zero at or below `CalmWindKmh` (10 km/h) — ordinary background air movement is already priced into
+  how a room normally feels.
+- **One-sided**: it applies only while it is *colder outside than in*. Air forced in from a warmer
+  outdoors is not a cold draught, and in cooling season a breeze is more likely to be welcome, so wind
+  never makes a room feel cooler than the rest of the model already thinks it is.
+- `WindCoefficient` defaults to **0.03** °C per km/h → −0.6 °C at 30 km/h.
+
+The wind speed is EMA-smoothed like the outdoor temperature but with a much shorter constant,
+`WindTimeConstantHours` (3 h against 15 h). Draught is felt as the weather does it, not filtered
+through the building's thermal mass; it is smoothed at all only because wind is gusty and the weather
+entity updates irregularly (median 2.9 h between samples, max 14.25 h). It is seeded on startup from
+`wind_speed` history the same way.
 
 > This is distinct from the profile's `WeatherOffset`, which stays an independent on/off **economy
 > gate** on the outdoor temperature; the envelope offset is a continuous **comfort** correction on

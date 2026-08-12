@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -33,6 +33,8 @@ public class AcControl : IAsyncInitializable
     private int _curSocModifier = 0;
     private decimal? _outdoorTempEma;
     private DateTime _outdoorTempEmaUpdatedUtc;
+    private decimal? _windEma;
+    private DateTime _windEmaUpdatedUtc;
 
     public AcControl(IHaContext ha, INetDaemonScheduler scheduler, IAppConfig<AcConfig> config,
         ILogger<AcControl> logger, IMitsubishiClient mitsubishiClient, HaHistoryClient historyClient)
@@ -104,14 +106,14 @@ public class AcControl : IAsyncInitializable
 
         _forecastHome.StateChanges().SubscribeAsync(_ =>
         {
-            UpdateOutdoorTempEma();
+            UpdateWeatherEmas();
             return HandleChange();
         }, _logger);
         _config.Value.SolarBatteryStateOfChargeEntity.StateChanges().SubscribeAsync(_ => HandleSocChange(), _logger);
 
         scheduler.RunEvery(TimeSpan.FromSeconds(60), () =>
         {
-            UpdateOutdoorTempEma();
+            UpdateWeatherEmas();
             var currentMeasuredTemp = _mitsubishiClient.State?.RoomTemp;
             _mitsubishiClient.UpdateState().Wait();
             if (currentMeasuredTemp != _mitsubishiClient.State?.RoomTemp) HandleChange().Wait();
@@ -128,6 +130,13 @@ public class AcControl : IAsyncInitializable
     // WeatherOffset economy gate keeps using the instantaneous CurrentWeatherTemperature.
     private decimal SmoothedWeatherTemperature => _outdoorTempEma ?? CurrentWeatherTemperature;
 
+    private decimal? CurrentWindSpeedOrNull =>
+        _forecastHome.Attributes?.WindSpeed is { } w ? Convert.ToDecimal(w) : null;
+
+    // Wind smoothed over a much shorter constant than the temperature: a draught is felt as the weather
+    // does it, not filtered through the building's thermal mass. Null until a reading has been seen.
+    private decimal? SmoothedWindSpeed => _windEma ?? CurrentWindSpeedOrNull;
+
     public async Task InitializeAsync(CancellationToken cancellationToken)
     {
         _logger.LogDebug("Attempting to login to mitsubishi client");
@@ -135,11 +144,13 @@ public class AcControl : IAsyncInitializable
         _logger.LogDebug("Successfully logged in to mitsubishi client");
 
         _logger.LogInformation(
-            "Felt-temperature control: EnvCoefficient {Env}, MaxComfortOffset {Max}°C, humidity coef {HumCoef} @ ref {RefRh}%, outdoor EMA τ {Tau}h (backfill {Backfill}h)",
+            "Felt-temperature control: EnvCoefficient {Env}, MaxComfortOffset {Max}°C, humidity coef {HumCoef} @ ref {RefRh}%, wind coef {WindCoef}/km/h above {Calm} km/h, outdoor EMA τ {Tau}h / wind EMA τ {WindTau}h (backfill {Backfill}h)",
             _config.Value.EnvCoefficient, _config.Value.MaxComfortOffset, _config.Value.HumidityCoefficient,
-            _config.Value.ReferenceHumidity, _config.Value.OutdoorTempTimeConstantHours, _config.Value.OutdoorTempBackfillHours);
+            _config.Value.ReferenceHumidity, _config.Value.WindCoefficient, _config.Value.CalmWindKmh,
+            _config.Value.OutdoorTempTimeConstantHours, _config.Value.WindTimeConstantHours,
+            _config.Value.OutdoorTempBackfillHours);
 
-        await SeedOutdoorTempEmaAsync();
+        await SeedWeatherEmasAsync();
         await HandleSocChange(cancellationToken);
         await HandleChange(cancellationToken);
     }
@@ -149,33 +160,55 @@ public class AcControl : IAsyncInitializable
     /// smoothed value rather than the instantaneous reading after a restart. Falls back to the current
     /// reading when no history is available; either way it then advances to "now".
     /// </summary>
-    private async Task SeedOutdoorTempEmaAsync()
+    private async Task SeedWeatherEmasAsync()
     {
         var startUtc = DateTime.UtcNow.AddHours(-_config.Value.OutdoorTempBackfillHours);
-        var history = await _historyClient.GetAttributeHistoryAsync(_forecastHome.EntityId, "temperature", startUtc);
-        var seed = history is not null ? ComfortMath.SeedEma(history, _config.Value.OutdoorTempTimeConstantHours) : null;
-        if (seed is { } s)
+
+        var tempHistory = await _historyClient.GetAttributeHistoryAsync(_forecastHome.EntityId, "temperature", startUtc);
+        if (tempHistory is not null &&
+            ComfortMath.SeedEma(tempHistory, _config.Value.OutdoorTempTimeConstantHours) is { } tempSeed)
         {
-            _outdoorTempEma = s.Ema;
-            _outdoorTempEmaUpdatedUtc = s.AsOfUtc;
+            _outdoorTempEma = tempSeed.Ema;
+            _outdoorTempEmaUpdatedUtc = tempSeed.AsOfUtc;
         }
 
-        UpdateOutdoorTempEma(); // advance the seed to the current reading/time (or seed it when there was no history)
+        var windHistory = await _historyClient.GetAttributeHistoryAsync(_forecastHome.EntityId, "wind_speed", startUtc);
+        if (windHistory is not null &&
+            ComfortMath.SeedEma(windHistory, _config.Value.WindTimeConstantHours) is { } windSeed)
+        {
+            _windEma = windSeed.Ema;
+            _windEmaUpdatedUtc = windSeed.AsOfUtc;
+        }
+
+        UpdateWeatherEmas(); // advance the seeds to the current readings/time (or seed them when there was no history)
 
         _logger.LogInformation(
-            "Outdoor temp EMA seeded from {Count} weather history sample(s) over {Hours}h: smoothed {Smoothed:0.0}°C vs instantaneous {Raw:0.0}°C",
-            history?.Count ?? 0, _config.Value.OutdoorTempBackfillHours, SmoothedWeatherTemperature, CurrentWeatherTemperature);
+            "Weather EMAs seeded from {TempCount} temperature and {WindCount} wind sample(s) over {Hours}h: outdoor {Smoothed:0.0}°C (raw {Raw:0.0}°C), wind {Wind:0.0} km/h (raw {RawWind:0.0})",
+            tempHistory?.Count ?? 0, windHistory?.Count ?? 0, _config.Value.OutdoorTempBackfillHours,
+            SmoothedWeatherTemperature, CurrentWeatherTemperature, SmoothedWindSpeed, CurrentWindSpeedOrNull);
     }
 
-    /// <summary>Folds the current outdoor reading into the EMA (or initialises it on the first call).</summary>
-    private void UpdateOutdoorTempEma()
+    /// <summary>Folds the current weather readings into their EMAs (or initialises them on the first call).</summary>
+    private void UpdateWeatherEmas()
     {
-        if (CurrentWeatherTemperatureOrNull is not { } reading) return;
         var nowUtc = DateTime.UtcNow;
-        _outdoorTempEma = _outdoorTempEma is { } prev
-            ? ComfortMath.EmaStep(prev, _outdoorTempEmaUpdatedUtc, reading, nowUtc, _config.Value.OutdoorTempTimeConstantHours)
-            : reading;
-        _outdoorTempEmaUpdatedUtc = nowUtc;
+
+        if (CurrentWeatherTemperatureOrNull is { } temperature)
+        {
+            _outdoorTempEma = _outdoorTempEma is { } previousTemp
+                ? ComfortMath.EmaStep(previousTemp, _outdoorTempEmaUpdatedUtc, temperature, nowUtc,
+                    _config.Value.OutdoorTempTimeConstantHours)
+                : temperature;
+            _outdoorTempEmaUpdatedUtc = nowUtc;
+        }
+
+        if (CurrentWindSpeedOrNull is { } wind)
+        {
+            _windEma = _windEma is { } previousWind
+                ? ComfortMath.EmaStep(previousWind, _windEmaUpdatedUtc, wind, nowUtc, _config.Value.WindTimeConstantHours)
+                : wind;
+            _windEmaUpdatedUtc = nowUtc;
+        }
     }
 
     private async Task HandleChange(CancellationToken cancellationToken = default)
@@ -303,6 +336,7 @@ public class AcControl : IAsyncInitializable
         decimal FeltTemp,
         decimal EnvOffset,
         decimal HumidityOffset,
+        decimal WindOffset,
         decimal KEnv,
         decimal ForcePoint,
         decimal OnPoint,
@@ -330,13 +364,19 @@ public class AcControl : IAsyncInitializable
             _config.Value.MaxComfortOffset,
             room.CurrentHumidity,
             _config.Value.ReferenceHumidity,
-            _config.Value.HumidityCoefficient);
+            _config.Value.HumidityCoefficient,
+            SmoothedWindSpeed,
+            _config.Value.WindCoefficient,
+            _config.Value.CalmWindKmh);
 
         return new ComfortPoints(
             feltTemp,
             ComfortMath.EnvelopeOffset(airTemp, SmoothedWeatherTemperature, kEnv),
             room.CurrentHumidity is { } rh
                 ? ComfortMath.HumidityOffset(airTemp, rh, _config.Value.ReferenceHumidity, _config.Value.HumidityCoefficient)
+                : 0M,
+            SmoothedWindSpeed is { } wind
+                ? ComfortMath.WindOffset(airTemp, SmoothedWeatherTemperature, wind, _config.Value.WindCoefficient, _config.Value.CalmWindKmh)
                 : 0M,
             kEnv,
             room.SetTemperature.Value + (isCooling ? profile.ForceTolerance : -profile.ForceTolerance),
@@ -406,11 +446,12 @@ public class AcControl : IAsyncInitializable
     {
         if (_logger.IsEnabled(LogLevel.Debug) && points is { } debugPoints)
             _logger.LogDebug(
-                "Felt temp {Room} ({Mode}): air {Air:0.0}°C + envelope {Env:+0.0;-0.0} (outdoor {Outdoor:0.0}°C smoothed, raw {Raw:0.0}°C, kEnv {KEnv}) + humidity {Hum:+0.0;-0.0} (RH {Rh:0}%) = felt {Felt:0.0}°C; set {Set:0.0}°C, force/on/off {Force:0.0}/{On:0.0}/{Off:0.0}, weatherGate {Gate:0.0}°C, acOn {AcOn}",
+                "Felt temp {Room} ({Mode}): air {Air:0.0}°C + envelope {Env:+0.0;-0.0} (outdoor {Outdoor:0.0}°C smoothed, raw {Raw:0.0}°C, kEnv {KEnv}) + humidity {Hum:+0.0;-0.0} (RH {Rh:0}%) + draught {Wind:+0.0;-0.0} ({WindKmh:0.0} km/h smoothed) = felt {Felt:0.0}°C; set {Set:0.0}°C, force/on/off {Force:0.0}/{On:0.0}/{Off:0.0}, weatherGate {Gate:0.0}°C, acOn {AcOn}",
                 room.Name, mode, room.CurrentTemperate!.Value, debugPoints.EnvOffset, SmoothedWeatherTemperature,
                 CurrentWeatherTemperature, debugPoints.KEnv, debugPoints.HumidityOffset, room.CurrentHumidity,
-                debugPoints.FeltTemp, room.SetTemperature, debugPoints.ForcePoint, debugPoints.OnPoint,
-                debugPoints.OffPoint, debugPoints.WeatherOffPoint, _mitsubishiClient.State.Power);
+                debugPoints.WindOffset, SmoothedWindSpeed, debugPoints.FeltTemp, room.SetTemperature,
+                debugPoints.ForcePoint, debugPoints.OnPoint, debugPoints.OffPoint, debugPoints.WeatherOffPoint,
+                _mitsubishiClient.State.Power);
 
         var previous = _lastRoomLogDict.GetValueOrDefault(room.ZoneId);
         var decisionChanged = previous.LoggedAt == default || previous.Enable != enable || previous.Veto != veto;
@@ -426,10 +467,10 @@ public class AcControl : IAsyncInitializable
         }
 
         _logger.LogInformation(
-            "Felt {Now:yyyy-MM-dd HH:mm} {Room} ({Mode}): air {Air:0.0} + env {Env:+0.0;-0.0} + hum {Hum:+0.0;-0.0} (RH {Rh:0}%) = felt {Felt:0.0}°C | set {Set:0.0}, force/on/off {Force:0.0}/{On:0.0}/{Off:0.0} | outdoor {Outdoor:0.0} smoothed ({Raw:0.0} raw) | zone {Zone}",
+            "Felt {Now:yyyy-MM-dd HH:mm} {Room} ({Mode}): air {Air:0.0} + env {Env:+0.0;-0.0} + hum {Hum:+0.0;-0.0} (RH {Rh:0}%) + draught {Wind:+0.0;-0.0} = felt {Felt:0.0}°C | set {Set:0.0}, force/on/off {Force:0.0}/{On:0.0}/{Off:0.0} | outdoor {Outdoor:0.0} smoothed ({Raw:0.0} raw), wind {WindKmh:0.0} km/h | zone {Zone}",
             DateTime.Now, room.Name, mode, room.CurrentTemperate!.Value, p.EnvOffset, p.HumidityOffset,
-            room.CurrentHumidity, p.FeltTemp, room.SetTemperature, p.ForcePoint, p.OnPoint, p.OffPoint,
-            SmoothedWeatherTemperature, CurrentWeatherTemperature, enable ? "ON" : "off");
+            room.CurrentHumidity, p.WindOffset, p.FeltTemp, room.SetTemperature, p.ForcePoint, p.OnPoint, p.OffPoint,
+            SmoothedWeatherTemperature, CurrentWeatherTemperature, SmoothedWindSpeed, enable ? "ON" : "off");
     }
 
     private AcProfileConfig? GetEffectiveProfile(string? setProfileName)

@@ -24,8 +24,30 @@ public class AcConfig
     /// </summary>
     public decimal EnvCoefficient { get; set; } = 0.1M;
 
-    /// <summary>Clamp (°C) on the total felt-temperature offset, so a bad outdoor reading can't drive the unit to extremes.</summary>
-    public decimal MaxComfortOffset { get; set; } = 3M;
+    /// <summary>
+    /// Clamp (°C) on the total felt-temperature offset, so a bad outdoor reading can't drive the unit
+    /// to extremes. This is a sanity guard, not a tuning knob — if it binds in ordinary weather it is
+    /// silently flattening the correction, which re-introduces exactly the weather dependence the felt
+    /// temperature exists to remove. Sized to stay clear of the envelope and draught terms combined.
+    /// </summary>
+    public decimal MaxComfortOffset { get; set; } = 5M;
+
+    /// <summary>
+    /// Draught coefficient: °C of felt temperature lost per km/h of wind above <see cref="CalmWindKmh"/>,
+    /// while it is colder outside than in. At 0.03 a 30 km/h wind is worth −0.6 °C.
+    /// </summary>
+    public decimal WindCoefficient { get; set; } = 0.03M;
+
+    /// <summary>Wind speed (km/h) below which there is no draught penalty — ordinary background air movement.</summary>
+    public decimal CalmWindKmh { get; set; } = 10M;
+
+    /// <summary>
+    /// Time constant (hours) of the wind-speed EMA. Much shorter than the outdoor-temperature constant:
+    /// draught is felt as the weather does it, not filtered through the building's thermal mass. It is
+    /// smoothed at all only because wind is gusty and the weather entity updates irregularly (median
+    /// 2.9 h between samples). 0 disables smoothing.
+    /// </summary>
+    public decimal WindTimeConstantHours { get; set; } = 3M;
 
     /// <summary>Reference relative humidity (%) at which the humidity term contributes nothing; only humidity above/below this shifts the felt temperature.</summary>
     public decimal ReferenceHumidity { get; set; } = 50M;
