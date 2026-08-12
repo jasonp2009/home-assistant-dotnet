@@ -33,9 +33,12 @@ public class AcConfig
     /// <summary>
     /// Coefficient on the Steadman vapour-pressure (humidity) term of the felt-temperature estimate.
     /// Deliberately below the textbook Steadman value of 0.33 — the full coefficient is calibrated for
-    /// outdoor apparent temperature and over-weights humidity at indoor room temperatures.
+    /// outdoor apparent temperature and over-weights humidity at indoor room temperatures. Calibrated
+    /// against Fanger PMV (ISO 7730, sedentary, still air): the vapour-pressure form already grows with
+    /// temperature at very nearly PMV's rate, so only the overall scale needs fixing. At 0.10 the term
+    /// is worth ≈0.26 °C per 10 % RH at 22 °C, matching PMV; the previous 0.15 was ≈1.5× too strong.
     /// </summary>
-    public decimal HumidityCoefficient { get; set; } = 0.15M;
+    public decimal HumidityCoefficient { get; set; } = 0.10M;
 
     /// <summary>
     /// Time constant (hours) of the outdoor-temperature EMA that feeds the radiant envelope offset.

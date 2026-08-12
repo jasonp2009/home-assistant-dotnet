@@ -97,6 +97,50 @@ public class ComfortMathTests
         Assert.InRange(offset, 2.4m, 3.2m);
     }
 
+    // ---- HumidityOffset: calibration against Fanger PMV ---------------------------------------
+    //
+    // The configured HumidityCoefficient (0.10) is calibrated so the vapour-pressure term reproduces
+    // the humidity sensitivity of Fanger PMV (ISO 7730, sedentary met 1.1, still air, t_r = t_a),
+    // expressed as the equivalent air-temperature shift per +10 % RH. These tests pin that calibration
+    // so it cannot drift silently; PMV reference values are 0.26 °C at 22 °C and 0.40 °C at 30 °C.
+
+    private const decimal CalibratedHumidityCoefficient = 0.10m;
+
+    private static decimal ShiftPer10PctRh(decimal tempC) =>
+        ComfortMath.HumidityOffset(tempC, 55m, 50m, CalibratedHumidityCoefficient)
+        - ComfortMath.HumidityOffset(tempC, 45m, 50m, CalibratedHumidityCoefficient);
+
+    [Fact]
+    public void HumidityOffset_AtRoomTemperature_MatchesPmvSensitivity()
+    {
+        // PMV says +10 % RH at 22 C is worth ~0.26 C of air temperature.
+        Assert.InRange(ShiftPer10PctRh(22m), 0.23m, 0.29m);
+    }
+
+    [Fact]
+    public void HumidityOffset_AtSummerTemperature_MatchesPmvSensitivity()
+    {
+        // PMV says +10 % RH at 30 C is worth ~0.40 C — humidity matters more when it is hot.
+        Assert.InRange(ShiftPer10PctRh(30m), 0.37m, 0.45m);
+    }
+
+    [Fact]
+    public void HumidityOffset_StillMattersAtWinterTemperatures()
+    {
+        // Deliberately NOT tapered to zero in winter: at 20 C a 10 % RH change is still worth ~0.24 C,
+        // so the controller must keep compensating for it. Keeping the term is what makes comfort
+        // humidity-invariant; removing it would let humidity swings pass through to how the room feels.
+        Assert.InRange(ShiftPer10PctRh(20m), 0.20m, 0.26m);
+    }
+
+    [Fact]
+    public void HumidityOffset_SensitivityGrowsWithTemperature()
+    {
+        // The Magnus form's temperature dependence is what matches PMV; it must stay monotonic.
+        Assert.True(ShiftPer10PctRh(16m) < ShiftPer10PctRh(22m));
+        Assert.True(ShiftPer10PctRh(22m) < ShiftPer10PctRh(30m));
+    }
+
     // ---- FeltTemperature with humidity -------------------------------------------------------
 
     [Fact]

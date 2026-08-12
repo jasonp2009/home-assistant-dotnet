@@ -236,9 +236,32 @@ temperature also includes the Steadman apparent-temperature vapour-pressure term
 where `e` is the water-vapour pressure (`ComfortMath.VapourPressure`, Magnus approximation) and
 `refRh` is `ReferenceHumidity` (default 50%). Anchoring to a reference humidity means a typical indoor
 humidity contributes ≈0, so only unusual humidity moves the felt temperature — positive (feels
-hotter) when muggy, slightly negative when very dry. The effect is small at mild winter conditions
-and grows on a hot, humid summer afternoon (e.g. ~+1.3 °C at 30 °C / 70% RH), where it makes cooling
-a little more aggressive. `HumidityCoefficient` defaults to **0.15** — deliberately below the textbook
-Steadman value of 0.33, which is calibrated for outdoor apparent temperature and over-weights
-humidity at indoor room temperatures (≈0.4 °C per 10% RH at 22 °C, vs ≈0.9 °C at 0.33). Rooms
-without a humidity sensor simply omit this term.
+hotter) when muggy, slightly negative when very dry. Rooms without a humidity sensor omit this term.
+
+#### Calibrating `HumidityCoefficient`
+
+`HumidityCoefficient` defaults to **0.10**, calibrated against **Fanger PMV** (ISO 7730, sedentary
+met 1.1, still air, `t_r = t_a`) expressed as the equivalent air-temperature shift per **+10% RH**:
+
+| air °C | PMV (clo 1.0) | this model @ 0.10 |
+|---|---|---|
+| 16 | 0.18 | 0.18 |
+| 22 | 0.26 | 0.26 |
+| 26 | 0.33 | 0.33 |
+| 30 | 0.40 | 0.42 |
+
+Two things fall out of that table, and both matter:
+
+- **The Magnus vapour-pressure form is the right shape.** Its sensitivity grows with temperature at
+  almost exactly PMV's rate (≈2.6× from 16→32 °C, against PMV's ≈2.4× at fixed clothing), so no
+  temperature-dependent weighting is needed — the physics is already in the exponential.
+- **Humidity is *not* negligible indoors in winter.** At 20 °C a 10% RH change is still worth ≈0.24 °C.
+  The term must therefore stay active year-round. Note the direction of the goal: *keeping* humidity in
+  the felt temperature is what makes comfort humidity-invariant, because the controller then
+  compensates for it (slightly warmer air when dry, slightly cooler when muggy). Removing or tapering
+  the term would let humidity swings pass straight through to how the room feels.
+
+The textbook Steadman coefficient of **0.33** is an *outdoor* apparent-temperature figure and
+over-weights humidity at room temperature by roughly 3×. The previous value of **0.15** was ≈1.5× too
+strong (0.40 °C per 10% RH at 22 °C, against PMV's 0.26). The calibration is pinned by tests in
+[`ComfortMathTests`](../../test/apps/HassModel/AC/ComfortMathTests.cs) so it cannot drift silently.

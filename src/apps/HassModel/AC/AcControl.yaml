@@ -3,7 +3,7 @@
   EnvCoefficient: 0.1
   MaxComfortOffset: 3
   ReferenceHumidity: 50
-  HumidityCoefficient: 0.15  # below the Steadman 0.33: that value over-weights humidity at room temperature
+  HumidityCoefficient: 0.10  # calibrated to Fanger PMV: ~0.26 C per 10% RH at 22 C (Steadman's 0.33 is an outdoor figure)
   OutdoorTempTimeConstantHours: 15
   OutdoorTempBackfillHours: 48
   Profiles:
