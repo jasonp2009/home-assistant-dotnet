@@ -114,4 +114,44 @@ public class BatteryPlannerTests
         Assert.Equal(29.5m, segs[1].EstimatedBatteryChargeKwh); // drained by Usage(Base) = 0.5
         Assert.Equal(28.5m, segs[2].EstimatedBatteryChargeKwh); // drained by Usage(Base+5min) = 1.0
     }
+
+    [Fact]
+    public void BuildSegments_ScalesUsageForDemandWindowSegments()
+    {
+        var cfg = Cfg();
+        cfg.EstimatedUsageMultiplier = 1m;
+        cfg.DemandWindowUsageMultiplier = 1.5m;
+        // Segment 1 is a demand window; segments 0 and 2 are not. Flat 0.5 kWh estimate everywhere.
+        var prices = new List<BaseInterval>
+        {
+            GeneralInterval(0, 20m), GeneralInterval(1, 20m, demand: true), GeneralInterval(2, 20m)
+        };
+
+        var segs = BatteryPlanner.BuildSegments(Base, currentChargeKwh: 30m, averageSegmentUsage: 0.5m, solarForecast: null, prices, cfg);
+
+        Assert.False(segs[0].IsDemandWindow);
+        Assert.True(segs[1].IsDemandWindow);
+        Assert.Equal(0.5m, segs[0].UsageKwh);   // normal segment: unchanged
+        Assert.Equal(0.75m, segs[1].UsageKwh);  // demand window: 0.5 * 1.5
+        // Charge trajectory reflects the inflated demand-window drain.
+        Assert.Equal(30m, segs[0].EstimatedBatteryChargeKwh);
+        Assert.Equal(29.5m, segs[1].EstimatedBatteryChargeKwh);   // -0.5 (seg 0, normal)
+        Assert.Equal(28.75m, segs[2].EstimatedBatteryChargeKwh);  // -0.75 (seg 1, demand window)
+    }
+
+    [Fact]
+    public void BuildSegments_UnsetDemandWindowMultiplier_LeavesUsageUnchanged()
+    {
+        var cfg = Cfg(); // DemandWindowUsageMultiplier defaults to 0 (feature off)
+        var prices = new List<BaseInterval>
+        {
+            GeneralInterval(0, 20m), GeneralInterval(1, 20m, demand: true), GeneralInterval(2, 20m)
+        };
+
+        var segs = BatteryPlanner.BuildSegments(Base, currentChargeKwh: 30m, averageSegmentUsage: 0.5m, solarForecast: null, prices, cfg);
+
+        Assert.True(segs[1].IsDemandWindow);
+        Assert.Equal(0.5m, segs[1].UsageKwh); // no scaling when the multiplier is unset
+        Assert.Equal(29m, segs[2].EstimatedBatteryChargeKwh); // -0.5 each, no demand inflation
+    }
 }
