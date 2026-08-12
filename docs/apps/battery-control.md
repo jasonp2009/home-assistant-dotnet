@@ -124,6 +124,10 @@ The per-segment **drain** in `BuildSegments` is a learned, time-of-day consumpti
    1 / 3 / 7 days, blended `0.4 / 0.3 / 0.3` (renormalised over windows that have data), times
    `EstimatedUsageMultiplier`. Any time-of-day bucket with no data falls back to the flat 3-day
    average, so the estimate is never 0.
+5. **Demand-window uplift.** For segments Amber flags as a demand window, `BuildSegments` swaps
+   `EstimatedUsageMultiplier` for the higher `DemandWindowUsageMultiplier` (1.5) — inflating the
+   projected drain there so the plan reserves more charge and doesn't get forced into an expensive
+   grid import mid-window if load spikes. Left unset (0) demand windows drain like any other segment.
 
 The **runway** risk weight (above) still uses the flat 3-day *average* hourly usage, not the
 time-of-day estimate: runway is an average-rate concept, and an instantaneous near-zero overnight rate
@@ -152,7 +156,10 @@ would make hours-to-empty effectively infinite.
 - **Inverter:** it exports surplus to the grid at 100% SoC (it does **not** curtail), so relieving an
   over-charge by discharging at the best available feed-in is the correct, loss-minimising action.
 - **No charging during demand windows** is intentional (the home draws from the grid; demand windows carry
-  excess usage charges). Selling in a demand window is allowed; only buying is disallowed.
+  excess usage charges). Selling in a demand window is allowed; only buying is disallowed. Because buying is
+  disallowed there, the plan instead **reserves more charge going into** a demand window via
+  `DemandWindowUsageMultiplier` (the projected drain across those segments is inflated), reducing the chance
+  of being forced to import mid-window.
 - **Price arbitrage** (buy import low / export high *without* a capacity-boundary trigger) runs after the
   boundary solver — see step 3 of the [decision flow](#decision-flow) and the **Price arbitrage** config
   table below. The original design notes are in [`../battery-arbitrage-plan.md`](../battery-arbitrage-plan.md).
@@ -170,6 +177,7 @@ would make hours-to-empty effectively infinite.
 | `SegmentSizeMins` | 5 | Decision interval / price resolution |
 | `MinForecastHours` | 72 | Minimum planning horizon |
 | `EstimatedUsageMultiplier` | 1.1 | Safety margin on the measured usage estimate |
+| `DemandWindowUsageMultiplier` | 1.5 | Usage multiplier used **instead of** `EstimatedUsageMultiplier` for demand-window segments, so more charge is reserved through the window; 0 disables it |
 | `MaxPriceLockInWaitSecs` / `MaxPriceLockInRetryDelaySecs` | 30 / 2 | How long to wait for the current price to lock in |
 
 **Risk weighting (hours-to-empty ramps)** — pessimism intentionally wider/stronger than optimism

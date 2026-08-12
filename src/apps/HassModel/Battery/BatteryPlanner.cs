@@ -52,6 +52,7 @@ public static class BatteryPlanner
         };
         curEnergySegment.ApplySolarForecast(solarForecast);
         curEnergySegment.ApplyPrice(amberPrices);
+        ApplyDemandWindowUsage(curEnergySegment, config);
         var energySegments = new List<EnergySegment>
         {
             curEnergySegment
@@ -63,16 +64,34 @@ public static class BatteryPlanner
             var nextStartUtc = curEnergySegment.StartUtc + config.SegmentSize;
             curEnergySegment = new EnergySegment
             {
-                EstimatedBatteryChargeKwh = curEnergySegment.EstimatedBatteryChargeKwh - segmentUsage(curEnergySegment.StartUtc),
+                // Drain by the previous segment's UsageKwh (not a fresh segmentUsage call) so any
+                // demand-window multiplier already applied to it carries into the charge trajectory.
+                EstimatedBatteryChargeKwh = curEnergySegment.EstimatedBatteryChargeKwh - curEnergySegment.UsageKwh,
                 Duration = config.SegmentSize,
                 StartUtc = nextStartUtc,
                 UsageKwh = segmentUsage(nextStartUtc)
             };
             curEnergySegment.ApplySolarForecast(solarForecast);
             curEnergySegment.ApplyPrice(amberPrices);
+            ApplyDemandWindowUsage(curEnergySegment, config);
             energySegments.Add(curEnergySegment);
         }
         return energySegments;
+    }
+
+    /// <summary>
+    /// Rescales a demand-window segment's <see cref="EnergySegment.UsageKwh"/> to use
+    /// <c>DemandWindowUsageMultiplier</c> in place of <c>EstimatedUsageMultiplier</c>, inflating the
+    /// projected drain so the plan reserves more charge through the window (avoiding a forced grid
+    /// import if load spikes). Must run after <c>ApplyPrice</c>, which sets <c>IsDemandWindow</c>. The
+    /// per-segment usage already carries <c>EstimatedUsageMultiplier</c>, so divide it out first. A
+    /// non-positive <c>DemandWindowUsageMultiplier</c> (unset) leaves the usage unchanged.
+    /// </summary>
+    private static void ApplyDemandWindowUsage(EnergySegment segment, BatteryConfig config)
+    {
+        if (!segment.IsDemandWindow) return;
+        if (config.DemandWindowUsageMultiplier <= 0m || config.EstimatedUsageMultiplier <= 0m) return;
+        segment.UsageKwh = segment.UsageKwh / config.EstimatedUsageMultiplier * config.DemandWindowUsageMultiplier;
     }
 
     /// <summary>

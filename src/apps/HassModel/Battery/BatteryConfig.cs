@@ -16,6 +16,12 @@ public class BatteryConfig
     public SensorEntity BatteryChargeDiff3DaysEntity { get; set; }
     public decimal EstimatedUsageMultiplier { get; set; }
 
+    // Usage multiplier applied INSTEAD of EstimatedUsageMultiplier for segments Amber flags as a demand
+    // window. Set higher (e.g. 1.5) to inflate the projected drain through a demand window so the plan
+    // reserves more charge and avoids an expensive forced grid import if load spikes. Left at 0 (unset)
+    // it falls back to EstimatedUsageMultiplier, i.e. demand windows drain the same as any other segment.
+    public decimal DemandWindowUsageMultiplier { get; set; }
+
     // Cumulative (lifetime) counters used to learn per-time-of-day consumption. Consumption over an
     // interval = ΔgridIn − ΔgridOut + Δsolar − (Δcharge − Δdischarge). The battery charge/discharge
     // counters reset daily (handled in UsageMath). See docs/apps/battery-control.md.
