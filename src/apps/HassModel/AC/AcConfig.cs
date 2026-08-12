@@ -73,6 +73,14 @@ public class AcConfig
     /// single tick pinned the drive at −1 through the middle of heating cycles.
     /// </summary>
     public decimal DriveProgressThreshold { get; set; } = 0.3M;
+
+    /// <summary>
+    /// How often (minutes) the per-room felt-temperature summary is written at <c>Information</c>. A
+    /// summary is also written immediately whenever a zone decision changes, so this only paces the
+    /// steady state. The deployed add-on journal holds roughly seven days, so this is what decides
+    /// whether a tuning change can still be judged a fortnight later.
+    /// </summary>
+    public int FeltLogIntervalMinutes { get; set; } = 15;
 }
 
 public class AcProfileConfig

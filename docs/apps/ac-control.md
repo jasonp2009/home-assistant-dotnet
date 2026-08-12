@@ -202,24 +202,37 @@ exists for each room (see [Felt-temperature control](#felt-temperature-control) 
 - **Two different temperatures**: zone decisions use per-room HA sensors; the aggressiveness/driving
   setpoint uses the unit's own return-air `RoomTemp`.
 - The log level for `src.apps.HassModel.AC.AcControl` in `appsettings.json` is misspelled `"Waring"`,
-  so it does not take effect — the category falls back to `Default` (`Debug`). This is why the
-  felt-temperature `Debug` lines below are visible in production today; if that key is ever corrected
-  to `Warning`, set it to `Debug` instead to keep them.
+  so it does not take effect — the category falls back to `Default` (`Debug`). **Set it to
+  `"Information"`**: that keeps all the telemetry below except the per-evaluation `Debug` breakdown,
+  which is what drives the log volume. Do *not* set it to `"Warning"` — that would suppress the
+  summaries too. `appsettings.json` is not tracked by git, so this has to be changed by hand.
 
 ## Debugging the felt temperature (deployed)
 
 Read the deployed add-on logs over the HA REST API (see [deployed-logs.md](../deployed-logs.md)) and
 look for:
 
-- **`Felt-temperature control: …`** (`Information`, once at startup) — confirms the bound config
-  (`EnvCoefficient`, `MaxComfortOffset`, humidity coefficient/reference, EMA τ and backfill window).
-- **`Outdoor temp EMA seeded from N … sample(s) …`** (`Information`, once at startup) — how many
-  weather-history points seeded the EMA and the resulting `smoothed` vs `instantaneous` outdoor temp.
-- **`Felt temp <Room> (<Mode>): air … + envelope … + humidity … = felt …°C; set …, force/on/off …`**
-  (`Debug`, once per room per evaluation) — the full per-room breakdown: the air temperature, each
-  offset component (so you can see whether the radiant or the humidity term is driving the gap), the
-  smoothed vs raw outdoor temperature, the resulting felt temperature, and the thresholds it is
-  compared against. This is the line to grep when a room feels off.
+| Log line | Level | Rate |
+|---|---|---|
+| `Felt-temperature control: …` | `Information` | once at startup — confirms the bound config |
+| `Outdoor temp EMA seeded from N … sample(s) …` | `Information` | once at startup — samples found, smoothed vs instantaneous outdoor temp |
+| `Felt <date> <Room> (<Mode>): air … = felt …°C \| set …, force/on/off … \| outdoor … \| zone …` | `Information` | per room, every `FeltLogIntervalMinutes`, **plus immediately on any decision change** |
+| `Felt <date> <Room> (<Mode>): zone off — <veto>` | `Information` | same, for rooms refused before the comparison could run |
+| `Drive <date> (<Mode>): N room(s) driving, raw … -> …°C past return air …` | `Information` | same cadence, for the driving setpoint |
+| `Felt temp <Room> …` (full breakdown) | `Debug` | once per room per evaluation — deep dives only |
+| `Drive <Room>: felt … vs off-point … (error …), stalled … min -> …` | `Debug` | per room per evaluation — why the drive is what it is |
+
+### Why the summaries are rate-limited
+
+The add-on journal holds roughly **7 days** (~139 k entries); at `Debug` the app writes ~20 k
+lines/day, so the full breakdown cannot survive long enough to judge a tuning change made a fortnight
+ago. The `Information` summaries are paced to `FeltLogIntervalMinutes` (default 15) so a fortnight
+fits comfortably, and they carry a **full date** because the journal's own stamps are time-only.
+
+They are also emitted for **vetoed** rooms. Previously a room refused before the felt-temperature
+comparison — switched off, occupancy veto, or pushed past the last profile by the SoC shift — produced
+no line at all, which silently hid exactly the rooms worth investigating. The veto reason is now named
+(`Occupancy`, `SwitchedOff`, `NoReading`, `NoProfile`, `NotConditioning`).
 
 ## Felt-temperature control
 
