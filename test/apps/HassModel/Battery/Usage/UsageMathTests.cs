@@ -259,33 +259,22 @@ public class UsageMathTests
     // ---- ComputeRecencyScale -----------------------------------------------------------------
 
     private static BatteryConfig RecencyCfg(
-        bool enabled = true, decimal minScale = 0.7m, decimal maxScale = 2m, decimal downwardGain = 0.5m,
-        int minSamples = 1, int baselineLagHours = 24, int baselineDays = 7,
-        (int Hours, decimal Weight)[]? windows = null)
+        bool enabled = true, decimal halfLifeHours = 4m, decimal downwardGain = 0.5m,
+        decimal minScale = 0.7m, decimal maxScale = 2m)
     {
         var cfg = UsageCfg();
         cfg.UsageRecencyEnabled = enabled;
+        cfg.UsageRecencyHalfLifeHours = halfLifeHours;
+        cfg.UsageRecencyDownwardGain = downwardGain;
         cfg.UsageRecencyMinScale = minScale;
         cfg.UsageRecencyMaxScale = maxScale;
-        cfg.UsageRecencyDownwardGain = downwardGain;
-        cfg.UsageRecencyMinSamples = minSamples;
-        cfg.UsageRecencyBaselineLagHours = baselineLagHours;
-        cfg.UsageRecencyBaselineDays = baselineDays;
-        windows ??= [(1, 0.35m), (3, 0.25m), (6, 0.2m), (12, 0.12m), (24, 0.08m)];
-        var w = new (int, decimal)[5];
-        for (var i = 0; i < 5; i++) w[i] = i < windows.Length ? windows[i] : (0, 0m);
-        (cfg.UsageRecencyWindow1Hours, cfg.UsageRecencyWindow1Weight) = w[0];
-        (cfg.UsageRecencyWindow2Hours, cfg.UsageRecencyWindow2Weight) = w[1];
-        (cfg.UsageRecencyWindow3Hours, cfg.UsageRecencyWindow3Weight) = w[2];
-        (cfg.UsageRecencyWindow4Hours, cfg.UsageRecencyWindow4Weight) = w[3];
-        (cfg.UsageRecencyWindow5Hours, cfg.UsageRecencyWindow5Weight) = w[4];
         return cfg;
     }
 
-    // Recency now = 12:00 UTC (reuses `Now`). Builds a set of 5-minute samples over the last `hours`
-    // hours (the "recent" actuals) plus one prior-day sample per matching time-of-day for each of the
-    // preceding `baselineDays` days (the "normal" baseline, older than the 24h lag). `recentKwh` and
-    // `baselineKwh` set the per-segment values so the ratio is recentKwh/baselineKwh.
+    // Recency now = 12:00 UTC (reuses `Now`). Builds 5-minute samples over the last `hours` hours (the
+    // "recent" actuals) plus one sample at the same time-of-day on each of the preceding `baselineDays`
+    // days (the "normal" baseline, outside the 24 h recent window). The ratio is recentKwh/baselineKwh,
+    // which the decay weighting leaves unchanged when it is uniform across the window.
     private static List<UsageSample> RecencySamples(decimal recentKwh, decimal baselineKwh, int hours = 24, int baselineDays = 7)
     {
         var samples = new List<UsageSample>();
@@ -356,9 +345,16 @@ public class UsageMathTests
     [Fact]
     public void ComputeRecencyScale_InsufficientCoverage_ReturnsOne()
     {
-        // Plenty of hot recent samples, but MinSamples set above the coverage of every horizon.
-        var samples = RecencySamples(recentKwh: 2m, baselineKwh: 1m, hours: 1); // ~12 recent segments
-        Assert.Equal(1m, UsageMath.ComputeRecencyScale(samples, Now, RecencyCfg(minSamples: 1000)));
+        // Only 3 recent samples with a known norm — below the minimum for the scale to be trusted.
+        var samples = new List<UsageSample>();
+        for (var i = 1; i <= 3; i++)
+        {
+            var t = Now.AddMinutes(-5 * i);
+            samples.Add(new UsageSample(t, 2m));
+            samples.Add(new UsageSample(t.AddDays(-1), 1m));
+        }
+
+        Assert.Equal(1m, UsageMath.ComputeRecencyScale(samples, Now, RecencyCfg()));
     }
 
     [Fact]
@@ -369,27 +365,56 @@ public class UsageMathTests
         Assert.Equal(1m, UsageMath.ComputeRecencyScale(samples, Now, RecencyCfg()));
     }
 
-    [Fact]
-    public void ComputeRecencyScale_Gradient_WeightsRecentHoursMoreHeavily()
+    // Hot only in the last hour (2x normal), ordinary for the 23 h before it.
+    private static List<UsageSample> SpikeInLastHourSamples()
     {
-        // Hot only in the last hour (2x), normal before it. A recent-heavy gradient must yield a
-        // higher scale than a far-heavy one, proving the horizon weighting biases toward recent hours.
         var samples = new List<UsageSample>();
         for (var i = 1; i <= 24 * 12; i++)
         {
             var t = Now.AddMinutes(-5 * i);
-            var recent = t >= Now.AddHours(-1) ? 2m : 1m; // last hour hot, rest normal
-            samples.Add(new UsageSample(t, recent));
+            samples.Add(new UsageSample(t, t >= Now.AddHours(-1) ? 2m : 1m));
             for (var d = 1; d <= 7; d++)
-                samples.Add(new UsageSample(t.AddDays(-d), 1m));
+                samples.Add(new UsageSample(t.AddDays(-d), 1m)); // norm is 1 at every time-of-day
+        }
+        return samples;
+    }
+
+    [Fact]
+    public void ComputeRecencyScale_ShortHalfLife_WeightsRecentHoursMoreHeavily()
+    {
+        var samples = SpikeInLastHourSamples();
+
+        // A short half-life concentrates the weight on the spike; a long one averages it away over the
+        // whole day. This is the "last hour has a higher impact than 3/6/12/24 h" behaviour, as one knob.
+        var twitchy = UsageMath.ComputeRecencyScale(samples, Now, RecencyCfg(halfLifeHours: 0.5m));
+        var smooth = UsageMath.ComputeRecencyScale(samples, Now, RecencyCfg(halfLifeHours: 24m));
+
+        Assert.True(twitchy > smooth, $"short half-life {twitchy} should exceed long half-life {smooth}");
+        Assert.True(twitchy > 1.7m, $"short half-life should track the 2x spike closely, got {twitchy}");
+        Assert.True(smooth < 1.2m, $"long half-life should dilute the 1-in-24h spike, got {smooth}");
+    }
+
+    [Fact]
+    public void ComputeRecencyScale_OlderSpikeCountsLessThanRecentSpike()
+    {
+        // Same size spike, same config — only its age differs. The older one must move the scale less.
+        List<UsageSample> WithSpikeAt(int hoursAgo)
+        {
+            var samples = new List<UsageSample>();
+            for (var i = 1; i <= 24 * 12; i++)
+            {
+                var t = Now.AddMinutes(-5 * i);
+                var inSpike = t < Now.AddHours(-hoursAgo) && t >= Now.AddHours(-hoursAgo - 1);
+                samples.Add(new UsageSample(t, inSpike ? 2m : 1m));
+                for (var d = 1; d <= 7; d++)
+                    samples.Add(new UsageSample(t.AddDays(-d), 1m));
+            }
+            return samples;
         }
 
-        var recentHeavy = UsageMath.ComputeRecencyScale(samples, Now, RecencyCfg(
-            windows: [(1, 1m), (3, 0m), (6, 0m), (12, 0m), (24, 0m)]));
-        var farHeavy = UsageMath.ComputeRecencyScale(samples, Now, RecencyCfg(
-            windows: [(1, 0m), (3, 0m), (6, 0m), (12, 0m), (24, 1m)]));
+        var fresh = UsageMath.ComputeRecencyScale(WithSpikeAt(0), Now, RecencyCfg());
+        var stale = UsageMath.ComputeRecencyScale(WithSpikeAt(12), Now, RecencyCfg());
 
-        Assert.True(recentHeavy > farHeavy, $"recent-heavy {recentHeavy} should exceed far-heavy {farHeavy}");
-        Assert.Equal(2m, recentHeavy, precision: 6); // 1h horizon is entirely the 2x hour
+        Assert.True(fresh > stale, $"a spike an hour ago ({fresh}) should outweigh one 12 h ago ({stale})");
     }
 }

@@ -131,16 +131,16 @@ The per-segment **drain** in `BuildSegments` is a learned, time-of-day consumpti
 6. **Recency scaling** ([`UsageMath.ComputeRecencyScale`](../../src/apps/HassModel/Battery/Usage/UsageMath.cs)).
    Because step 4 only learns from **prior** days, a day running hotter than usual doesn't shift the
    *rest-of-today* projection until those samples age into the time-of-day windows a day later. The
-   recency scale closes that gap: a single multiplier applied on top of the time-of-day estimate that
-   reacts to how recent **measured** consumption compares to the learned norm. For each trailing
-   horizon (`1 / 3 / 6 / 12 / 24 h`) it forms a ratio of measured usage to the time-of-day
-   [baseline](../../src/apps/HassModel/Battery/Usage/UsageMath.cs) over the same clock-times — the
-   baseline deliberately **excludes the last `UsageRecencyBaselineLagHours`** so today's anomaly can't
-   inflate its own reference — then blends the ratios by a **gradient** of weights (most-recent
-   heaviest). The blended ratio becomes a scale **asymmetrically**: an above-normal deviation is applied
-   in full, a below-normal one is damped by `UsageRecencyDownwardGain` (so it reacts faster to high
-   usage than to low), clamped to `[UsageRecencyMinScale, UsageRecencyMaxScale]`. A horizon with too few
-   covered samples (`UsageRecencyMinSamples`) is dropped; with none, the scale is a neutral `1`.
+   recency scale closes that gap: a single multiplier on top of the time-of-day estimate, reacting to
+   how the last 24 h of **measured** consumption compares to the learned norm. Each recent sample is
+   compared against the mean of its own time-of-day bucket **on earlier days** (a sample is never part
+   of the norm it is judged against, so a hot spell can't inflate its own reference) and weighted by an
+   **exponential decay on its age** — `UsageRecencyHalfLifeHours` — so the last hour dominates, the
+   previous few hours count progressively less, and a day-old sample barely registers. The resulting
+   deviation is applied **asymmetrically**: above-normal in full, below-normal damped by
+   `UsageRecencyDownwardGain` (reacting faster to high usage than to low), then clamped to
+   `[UsageRecencyMinScale, UsageRecencyMaxScale]`. Too few recent samples with a known norm ⇒ a
+   neutral `1`.
 
 The scale multiplies **both** the forward per-segment estimate (so a hot day pulls the projected
 `MinCapacity` crossing earlier → earlier/more floor-defense buys) **and** the runway hourly usage (so
@@ -240,14 +240,15 @@ defaults that is `0` at ≥12 h runway → `1.0` at 6 h → `1.5` at 3 h → `2.
 | Key | Default | Meaning |
 |---|---|---|
 | `UsageRecencyEnabled` | true | Master switch; `false` = exact prior behaviour (scale fixed at 1) |
-| `UsageRecencyWindow{1..5}Hours` | 1 / 3 / 6 / 12 / 24 | Trailing horizons compared against the norm |
-| `UsageRecencyWindow{1..5}Weight` | 0.35 / 0.25 / 0.2 / 0.12 / 0.08 | Gradient blend weights — most-recent heaviest (renormalised over horizons with data) |
+| `UsageRecencyHalfLifeHours` | 4 | Age at which a sample counts half as much as one from now — the single knob for how sharply the scale favours recent hours. Smaller = twitchier, larger = smoother |
+| `UsageRecencyDownwardGain` | 0.5 | Fraction of a **below**-normal deviation applied (above-normal is always full). `<1` reacts faster up than down; `1` symmetric; `0` up-only |
 | `UsageRecencyMinScale` | 0.7 | Hard floor on the scale (caps the below-normal reaction) |
 | `UsageRecencyMaxScale` | 2 | Hard ceiling on the scale (caps the above-normal reaction) |
-| `UsageRecencyDownwardGain` | 0.5 | Fraction of a **below**-normal deviation applied (above-normal is always full). `<1` reacts faster up than down; `1` symmetric; `0` up-only |
-| `UsageRecencyMinSamples` | 6 | Min covered samples for a horizon's ratio to count |
-| `UsageRecencyBaselineLagHours` | 24 | Exclude the last N h from the "normal" baseline (so today's anomaly doesn't dilute it) |
-| `UsageRecencyBaselineDays` | 7 | How far back the "normal" baseline looks |
+
+The 24 h "recent" window and the minimum sample count are fixed in
+[`UsageMath`](../../src/apps/HassModel/Battery/Usage/UsageMath.cs) rather than exposed: the first is a
+design invariant (a sample must not be part of the norm it is judged against) and the second a safety
+guard, not a tuning dial.
 
 **Inverter modes** — strings matching the work-mode `select` options:
 `BatteryNoneMode` = `Self-consumption mode`, `BatteryChargeMode` = `Reserve power mode`,
