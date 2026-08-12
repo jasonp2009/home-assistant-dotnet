@@ -37,13 +37,15 @@
       SocMin: 90
       SocMax: 100
       Tolerance: 2
+    # Neutral runs down to 30%: the daily SoC trough parks at 30-45% (modal bucket 35-40%), which used
+    # to sit inside the -1 band and quietly held the whole house on Eco for ~45% of the time.
     - ProfileModifier: 0
-      SocMin: 50
+      SocMin: 30
       SocMax: 90
       Tolerance: 2
     - ProfileModifier: -1
       SocMin: 25
-      SocMax: 50
+      SocMax: 30
       Tolerance: 2
     - ProfileModifier: -2
       SocMin: 15

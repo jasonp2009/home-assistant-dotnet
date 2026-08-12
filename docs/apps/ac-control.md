@@ -82,12 +82,24 @@ so the AC leans on cheap/abundant stored energy when the battery is full and bac
 low. [`HandleSocChange`](../../src/apps/HassModel/AC/AcControl.cs#L236) maps SoC to a
 `_curSocModifier` via `SocAdjusts` (with a hysteresis `Tolerance` so it doesn't flap at a boundary):
 
-| SoC | Modifier |
-|---|---|
-| 90–100% | +1 (more aggressive) |
-| 50–90% | 0 |
-| 30–50% | −1 |
-| 0–30% | −2 (more economical) |
+| SoC | Modifier | |
+|---|---|---|
+| 90–100% | +1 | more aggressive |
+| 30–90% | 0 | neutral |
+| 25–30% | −1 | more economical |
+| 15–25% | −2 | |
+| 0–15% | −5 | past the last profile → zone off entirely |
+
+The **neutral band deliberately reaches down to 30%**. Measured over 10 days, the daily SoC trough
+parks in the 30–45% range (modal bucket 35–40%), so a neutral band starting at 50% left the whole
+house on `Eco` — a 4 °C allowed felt deficit instead of 2 °C — for ~45% of the time, and did so
+disproportionately in cold weather (mean modifier −1.4 at 4–8 °C outdoor versus 0.0 at 14–18 °C),
+because cold → more heating → flatter battery → wider deadband → less heating. The boundary sits at
+30 rather than 35 so the modal trough falls *inside* the neutral band instead of straddling its edge
+and fighting the `Tolerance` hysteresis.
+
+> Note the `Tolerance` is hysteresis on *leaving* a band, so with `Tolerance: 2` the −1 band (25–30)
+> is held across 23–32 once entered. The bands are intentionally allowed to overlap in that sense.
 
 [`GetEffectiveProfile`](../../src/apps/HassModel/AC/AcControl.cs#L218) then shifts the chosen profile
 by that modifier: `desiredIndex = profileIndex − modifier`. Below the first profile it clamps to the
