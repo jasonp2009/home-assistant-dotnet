@@ -51,21 +51,11 @@ public class BatteryConfig
         (UsageWindow3Days, UsageWindow3Weight)
     ];
 
-    // Recency scaling. The time-of-day estimate above only learns from PRIOR days, so a day running
-    // hotter than usual doesn't shift the rest-of-today projection until those samples become
-    // "yesterday" a day later. This multiplier closes that gap: it compares the last 24 h of MEASURED
-    // consumption against the learned time-of-day norm — weighting each sample by an exponential decay
-    // on its age, so the most recent hours dominate — and scales the estimate (and the runway usage)
-    // to match. See UsageMath.ComputeRecencyScale and docs/apps/battery-control.md.
+    // Recency scaling: multiplies the time-of-day estimate (and the runway usage) to track a day running
+    // hotter/cooler than its learned norm. See UsageMath.ComputeRecencyScale and docs/apps/battery-control.md.
     public bool UsageRecencyEnabled { get; set; }
-    // Age at which a sample counts half as much as one from right now: the single knob controlling how
-    // sharply the scale favours recent hours. Smaller = twitchier, larger = smoother.
-    public decimal UsageRecencyHalfLifeHours { get; set; }
-    // Fraction of a BELOW-normal deviation that is applied (an above-normal deviation is always applied
-    // in full). <1 makes the estimate react faster to high usage than to low; 1 = symmetric; 0 = only up.
-    public decimal UsageRecencyDownwardGain { get; set; }
-    public decimal UsageRecencyMinScale { get; set; }        // hard floor on the scale (below-normal cap)
-    public decimal UsageRecencyMaxScale { get; set; }        // hard ceiling on the scale (above-normal cap)
+    public decimal UsageRecencyHalfLifeHours { get; set; }   // sample age at which it counts half as much; smaller = twitchier
+    public decimal UsageRecencyDownwardGain { get; set; }    // fraction of a BELOW-normal deviation applied (above-normal always in full)
 
     // Risk weighting based on battery runway (hours-to-empty). Pessimism leans an estimated
     // price toward Amber's High bound (buy)/Low bound (sell); optimism leans the other way.

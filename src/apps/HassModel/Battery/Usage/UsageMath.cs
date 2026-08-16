@@ -149,28 +149,21 @@ public static class UsageMath
         return weightedSum / weightUsed * config.EstimatedUsageMultiplier;
     }
 
-    /// <summary>The trailing span treated as "recent" — i.e. the current day's run of samples, compared
-    /// against the same clock-times on PRIOR days. Also the baseline's exclusion window: a sample can't
-    /// be part of the norm it is being judged against, or a hot spell would inflate its own reference.</summary>
+    /// <summary>Trailing span treated as "recent"; also excluded from the norm, so a hot spell can't inflate its own reference.</summary>
     private static readonly TimeSpan RecentWindow = TimeSpan.FromHours(24);
 
     /// <summary>Minimum recent samples with a known norm before the scale is trusted (else neutral).</summary>
     private const int MinRecentSamples = 6;
 
+    /// <summary>Bounds on the scale — safety rails rather than tuning dials, so they stay out of config.</summary>
+    private const decimal MinScale = 0.7m, MaxScale = 2m;
+
     /// <summary>
-    /// Recency scale: a multiplier on the forward usage estimate that reacts to recent MEASURED
-    /// consumption running above (or below) the learned time-of-day norm — so a day running hotter
-    /// than usual pulls the projection tighter WITHIN the day, instead of only a day later once those
-    /// samples age into the time-of-day windows of <see cref="EstimateSegmentUsage"/>.
-    ///
-    /// Each sample in the last <see cref="RecentWindow"/> is compared against the mean of its own
-    /// time-of-day bucket on earlier days, and weighted by an exponential decay on its age
-    /// (<c>UsageRecencyHalfLifeHours</c>) — so the last hour dominates, the previous few hours count
-    /// progressively less, and a day-old sample barely registers. The resulting deviation is applied
-    /// asymmetrically: ABOVE-normal in full, BELOW-normal damped by <c>UsageRecencyDownwardGain</c>
-    /// (reacting faster to high usage than low), then clamped to
-    /// [<c>UsageRecencyMinScale</c>, <c>UsageRecencyMaxScale</c>]. Returns a neutral 1 when disabled or
-    /// when too few recent samples have a known norm.
+    /// A multiplier on the usage estimate reacting to the last 24 h of MEASURED consumption running
+    /// above/below its learned time-of-day norm. <see cref="EstimateSegmentUsage"/> leans on PRIOR days,
+    /// so without this a day running hotter than usual barely shifts the rest-of-today projection until
+    /// a day later. Below-normal is damped (running short of charge costs more than carrying spare).
+    /// Neutral (1) when disabled or when the recent window is too sparse to trust.
     /// </summary>
     public static decimal ComputeRecencyScale(
         IReadOnlyCollection<UsageSample> samples,
@@ -180,8 +173,7 @@ public static class UsageMath
         if (!config.UsageRecencyEnabled || config.UsageRecencyHalfLifeHours <= 0m) return 1m;
         var recentStart = nowUtc - RecentWindow;
 
-        // The norm per time-of-day bucket, from samples older than the recent window. Built in one pass
-        // and reused, so the whole scale costs a couple of passes over the sample set.
+        // Norm per time-of-day bucket, from days before the recent window.
         var norms = new Dictionary<int, (decimal Sum, int Count)>();
         foreach (var s in samples)
         {
@@ -208,12 +200,11 @@ public static class UsageMath
         }
         if (covered < MinRecentSamples || expected <= 0m) return 1m;
 
-        var deviation = actual / expected - 1m;                   // >0 hot, <0 cool, relative to normal
-        if (deviation < 0m) deviation *= config.UsageRecencyDownwardGain; // damp the below-normal side
-        return Math.Clamp(1m + deviation, config.UsageRecencyMinScale, config.UsageRecencyMaxScale);
+        var deviation = actual / expected - 1m;   // >0 hot, <0 cool, relative to normal
+        if (deviation < 0m) deviation *= config.UsageRecencyDownwardGain;
+        return Math.Clamp(1m + deviation, MinScale, MaxScale);
     }
 
-    /// <summary>Exponential age decay: weight <c>0.5</c> at one half-life, <c>0.25</c> at two, and so on.</summary>
     private static decimal DecayWeight(decimal ageHours, decimal halfLifeHours)
         => Convert.ToDecimal(Math.Pow(0.5, Convert.ToDouble(ageHours / halfLifeHours)));
 

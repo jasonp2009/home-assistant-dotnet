@@ -28,8 +28,6 @@
   UsageRecencyEnabled: true
   UsageRecencyHalfLifeHours: 4
   UsageRecencyDownwardGain: 0.5
-  UsageRecencyMinScale: 0.7
-  UsageRecencyMaxScale: 2
   PessimismStartHours: 12
   PessimismMaxAtHours: 0
   PessimismMaxWeight: 2

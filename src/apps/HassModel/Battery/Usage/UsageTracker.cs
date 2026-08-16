@@ -133,12 +133,11 @@ public class UsageTracker
     }
 
     /// <summary>
-    /// Snapshots the current samples and returns a per-segment usage estimator (kWh per segment) for
-    /// use by the planner, along with the recency scale it bakes in. <paramref name="fallbackKwh"/>
-    /// (the flat average, already multiplier-adjusted) is returned for any time-of-day bucket with no
-    /// data. The estimator multiplies the time-of-day estimate by <see cref="UsageMath.ComputeRecencyScale"/>
-    /// so a day running hotter/cooler than usual shifts the projection within the day; the scale is
-    /// returned so the caller can apply the same factor to the runway usage.
+    /// Snapshots the current samples and returns a per-segment usage estimator (kWh per segment) for use
+    /// by the planner, with <see cref="UsageMath.ComputeRecencyScale"/> already applied.
+    /// <paramref name="fallbackKwh"/> (the flat average, already multiplier-adjusted) is returned for any
+    /// time-of-day bucket with no data. The scale is returned separately only because the runway usage
+    /// doesn't go through the estimator — do not re-apply it to the estimator's output.
     /// </summary>
     public (Func<DateTime, decimal> PerSegmentUsage, decimal RecencyScale) BuildEstimator(decimal fallbackKwh)
     {

@@ -12,7 +12,7 @@ namespace Tests.apps.HassModel.Battery.Usage;
 /// <summary>
 /// Unit tests for the pure consumption maths: computing per-interval consumption from cumulative
 /// counters (with daily-reset handling), spreading a solar-aligned window across its 5-minute buckets,
-/// and the per-time-of-day weighted estimate.
+/// the per-time-of-day weighted estimate, and the recency scale applied on top of it.
 /// </summary>
 public class UsageMathTests
 {
@@ -259,87 +259,128 @@ public class UsageMathTests
     // ---- ComputeRecencyScale -----------------------------------------------------------------
 
     private static BatteryConfig RecencyCfg(
-        bool enabled = true, decimal halfLifeHours = 4m, decimal downwardGain = 0.5m,
-        decimal minScale = 0.7m, decimal maxScale = 2m)
+        bool enabled = true, decimal halfLifeHours = 4m, decimal downwardGain = 0.5m)
     {
         var cfg = UsageCfg();
         cfg.UsageRecencyEnabled = enabled;
         cfg.UsageRecencyHalfLifeHours = halfLifeHours;
         cfg.UsageRecencyDownwardGain = downwardGain;
-        cfg.UsageRecencyMinScale = minScale;
-        cfg.UsageRecencyMaxScale = maxScale;
         return cfg;
     }
 
-    // Recency now = 12:00 UTC (reuses `Now`). Builds 5-minute samples over the last `hours` hours (the
-    // "recent" actuals) plus one sample at the same time-of-day on each of the preceding `baselineDays`
-    // days (the "normal" baseline, outside the 24 h recent window). The ratio is recentKwh/baselineKwh,
-    // which the decay weighting leaves unchanged when it is uniform across the window.
-    private static List<UsageSample> RecencySamples(decimal recentKwh, decimal baselineKwh, int hours = 24, int baselineDays = 7)
+    /// A day of 5-minute samples ending at <see cref="Now"/>, each `recentMultiplier` times the norm,
+    /// with `baselineDays` prior days at the norm itself. `profile` sets the norm per time-of-day: pass
+    /// a varying one to make the per-bucket lookup observable (a flat norm hides it — a global mean over
+    /// every older sample would give identical answers). Keyed on LOCAL time of day like the production
+    /// code, and a sample's prior-day counterparts share its key, so results hold in any timezone.
+    private static List<UsageSample> RecencySamples(
+        decimal recentMultiplier, int baselineDays = 7, Func<DateTime, decimal>? profile = null)
     {
+        profile ??= _ => 1m;
         var samples = new List<UsageSample>();
-        var segs = hours * 12; // 5-min segments in the trailing window
-        for (var i = 1; i <= segs; i++)
+        for (var i = 1; i <= 24 * 12; i++)
         {
-            var t = Now.AddMinutes(-5 * i); // within [now - hours, now)
-            samples.Add(new UsageSample(t, recentKwh));
+            var t = Now.AddMinutes(-5 * i);
+            samples.Add(new UsageSample(t, profile(t) * recentMultiplier));
             for (var d = 1; d <= baselineDays; d++)
-                samples.Add(new UsageSample(t.AddDays(-d), baselineKwh)); // same time-of-day, prior days
+                samples.Add(new UsageSample(t.AddDays(-d), profile(t)));
         }
         return samples;
     }
 
-    [Fact]
-    public void ComputeRecencyScale_Disabled_ReturnsOne()
+    /// A realistic day shape: quiet overnight, moderate daytime, heavy evening.
+    private static decimal DailyShape(DateTime utc)
+        => DateTime.SpecifyKind(utc, DateTimeKind.Utc).ToLocalTime().Hour switch
+        {
+            < 6 => 0.05m,
+            < 17 => 0.15m,
+            < 22 => 0.40m,
+            _ => 0.10m
+        };
+
+    [Theory]
+    // recent vs norm -> scale. Above-normal counts in full; below-normal is halved by the 0.5 gain.
+    [InlineData(1.0, 1.0)]     // normal
+    [InlineData(1.5, 1.5)]     // hot
+    [InlineData(3.0, 2.0)]     // deviation +2.0 clamped at MaxScale
+    [InlineData(0.5, 0.75)]    // deviation -0.5 damped to -0.25
+    [InlineData(0.0, 0.7)]     // deviation -1.0 damped to -0.5, clamped at MinScale
+    public void ComputeRecencyScale_MapsRecentUsageAgainstNormToScale(double recentMultiplier, double expected)
     {
-        var samples = RecencySamples(recentKwh: 2m, baselineKwh: 1m);
-        Assert.Equal(1m, UsageMath.ComputeRecencyScale(samples, Now, RecencyCfg(enabled: false)));
+        var samples = RecencySamples((decimal)recentMultiplier);
+
+        Assert.Equal((decimal)expected, UsageMath.ComputeRecencyScale(samples, Now, RecencyCfg()), precision: 6);
     }
 
-    [Fact]
-    public void ComputeRecencyScale_NormalUsage_ReturnsOne()
+    [Theory]
+    [InlineData(1.0, 1.0)] // a normal day against a SHAPED norm must stay neutral
+    [InlineData(1.5, 1.5)] // a uniformly hotter day is measured per bucket, not against a daily average
+    public void ComputeRecencyScale_ComparesEachSampleWithItsOwnTimeOfDayNorm(double recentMultiplier, double expected)
     {
-        var samples = RecencySamples(recentKwh: 1m, baselineKwh: 1m);
-        Assert.Equal(1m, UsageMath.ComputeRecencyScale(samples, Now, RecencyCfg()), precision: 6);
-    }
+        // Overnight usage is 8x lighter than the evening peak, so judging a sample against a single
+        // all-day mean instead of its own time-of-day bucket lands nowhere near the expected scale.
+        var samples = RecencySamples((decimal)recentMultiplier, profile: DailyShape);
 
-    [Fact]
-    public void ComputeRecencyScale_ElevatedRecentUsage_ScalesUpByRatio()
-    {
-        // Every horizon sees the same 1.5x ratio -> blend is 1.5 -> above-normal applied in full.
-        var samples = RecencySamples(recentKwh: 1.5m, baselineKwh: 1m);
-        Assert.Equal(1.5m, UsageMath.ComputeRecencyScale(samples, Now, RecencyCfg()), precision: 6);
-    }
-
-    [Fact]
-    public void ComputeRecencyScale_AboveMax_ClampedToMaxScale()
-    {
-        var samples = RecencySamples(recentKwh: 3m, baselineKwh: 1m); // ratio 3 -> clamp to 2
-        Assert.Equal(2m, UsageMath.ComputeRecencyScale(samples, Now, RecencyCfg(maxScale: 2m)));
-    }
-
-    [Fact]
-    public void ComputeRecencyScale_LowUsage_DampedByDownwardGain()
-    {
-        // ratio 0.5 -> deviation -0.5, damped by gain 0.5 -> -0.25 -> scale 0.75 (above the 0.7 floor).
-        var samples = RecencySamples(recentKwh: 0.5m, baselineKwh: 1m);
-        Assert.Equal(0.75m, UsageMath.ComputeRecencyScale(samples, Now, RecencyCfg(downwardGain: 0.5m)), precision: 6);
-    }
-
-    [Fact]
-    public void ComputeRecencyScale_LowUsage_ClampedToMinScale()
-    {
-        // ratio 0 -> deviation -1, damped -0.5 -> scale 0.5, clamped up to the 0.7 floor.
-        var samples = RecencySamples(recentKwh: 0m, baselineKwh: 1m);
-        Assert.Equal(0.7m, UsageMath.ComputeRecencyScale(samples, Now, RecencyCfg(minScale: 0.7m, downwardGain: 0.5m)));
+        Assert.Equal((decimal)expected, UsageMath.ComputeRecencyScale(samples, Now, RecencyCfg()), precision: 6);
     }
 
     [Fact]
     public void ComputeRecencyScale_SymmetricGain_AppliesDownwardInFull()
     {
-        // gain 1 -> ratio 0.5 gives scale 0.5 (would clamp at floor 0.4 here, so keep floor lower).
-        var samples = RecencySamples(recentKwh: 0.5m, baselineKwh: 1m);
-        Assert.Equal(0.5m, UsageMath.ComputeRecencyScale(samples, Now, RecencyCfg(minScale: 0.4m, downwardGain: 1m)), precision: 6);
+        var samples = RecencySamples(recentMultiplier: 0.8m);
+
+        // gain 1 -> the -0.2 deviation is applied whole, rather than halved to 0.9.
+        Assert.Equal(0.8m, UsageMath.ComputeRecencyScale(samples, Now, RecencyCfg(downwardGain: 1m)), precision: 6);
+    }
+
+    [Fact]
+    public void ComputeRecencyScale_Disabled_ReturnsOne()
+    {
+        var samples = RecencySamples(recentMultiplier: 2m);
+        Assert.Equal(1m, UsageMath.ComputeRecencyScale(samples, Now, RecencyCfg(enabled: false)));
+    }
+
+    [Fact]
+    public void ComputeRecencyScale_ZeroHalfLife_ReturnsOne()
+    {
+        var samples = RecencySamples(recentMultiplier: 2m);
+        Assert.Equal(1m, UsageMath.ComputeRecencyScale(samples, Now, RecencyCfg(halfLifeHours: 0m)));
+    }
+
+    [Fact]
+    public void ComputeRecencyScale_TodaysUsageIsExcludedFromItsOwnNorm()
+    {
+        // A single prior day, so contaminating the norm with today would be maximally visible:
+        // it would read (1 + 1.4) / 2 = 1.2 and yield 1.167 instead of 1.4.
+        var samples = RecencySamples(recentMultiplier: 1.4m, baselineDays: 1);
+
+        Assert.Equal(1.4m, UsageMath.ComputeRecencyScale(samples, Now, RecencyCfg()), precision: 6);
+    }
+
+    [Fact]
+    public void ComputeRecencyScale_WeightHalvesEveryHalfLife()
+    {
+        // Two groups exactly one half-life apart, so the older weighs half the newer regardless of the
+        // shared leading weight: (1.0 + 0.5*2.0) / (1 + 0.5) = 4/3, which sits inside the clamps. Pinning
+        // the arithmetic catches 0.5^(age/halfLife) being swapped for e^(-age/halfLife) (which would give
+        // ~1.269) — a silent retune of the deployed half-life that an ordering-only assertion misses.
+        var newer = Now.AddMinutes(-5);
+        var older = newer.AddHours(-2);
+        var samples = new List<UsageSample>();
+        for (var i = 0; i < 3; i++) // 6 recent samples total: exactly the coverage minimum
+        {
+            samples.Add(new UsageSample(newer, 1.0m));
+            samples.Add(new UsageSample(older, 2.0m));
+            for (var d = 1; d <= 3; d++)
+            {
+                samples.Add(new UsageSample(newer.AddDays(-d), 1m));
+                samples.Add(new UsageSample(older.AddDays(-d), 1m));
+            }
+        }
+
+        var scale = UsageMath.ComputeRecencyScale(samples, Now, RecencyCfg(halfLifeHours: 2m));
+
+        Assert.Equal(4m / 3m, scale, precision: 6);
     }
 
     [Fact]
@@ -361,7 +402,7 @@ public class UsageMathTests
     public void ComputeRecencyScale_NoBaseline_ReturnsOne()
     {
         // Recent samples only (no prior-day baseline) -> every recent sample is uncovered -> neutral.
-        var samples = RecencySamples(recentKwh: 2m, baselineKwh: 1m, baselineDays: 0);
+        var samples = RecencySamples(recentMultiplier: 2m, baselineDays: 0);
         Assert.Equal(1m, UsageMath.ComputeRecencyScale(samples, Now, RecencyCfg()));
     }
 
@@ -392,29 +433,5 @@ public class UsageMathTests
         Assert.True(twitchy > smooth, $"short half-life {twitchy} should exceed long half-life {smooth}");
         Assert.True(twitchy > 1.7m, $"short half-life should track the 2x spike closely, got {twitchy}");
         Assert.True(smooth < 1.2m, $"long half-life should dilute the 1-in-24h spike, got {smooth}");
-    }
-
-    [Fact]
-    public void ComputeRecencyScale_OlderSpikeCountsLessThanRecentSpike()
-    {
-        // Same size spike, same config — only its age differs. The older one must move the scale less.
-        List<UsageSample> WithSpikeAt(int hoursAgo)
-        {
-            var samples = new List<UsageSample>();
-            for (var i = 1; i <= 24 * 12; i++)
-            {
-                var t = Now.AddMinutes(-5 * i);
-                var inSpike = t < Now.AddHours(-hoursAgo) && t >= Now.AddHours(-hoursAgo - 1);
-                samples.Add(new UsageSample(t, inSpike ? 2m : 1m));
-                for (var d = 1; d <= 7; d++)
-                    samples.Add(new UsageSample(t.AddDays(-d), 1m));
-            }
-            return samples;
-        }
-
-        var fresh = UsageMath.ComputeRecencyScale(WithSpikeAt(0), Now, RecencyCfg());
-        var stale = UsageMath.ComputeRecencyScale(WithSpikeAt(12), Now, RecencyCfg());
-
-        Assert.True(fresh > stale, $"a spike an hour ago ({fresh}) should outweigh one 12 h ago ({stale})");
     }
 }

@@ -68,12 +68,9 @@ public class BatteryControl
     private async Task<EnergySegmentAction> GetCurrentActionAsync()
     {
         var (energySegments, currentSegmentUsage, currentChargeKwh, recencyScale) = await InitialiseEnergySegmentsAsync();
-        // The runway/OptimiseSegments uses the flat hourly average, but scaled by the same recency factor
-        // the forward projection uses, so a day running hotter than usual also shortens hours-to-empty and
-        // pulls the risk-weight pessimism in earlier (see UsageMath.ComputeRecencyScale).
-        var hourlyUsage = GetHourlyUsage() * recencyScale;
+        var hourlyUsage = GetHourlyUsage() * recencyScale; // runway tracks the same recency factor as the projection
         // Log the current segment's time-of-day estimate scaled to an hour (the runway/OptimiseSegments
-        // uses the recency-scaled flat hourly average below — see GetHourlyUsage and recencyScale).
+        // uses the flat hourly average below — see GetHourlyUsage).
         var hourlyUsageEstimate = currentSegmentUsage * Convert.ToDecimal(TimeSpan.FromHours(1) / _config.SegmentSize);
         _logger.LogInformation(
             "Initialised segments with {SegmentCount} {SegmentStart} - {SegmentEnd} First segment is estimate: {IsEstimate} Hourly usage estimate: {HourlyUsageEstimate}",
