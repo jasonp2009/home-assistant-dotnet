@@ -83,7 +83,7 @@ public class BatteryNaturalDeltaTests
         };
 
         BatteryPlanner.OptimiseSegments(segs, Cfg(), hourlyUsage: 1m);
-        BatteryPlanner.ApplyArbitrage(segs, Cfg());
+        BatteryPlanner.ApplyArbitrage(segs, Cfg(), 1m);
 
         Assert.Equal(EnergySegmentAction.Buy, segs[0].Action);
         Assert.Equal(EnergySegmentAction.Sell, segs[1].Action);

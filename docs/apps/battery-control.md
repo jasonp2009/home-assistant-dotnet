@@ -64,8 +64,30 @@ accordingly.
    buy-before-sell pairs (charge now, export later) use the lower `ArbitrageBuyBeforeSellWeight` because
    charging is low-regret — energy that never gets sold still serves household load — while sell-before-buy
    pairs keep the full `ArbitragePessimismWeight`. No-op when `ArbitrageEnabled` is false.
+   - **Sell-before-buy legs are priced no more cheaply than the boundary solver would price them.** Each leg
+     of a sell-before-buy pair uses `max(ArbitragePessimismWeight, GetRiskWeight(runway))` — the *more*
+     pessimistic of arbitrage's flat weight and the runway weight `OptimiseSegments` applies to the same
+     segment. Arbitrage is discretionary where the solver is mandatory, so it must never be the more
+     optimistic of the two: otherwise it sells now against a cheap refill the solver has already decided it
+     will not wait for. `max` (not substitution) matters because `GetRiskWeight` goes **negative** at deep
+     runway, and deferring to it unconditionally would price a full-battery refill *below* predicted.
+   - **The feasibility floor for a sell-before-buy pair scales with the drain it holds through** —
+     `ArbitrageHoldDrainReserveFraction` (see below). The fixed one-step buffer is a structural guard that
+     does not grow with hold length, so a pair holding through 15 kWh of projected drain was judged on the
+     same 0.83 kWh margin as one holding through 0.3 kWh.
 
-4. **Act + log.** Set the inverter `BatteryModeSelectEntity` to the charge/discharge/none mode for
+4. **Reversal cooldown.** Before acting, `BatteryControl.ApplyReversalCooldown` suppresses the current
+   segment's action to `None` if it is the **opposite** of the last action actually sent to the inverter and
+   fewer than `ActionReversalCooldownSegments` segments have passed
+   ([`BatteryPlanner.ApplyActionReversalCooldown`](../../src/apps/HassModel/Battery/BatteryPlanner.cs)).
+   The planner re-derives the whole plan every 5 minutes and holds no memory, so oscillation between
+   consecutive runs is invisible from inside a single plan — hence an actuation-level rule, with the "what
+   did I do last" state on `BatteryControl` so `BatteryPlanner` stays pure. Two safety asymmetries: it only
+   ever downgrades to `None` (it can never force a discharge to continue), and it **never blocks a Usage
+   (floor-defence) buy**, since refusing to charge can strand the battery on the floor. Blocking a
+   max-boundary *sell* is safe because the inverter exports surplus at 100% SoC anyway (see below).
+
+5. **Act + log.** Set the inverter `BatteryModeSelectEntity` to the charge/discharge/none mode for
    the current segment, and write the next action, its price, its time, and the projected
    "battery until empty" time to Home Assistant helper entities.
 
@@ -242,6 +264,8 @@ defaults that is `0` at ≥12 h runway → `1.0` at 6 h → `1.5` at 3 h → `2.
 | `ArbitrageBuyBeforeSellWeight` | 0.25 | Lower pessimism for buy-before-sell (charge-first) pairs — charging is low-regret, so they are judged less conservatively. Set ≤ `ArbitragePessimismWeight`, and not 0 |
 | `RoundTripEfficiency` | 0.9 | Charge→discharge efficiency; divides the buy cost in the profit gate only |
 | `ArbitrageMinMarginPerKwh` | 2 | Minimum net profit (c/kWh) required to commit a pair |
+| `ArbitrageHoldDrainReserveFraction` | 1.0 | Extra charge a **sell-before-buy** pair must keep above the floor, as a fraction of the household drain projected between the sell and the refill, on top of the fixed one-step buffer. The value **is** the tolerance: `k` means "the pair must still clear the floor if the drain runs `(1+k)×` the estimate". Set to 1.0 because the measured drain on 2026-08-12 ran ~2× the time-of-day estimate through the morning. `0` disables it. **Min side only** — a drain under-estimate makes *over*-filling less likely, not more. Known gap: haircuts drain only, not forecast solar |
+| `ActionReversalCooldownSegments` | 3 | Segments during which an action blocks the **opposite** action (0 = disabled). Only ever downgrades to `None`, and never blocks a floor-defence (`Usage`) buy |
 
 **Segmented usage estimate**
 
@@ -329,4 +353,12 @@ the [segmented usage estimate](#segmented-usage-estimate).
   window, overlap selection.
 - `BatteryArbitrageTests.cs` — the arbitrage profit gate, feasibility, estimate-based pessimism, locked
   vs forecast legs, demand-window rules, and the directional buy-before-sell weight.
+- `BatteryArbitrageAuditTests.cs` — end-to-end harness driving the real
+  `BuildSegments → OptimiseSegments → ApplyArbitrage` pipeline with the **deployed** config and a 42 h
+  price/usage/solar shape taken from 2026-08-12, written as before/after comparisons against the
+  pre-fix config. See [`../battery-arbitrage-fix-review.md`](../battery-arbitrage-fix-review.md).
+- `BatteryArbitrageHoldReserveTests.cs` — the hold-window drain reserve, including the short-hold,
+  low-drain and reserve-disabled **controls** that give the long-hold rejection its meaning.
+- `BatteryReversalCooldownTests.cs` — the reversal cooldown, notably that a floor-defence buy is never
+  blocked and that the guard never forces an action to continue.
 - `Clients/AmberClient/Extensions/BaseIntervalExtensionsTests.cs` — interval price helpers.

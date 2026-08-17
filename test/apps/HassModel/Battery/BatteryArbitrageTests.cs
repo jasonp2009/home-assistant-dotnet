@@ -35,7 +35,7 @@ public class BatteryArbitrageTests
         };
 
         BatteryPlanner.OptimiseSegments(segs, cfg, 1m);
-        BatteryPlanner.ApplyArbitrage(segs, cfg);
+        BatteryPlanner.ApplyArbitrage(segs, cfg, 1m);
 
         var actions = string.Join(",", segs.Select(s => s.Action));
         Assert.True(segs[2].Action == EnergySegmentAction.Buy, $"actions=[{actions}]");
@@ -62,7 +62,7 @@ public class BatteryArbitrageTests
         };
 
         BatteryPlanner.OptimiseSegments(segs, cfg, 1m);
-        BatteryPlanner.ApplyArbitrage(segs, cfg);
+        BatteryPlanner.ApplyArbitrage(segs, cfg, 1m);
 
         var actions = string.Join(",", segs.Select(s => s.Action));
         Assert.True(segs.All(s => s.Action == EnergySegmentAction.None), $"actions=[{actions}]");
@@ -92,7 +92,7 @@ public class BatteryArbitrageTests
         };
 
         BatteryPlanner.OptimiseSegments(segs, cfg, 1m);
-        BatteryPlanner.ApplyArbitrage(segs, cfg);
+        BatteryPlanner.ApplyArbitrage(segs, cfg, 1m);
 
         var actions = string.Join(",", segs.Select(s => s.Action));
         Assert.True(segs.All(s => s.Action == EnergySegmentAction.None), $"actions=[{actions}]");
@@ -120,7 +120,7 @@ public class BatteryArbitrageTests
         };
 
         BatteryPlanner.OptimiseSegments(segs, cfg, 1m);
-        BatteryPlanner.ApplyArbitrage(segs, cfg);
+        BatteryPlanner.ApplyArbitrage(segs, cfg, 1m);
 
         var actions = string.Join(",", segs.Select(s => s.Action));
         Assert.True(segs.All(s => s.Action == EnergySegmentAction.None), $"actions=[{actions}]");
@@ -147,7 +147,7 @@ public class BatteryArbitrageTests
         };
 
         BatteryPlanner.OptimiseSegments(segs, cfg, 1m);
-        BatteryPlanner.ApplyArbitrage(segs, cfg);
+        BatteryPlanner.ApplyArbitrage(segs, cfg, 1m);
 
         var actions = string.Join(",", segs.Select(s => s.Action));
         Assert.True(segs.All(s => s.Action == EnergySegmentAction.None), $"actions=[{actions}]");
@@ -175,7 +175,7 @@ public class BatteryArbitrageTests
         };
 
         BatteryPlanner.OptimiseSegments(segs, cfg, 1m);
-        BatteryPlanner.ApplyArbitrage(segs, cfg);
+        BatteryPlanner.ApplyArbitrage(segs, cfg, 1m);
 
         var actions = string.Join(",", segs.Select(s => s.Action));
         Assert.True(segs[1].Action == EnergySegmentAction.Sell, $"actions=[{actions}]");
@@ -207,7 +207,7 @@ public class BatteryArbitrageTests
         };
 
         BatteryPlanner.OptimiseSegments(segs, cfg, 1m);
-        BatteryPlanner.ApplyArbitrage(segs, cfg);
+        BatteryPlanner.ApplyArbitrage(segs, cfg, 1m);
 
         var actions = string.Join(",", segs.Select(s => s.Action));
         Assert.True(segs.All(s => s.Action == EnergySegmentAction.None), $"actions=[{actions}]");
@@ -238,7 +238,7 @@ public class BatteryArbitrageTests
         };
 
         BatteryPlanner.OptimiseSegments(segs, cfg, 1m);
-        BatteryPlanner.ApplyArbitrage(segs, cfg);
+        BatteryPlanner.ApplyArbitrage(segs, cfg, 1m);
 
         var actions = string.Join(",", segs.Select(s => s.Action));
         Assert.True(segs[2].Action == EnergySegmentAction.Buy, $"actions=[{actions}]");
@@ -270,7 +270,7 @@ public class BatteryArbitrageTests
         };
 
         BatteryPlanner.OptimiseSegments(segs, cfg, 1m);
-        BatteryPlanner.ApplyArbitrage(segs, cfg);
+        BatteryPlanner.ApplyArbitrage(segs, cfg, 1m);
 
         var actions = string.Join(",", segs.Select(s => s.Action));
         Assert.True(segs.All(s => s.Action == EnergySegmentAction.None), $"actions=[{actions}]");
@@ -300,7 +300,7 @@ public class BatteryArbitrageTests
         };
 
         BatteryPlanner.OptimiseSegments(segs, cfg, 1m);
-        BatteryPlanner.ApplyArbitrage(segs, cfg);
+        BatteryPlanner.ApplyArbitrage(segs, cfg, 1m);
 
         var actions = string.Join(",", segs.Select(s => s.Action));
         Assert.True(segs.All(s => s.Action == EnergySegmentAction.None), $"actions=[{actions}]");
@@ -330,7 +330,7 @@ public class BatteryArbitrageTests
         };
 
         BatteryPlanner.OptimiseSegments(segs, cfg, 1m);
-        BatteryPlanner.ApplyArbitrage(segs, cfg);
+        BatteryPlanner.ApplyArbitrage(segs, cfg, 1m);
 
         var actions = string.Join(",", segs.Select(s => s.Action));
         Assert.True(segs[1].Action == EnergySegmentAction.Sell, $"actions=[{actions}]");
@@ -360,7 +360,7 @@ public class BatteryArbitrageTests
         };
 
         BatteryPlanner.OptimiseSegments(segs, cfg, 1m);
-        BatteryPlanner.ApplyArbitrage(segs, cfg);
+        BatteryPlanner.ApplyArbitrage(segs, cfg, 1m);
 
         var actions = string.Join(",", segs.Select(s => s.Action));
         Assert.True(segs[0].Action == EnergySegmentAction.Sell, $"actions=[{actions}]");
@@ -390,7 +390,7 @@ public class BatteryArbitrageTests
         };
 
         BatteryPlanner.OptimiseSegments(segs, cfg, 1m);
-        BatteryPlanner.ApplyArbitrage(segs, cfg);
+        BatteryPlanner.ApplyArbitrage(segs, cfg, 1m);
 
         var actions = string.Join(",", segs.Select(s => s.Action));
         Assert.True(segs.All(s => s.Action == EnergySegmentAction.None), $"actions=[{actions}]");
@@ -419,7 +419,7 @@ public class BatteryArbitrageTests
         };
 
         BatteryPlanner.OptimiseSegments(segs, cfg, 1m);
-        BatteryPlanner.ApplyArbitrage(segs, cfg);
+        BatteryPlanner.ApplyArbitrage(segs, cfg, 1m);
 
         var actions = string.Join(",", segs.Select(s => s.Action));
         Assert.True(segs.All(s => s.Action == EnergySegmentAction.None), $"actions=[{actions}]");
@@ -447,7 +447,7 @@ public class BatteryArbitrageTests
         };
 
         BatteryPlanner.OptimiseSegments(segs, cfg, 1m);
-        BatteryPlanner.ApplyArbitrage(segs, cfg);
+        BatteryPlanner.ApplyArbitrage(segs, cfg, 1m);
 
         var actions = string.Join(",", segs.Select(s => s.Action));
         Assert.True(segs[2].Action == EnergySegmentAction.Buy, $"actions=[{actions}]");
@@ -480,7 +480,7 @@ public class BatteryArbitrageTests
         };
 
         BatteryPlanner.OptimiseSegments(segs, cfg, 1m);
-        BatteryPlanner.ApplyArbitrage(segs, cfg);
+        BatteryPlanner.ApplyArbitrage(segs, cfg, 1m);
 
         var actions = string.Join(",", segs.Select(s => s.Action));
         Assert.True(segs[2].Action == EnergySegmentAction.Buy, $"actions=[{actions}]");

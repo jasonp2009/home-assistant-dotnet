@@ -25,6 +25,13 @@ public class BatteryControl
     private readonly ILogger<BatteryControl> _logger;
     private readonly UsageTracker _usageTracker;
 
+    // Last action actually sent to the inverter, and the segment it was sent for. Feeds the reversal
+    // cooldown (see ApplyReversalCooldown). In-memory only: after a restart the cooldown simply doesn't
+    // bite until the first action of the new process, which is safe — it can only ever permit an action
+    // the planner already wanted.
+    private EnergySegmentAction _lastCommittedAction = EnergySegmentAction.None;
+    private DateTime _lastCommittedSegmentStartUtc = DateTime.MinValue;
+
     public BatteryControl(IHaContext ha, INetDaemonScheduler scheduler, IAppConfig<BatteryConfig> config,
         ILogger<BatteryControl> logger, ForecastSolarClient forecastSolarClient, AmberClient amberClient,
         HaHistoryClient haHistoryClient, ILogger<UsageTracker> usageLogger)
@@ -84,10 +91,10 @@ public class BatteryControl
         LogPlanningContext(energySegments, currentChargeKwh);
 
         BatteryPlanner.OptimiseSegments(energySegments, _config, hourlyUsage);
-        BatteryPlanner.ApplyArbitrage(energySegments, _config);
+        BatteryPlanner.ApplyArbitrage(energySegments, _config, hourlyUsage);
 
         var currentSegment = energySegments.First();
-        var currentAction = currentSegment.Action;
+        var currentAction = ApplyReversalCooldown(currentSegment);
         LogDecision(energySegments, currentSegment, currentAction, currentChargeKwh);
         _config.CurrentActionLog.SelectOption(currentAction.ToString());
         // Only surface a meaningful reason (Usage/Arbitrage). When the current segment has no action the
@@ -169,6 +176,41 @@ public class BatteryControl
         }
         var segments = BatteryPlanner.BuildSegments(startUtc, currentBatteryChargeKwh, segmentUsageEstimator, solarForecast, amberPrices, _config);
         return (segments, currentSegmentUsage, currentBatteryChargeKwh, recencyScale);
+    }
+
+    /// <summary>
+    /// Applies the action-reversal cooldown (see <see cref="BatteryPlanner.ApplyActionReversalCooldown"/>)
+    /// to the current segment's planned action and records what was actually committed, so the next run can
+    /// measure the gap. When the cooldown bites, the segment is downgraded to None in the plan too, so the
+    /// action/reason/end log lines stay consistent with what the inverter was told; the segment's projected
+    /// charge still carries the un-taken action's delta for the rest of this run, which is self-healing —
+    /// the next run rebuilds the whole trajectory from the freshly measured state of charge.
+    /// </summary>
+    private EnergySegmentAction ApplyReversalCooldown(EnergySegment currentSegment)
+    {
+        var proposed = currentSegment.Action;
+        var segmentsSinceLastAction = _lastCommittedAction is EnergySegmentAction.None
+            ? int.MaxValue
+            : (int)((currentSegment.StartUtc - _lastCommittedSegmentStartUtc) / _config.SegmentSize);
+        var allowed = BatteryPlanner.ApplyActionReversalCooldown(
+            proposed, currentSegment.ActionReason, _lastCommittedAction, segmentsSinceLastAction, _config);
+
+        if (allowed != proposed)
+        {
+            _logger.LogInformation(
+                "Reversal cooldown: suppressed {Proposed}/{Reason} — {Segments} segment(s) since the last {Last} (cooldown {Cooldown})",
+                proposed, currentSegment.ActionReason, segmentsSinceLastAction, _lastCommittedAction,
+                _config.ActionReversalCooldownSegments);
+            currentSegment.Action = EnergySegmentAction.None;
+            currentSegment.ActionReason = EnergySegmentActionReason.NotApplicable;
+        }
+
+        if (allowed is not EnergySegmentAction.None)
+        {
+            _lastCommittedAction = allowed;
+            _lastCommittedSegmentStartUtc = currentSegment.StartUtc;
+        }
+        return allowed;
     }
 
     /// <summary>

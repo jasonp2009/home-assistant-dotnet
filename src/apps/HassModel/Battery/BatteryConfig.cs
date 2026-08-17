@@ -81,6 +81,23 @@ public class BatteryConfig
     public decimal RoundTripEfficiency { get; set; }       // charge->discharge efficiency, used only in the profit gate
     public decimal ArbitrageMinMarginPerKwh { get; set; }  // minimum profit (price units) required to commit a pair
 
+    // Extra charge a SELL-BEFORE-BUY pair must keep in reserve, as a fraction of the household drain
+    // projected between the sell and the refill, on top of the fixed one-step feasibility buffer. The
+    // fixed buffer is a structural guard and does not grow with how long the pair holds, so a long hold
+    // was judged on the same margin as a short one. The value IS the tolerance: k means "the pair must
+    // still clear the floor if the drain runs (1 + k)x the estimate". Deployed at 1.0 because the drain on
+    // 2026-08-12 — the day the audited losses happened — ran about 2x the time-of-day estimate through the
+    // morning. 0 (unset) restores the old fixed-buffer-only behaviour. See BatteryPlanner.FeasiblePair.
+    // KNOWN GAP: this haircuts the DRAIN only. Where a hold window spans daylight, much of the reassurance
+    // in the projection comes from forecast SOLAR, whose error is not reserved against at all.
+    public decimal ArbitrageHoldDrainReserveFraction { get; set; }
+
+    // Segments for which an action blocks the OPPOSITE action from being committed (0 = disabled). Stops
+    // the discretionary buy/sell thrash seen in production (buy 25c -> sell 24c -> buy 26c on consecutive
+    // segments). Only ever downgrades an action to None, and never blocks a floor-defence (Usage) buy —
+    // see BatteryPlanner.ApplyActionReversalCooldown.
+    public int ActionReversalCooldownSegments { get; set; }
+
     public SelectEntity BatteryModeSelectEntity { get; set; }
     public string BatteryNoneMode { get; set; }
     public string BatteryChargeMode { get; set; }

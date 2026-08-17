@@ -91,7 +91,7 @@ public class BatteryBufferTests
             Seg(6, 6m,  buy: 100m),
         };
         BatteryPlanner.OptimiseSegments(cycle1, Cfg(), hourlyUsage: 1m);
-        BatteryPlanner.ApplyArbitrage(cycle1, Cfg());
+        BatteryPlanner.ApplyArbitrage(cycle1, Cfg(), 1m);
 
         // Cycle 2 (5 minutes later): that 1 kWh has materialised — SoC is now 50 — and solar nudges it
         // up, so "now" reads at-max-and-rising and the solver sells. Buying onto max last cycle directly
@@ -103,7 +103,7 @@ public class BatteryBufferTests
             Seg(2, 50m,   sell: 5m),
         };
         BatteryPlanner.OptimiseSegments(cycle2, Cfg(), hourlyUsage: 1m);
-        BatteryPlanner.ApplyArbitrage(cycle2, Cfg());
+        BatteryPlanner.ApplyArbitrage(cycle2, Cfg(), 1m);
 
         Assert.False(
             cycle1[0].Action == EnergySegmentAction.Buy && cycle2[0].Action == EnergySegmentAction.Sell,

@@ -39,6 +39,8 @@
   ArbitrageBuyBeforeSellWeight: 0.25
   RoundTripEfficiency: 0.9
   ArbitrageMinMarginPerKwh: 2
+  ArbitrageHoldDrainReserveFraction: 1.0
+  ActionReversalCooldownSegments: 3
   CurrentActionLog: input_select.current_action_battery_log
   CurrentActionReasonLog: input_select.current_action_reason_battery_log
   CurrentActionWithPriceLog: input_text.current_action_with_price_battery_log
