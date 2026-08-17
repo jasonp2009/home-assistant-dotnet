@@ -47,10 +47,27 @@ public static class ComfortMath
         => coefficient * (VapourPressure(tempC, relHumidityPct) - VapourPressure(tempC, referenceHumidityPct));
 
     /// <summary>
+    /// Draught ("infiltration") offset in °C. Wind drives cold outside air through the building
+    /// envelope and raises air movement indoors, both of which carry heat away from skin — which is
+    /// why a cold windy day feels markedly worse than a cold still day at the same temperature. The
+    /// offset is <c>−coefficient · (windSpeedKmh − calmWindKmh)</c>, zero at or below the calm
+    /// threshold since ordinary background air movement is already priced into how a room normally
+    /// feels.
+    ///
+    /// <para>Deliberately one-sided: it applies only while it is <b>colder outside than in</b>. Air
+    /// forced in from a warmer outdoors is not a draught, and in cooling season a breeze is more
+    /// likely to be welcome than not — so wind never makes the room feel cooler than the model
+    /// already thinks it is.</para>
+    /// </summary>
+    public static decimal WindOffset(
+        decimal airTemp, decimal outdoorTemp, decimal windSpeedKmh, decimal coefficient, decimal calmWindKmh)
+        => outdoorTemp >= airTemp ? 0M : -coefficient * Math.Max(0M, windSpeedKmh - calmWindKmh);
+
+    /// <summary>
     /// Estimated felt temperature (°C): the air temperature plus the radiant envelope offset and,
-    /// when <paramref name="relHumidityPct"/> is supplied, the humidity offset. The combined offset
-    /// is clamped to ±<paramref name="maxOffset"/> so an extreme or glitched reading cannot drive the
-    /// unit to extremes.
+    /// where the inputs are supplied, the humidity and draught offsets. The combined offset is clamped
+    /// to ±<paramref name="maxOffset"/> so an extreme or glitched reading cannot drive the unit to
+    /// extremes.
     /// </summary>
     public static decimal FeltTemperature(
         decimal airTemp,
@@ -59,11 +76,16 @@ public static class ComfortMath
         decimal maxOffset,
         decimal? relHumidityPct = null,
         decimal referenceHumidityPct = 50M,
-        decimal humidityCoefficient = 0.33M)
+        decimal humidityCoefficient = 0.33M,
+        decimal? windSpeedKmh = null,
+        decimal windCoefficient = 0M,
+        decimal calmWindKmh = 0M)
     {
         var offset = EnvelopeOffset(airTemp, outdoorTemp, kEnv);
         if (relHumidityPct is not null)
             offset += HumidityOffset(airTemp, relHumidityPct.Value, referenceHumidityPct, humidityCoefficient);
+        if (windSpeedKmh is not null)
+            offset += WindOffset(airTemp, outdoorTemp, windSpeedKmh.Value, windCoefficient, calmWindKmh);
         offset = Math.Clamp(offset, -maxOffset, maxOffset);
         return airTemp + offset;
     }

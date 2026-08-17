@@ -82,34 +82,86 @@ so the AC leans on cheap/abundant stored energy when the battery is full and bac
 low. [`HandleSocChange`](../../src/apps/HassModel/AC/AcControl.cs#L236) maps SoC to a
 `_curSocModifier` via `SocAdjusts` (with a hysteresis `Tolerance` so it doesn't flap at a boundary):
 
-| SoC | Modifier |
-|---|---|
-| 90–100% | +1 (more aggressive) |
-| 50–90% | 0 |
-| 30–50% | −1 |
-| 0–30% | −2 (more economical) |
+| SoC | Modifier | |
+|---|---|---|
+| 90–100% | +1 | more aggressive |
+| 30–90% | 0 | neutral |
+| 25–30% | −1 | more economical |
+| 15–25% | −2 | |
+| 0–15% | −5 | past the last profile → zone off entirely |
+
+The **neutral band deliberately reaches down to 30%**. Measured over 10 days, the daily SoC trough
+parks in the 30–45% range (modal bucket 35–40%), so a neutral band starting at 50% left the whole
+house on `Eco` — a 4 °C allowed felt deficit instead of 2 °C — for ~45% of the time, and did so
+disproportionately in cold weather (mean modifier −1.4 at 4–8 °C outdoor versus 0.0 at 14–18 °C),
+because cold → more heating → flatter battery → wider deadband → less heating. The boundary sits at
+30 rather than 35 so the modal trough falls *inside* the neutral band instead of straddling its edge
+and fighting the `Tolerance` hysteresis.
+
+> Note the `Tolerance` is hysteresis on *leaving* a band, so with `Tolerance: 2` the −1 band (25–30)
+> is held across 23–32 once entered. The bands are intentionally allowed to overlap in that sense.
 
 [`GetEffectiveProfile`](../../src/apps/HassModel/AC/AcControl.cs#L218) then shifts the chosen profile
 by that modifier: `desiredIndex = profileIndex − modifier`. Below the first profile it clamps to the
 most aggressive (Boost Plus); past the last profile it returns `null`, which turns the zone **off**
 entirely (the battery is too low to justify running that room).
 
-## Driving setpoint & "aggressiveness"
+## Driving setpoint & the coil-residual coast
 
-`ShouldEnableZone` only decides *whether* a zone runs. *How hard* the unit drives is
-`SetTemperature` ([AcControl.cs:122](../../src/apps/HassModel/AC/AcControl.cs#L122)). It computes an
-**aggressiveness** term from how long the room temperature has been **failing to move in the desired
-direction**:
+`ShouldEnableZone` only decides *whether* a zone runs. *How hard* the unit drives is `SetTemperature`,
+which sets the unit's setpoint as an offset from its own return-air reading:
+`SetTemp = RoomTemp ± drive`. The maths is pure and unit-tested in
+[`DriveMath`](../../src/apps/HassModel/AC/DriveMath.cs).
 
-- Per zone, `_tempLastChangedDict` records the last time the room temperature moved the *right* way
-  (cooler while cooling, warmer while heating).
-- The longer a room has stalled (no helpful movement) since it last changed or since the zone came
-  on, the higher its aggressiveness. It is averaged across the active rooms, floored, and used to
-  push the unit's **actual setpoint** past its measured room temperature:
-  `SetTemp = RoomTemp ∓ aggressiveness`.
+The drive has two terms, per room:
 
-This is a time-since-progress feedback term, not a comfort term. Note it drives off the **unit's**
-single `RoomTemp` (its return-air reading), whereas zone enable/disable uses the **per-room** sensors.
+| Term | Meaning |
+|---|---|
+| **proportional** | `DriveErrorGain × error`, where `error` is how far the room's **felt** temperature still is from its `offPoint` — the point at which its zone would switch off |
+| **stall** | `minutes since the room last made progress ÷ 5 − 1`, floored at −1 — the original time-since-progress feedback |
+
+They are aggregated across active rooms with **`Max`**, not an average: the unit has one setpoint and
+the zones gate delivery, so a room that is already satisfied has its zone shut anyway and must not be
+able to dilute a room that is still cold.
+
+### Why a *negative* drive exists
+
+A negative drive commands a setpoint past the unit's own return-air temperature, which idles the
+compressor while the fan keeps running. That is deliberate — it blows the heat (or cold) still stored
+in the coil into the house rather than stranding it, and avoids paying to warm the coil only to shut
+down moments later.
+
+**But that only pays off at the end of a cycle.** Residual harvested mid-cycle, while the room is
+still well short of target, is simply re-heated minutes later. So the stall term's sign is gated on
+`DriveCoastWindow`:
+
+- **Within `DriveCoastWindow` (default 1 °C) of the off-point** — the cycle is ending, the stall term
+  applies in full and may pull the drive negative. The coast behaves exactly as it always did.
+- **Further out** — the stall term is clamped to a *bonus*: it can still add drive to a room that is
+  failing to respond, but it can no longer subtract. The unit is never told to stop while a room is
+  still well short of its target.
+
+### Progress must be sustained, not a single tick
+
+`_tempLastChangedDict` records when a room last made progress, and the stall clock resets from it. The
+room sensors quantise at **0.1 °C**, so resetting on any single favourable tick pinned the drive at −1
+right through the middle of heating cycles. Instead, `DriveMath.AccumulateProgress` accumulates *net*
+movement in the conditioned direction — the wrong way subtracts, and the total is floored at zero — and
+only resets the clock once it clears `DriveProgressThreshold` (default 0.3 °C). A room oscillating on
+sensor noise therefore never registers as responding.
+
+### Rounding
+
+`DriveMath` deliberately returns a **fractional** drive. `MitsubishiClient.SetTemperature` already
+integerises the final setpoint, and does so *in the conditioning direction* (`Ceiling` when heating,
+`Floor` when cooling). Rounding in the drive as well would round the wrong way first and discard up to
+a degree before the client ever saw it.
+
+> Note the drive works off the **unit's** single `RoomTemp` (its return-air reading), whereas zone
+> enable/disable and the drive's own `error` term use the **per-room** felt temperatures.
+
+`AcAggressivenessLogEntity` logs the **unrounded, uncapped** drive, so the fractional detail stays
+visible in history and it is obvious when `MaxDrive` binds.
 
 ## Occupancy gating
 
@@ -150,24 +202,37 @@ exists for each room (see [Felt-temperature control](#felt-temperature-control) 
 - **Two different temperatures**: zone decisions use per-room HA sensors; the aggressiveness/driving
   setpoint uses the unit's own return-air `RoomTemp`.
 - The log level for `src.apps.HassModel.AC.AcControl` in `appsettings.json` is misspelled `"Waring"`,
-  so it does not take effect — the category falls back to `Default` (`Debug`). This is why the
-  felt-temperature `Debug` lines below are visible in production today; if that key is ever corrected
-  to `Warning`, set it to `Debug` instead to keep them.
+  so it does not take effect — the category falls back to `Default` (`Debug`). **Set it to
+  `"Information"`**: that keeps all the telemetry below except the per-evaluation `Debug` breakdown,
+  which is what drives the log volume. Do *not* set it to `"Warning"` — that would suppress the
+  summaries too. `appsettings.json` is not tracked by git, so this has to be changed by hand.
 
 ## Debugging the felt temperature (deployed)
 
 Read the deployed add-on logs over the HA REST API (see [deployed-logs.md](../deployed-logs.md)) and
 look for:
 
-- **`Felt-temperature control: …`** (`Information`, once at startup) — confirms the bound config
-  (`EnvCoefficient`, `MaxComfortOffset`, humidity coefficient/reference, EMA τ and backfill window).
-- **`Outdoor temp EMA seeded from N … sample(s) …`** (`Information`, once at startup) — how many
-  weather-history points seeded the EMA and the resulting `smoothed` vs `instantaneous` outdoor temp.
-- **`Felt temp <Room> (<Mode>): air … + envelope … + humidity … = felt …°C; set …, force/on/off …`**
-  (`Debug`, once per room per evaluation) — the full per-room breakdown: the air temperature, each
-  offset component (so you can see whether the radiant or the humidity term is driving the gap), the
-  smoothed vs raw outdoor temperature, the resulting felt temperature, and the thresholds it is
-  compared against. This is the line to grep when a room feels off.
+| Log line | Level | Rate |
+|---|---|---|
+| `Felt-temperature control: …` | `Information` | once at startup — confirms the bound config |
+| `Outdoor temp EMA seeded from N … sample(s) …` | `Information` | once at startup — samples found, smoothed vs instantaneous outdoor temp |
+| `Felt <date> <Room> (<Mode>): air … = felt …°C \| set …, force/on/off … \| outdoor … \| zone …` | `Information` | per room, every `FeltLogIntervalMinutes`, **plus immediately on any decision change** |
+| `Felt <date> <Room> (<Mode>): zone off — <veto>` | `Information` | same, for rooms refused before the comparison could run |
+| `Drive <date> (<Mode>): N room(s) driving, raw … -> …°C past return air …` | `Information` | same cadence, for the driving setpoint |
+| `Felt temp <Room> …` (full breakdown) | `Debug` | once per room per evaluation — deep dives only |
+| `Drive <Room>: felt … vs off-point … (error …), stalled … min -> …` | `Debug` | per room per evaluation — why the drive is what it is |
+
+### Why the summaries are rate-limited
+
+The add-on journal holds roughly **7 days** (~139 k entries); at `Debug` the app writes ~20 k
+lines/day, so the full breakdown cannot survive long enough to judge a tuning change made a fortnight
+ago. The `Information` summaries are paced to `FeltLogIntervalMinutes` (default 15) so a fortnight
+fits comfortably, and they carry a **full date** because the journal's own stamps are time-only.
+
+They are also emitted for **vetoed** rooms. Previously a room refused before the felt-temperature
+comparison — switched off, occupancy veto, or pushed past the last profile by the SoC shift — produced
+no line at all, which silently hid exactly the rooms worth investigating. The veto reason is now named
+(`Occupancy`, `SwitchedOff`, `NoReading`, `NoProfile`, `NotConditioning`).
 
 ## Felt-temperature control
 
@@ -197,9 +262,52 @@ air and the outdoor air, so the colder it is outside the more those surfaces dra
 `kEnv` (config `EnvCoefficient`) rolls each room's exposure (window area / insulation) into one
 number. It is global by default (`AcConfig.EnvCoefficient`, 0.1) with an optional per-room override
 (`AcRoomConfig.EnvCoefficient`) — the internal **Hallway** is set to `0` (no external surfaces, no
-correction). The total offset is clamped to ±`MaxComfortOffset` (default 3 °C) so a glitched outdoor
+correction). The total offset is clamped to ±`MaxComfortOffset` (default 5 °C) so a glitched outdoor
 reading can't drive the unit to extremes. Start from the default and tune; the outdoor temperature
 moves slowly, so the offset drifts gently and does not cause mode/zone thrash.
+
+> `MaxComfortOffset` is a **sanity guard, not a tuning knob**. If it binds in ordinary weather it is
+> silently flattening the correction, which hands back exactly the weather dependence the felt
+> temperature exists to remove. A test asserts it stays clear in the harshest plausible local winter
+> (0 °C outdoors, 21 °C indoors, 50 km/h wind).
+
+#### How far can `kEnv` go?
+
+Holding the felt temperature constant requires `air = set + kEnv/(1−kEnv)·(set − outdoor)`:
+
+| `kEnv` | extra air °C per °C outdoor deficit | required air at set 23 °C, outdoor 8 °C |
+|---|---|---|
+| 0.10 | +0.11 | 24.7 °C |
+| 0.15 | +0.18 | 25.6 °C |
+| 0.20 | +0.25 | 26.8 °C |
+
+Beyond ~0.15 the model demands implausible air temperatures on cold days. For reference, an
+order-of-magnitude operative-temperature calculation (`T_op = (T_air + MRT)/2`, single-glazed windows
+over ~6% of enclosure area) puts the *pure radiant* value near **0.03**, so the configured 0.1 is
+already generous — if the house still feels cold on cold days, suspect delivery before this
+coefficient.
+
+### Draught (wind) offset
+
+Wind drives cold outside air through the envelope and raises air movement indoors, both of which carry
+heat away from skin — which is why a cold *windy* day feels markedly worse than a cold still day at
+the same temperature. Local wind ranges roughly 8–46 km/h, and none of it reached the felt temperature
+before this term existed.
+
+`WindOffset = −WindCoefficient · max(0, windKmh − CalmWindKmh)`
+
+- Zero at or below `CalmWindKmh` (10 km/h) — ordinary background air movement is already priced into
+  how a room normally feels.
+- **One-sided**: it applies only while it is *colder outside than in*. Air forced in from a warmer
+  outdoors is not a cold draught, and in cooling season a breeze is more likely to be welcome, so wind
+  never makes a room feel cooler than the rest of the model already thinks it is.
+- `WindCoefficient` defaults to **0.03** °C per km/h → −0.6 °C at 30 km/h.
+
+The wind speed is EMA-smoothed like the outdoor temperature but with a much shorter constant,
+`WindTimeConstantHours` (3 h against 15 h). Draught is felt as the weather does it, not filtered
+through the building's thermal mass; it is smoothed at all only because wind is gusty and the weather
+entity updates irregularly (median 2.9 h between samples, max 14.25 h). It is seeded on startup from
+`wind_speed` history the same way.
 
 > This is distinct from the profile's `WeatherOffset`, which stays an independent on/off **economy
 > gate** on the outdoor temperature; the envelope offset is a continuous **comfort** correction on
@@ -236,9 +344,32 @@ temperature also includes the Steadman apparent-temperature vapour-pressure term
 where `e` is the water-vapour pressure (`ComfortMath.VapourPressure`, Magnus approximation) and
 `refRh` is `ReferenceHumidity` (default 50%). Anchoring to a reference humidity means a typical indoor
 humidity contributes ≈0, so only unusual humidity moves the felt temperature — positive (feels
-hotter) when muggy, slightly negative when very dry. The effect is small at mild winter conditions
-and grows on a hot, humid summer afternoon (e.g. ~+1.3 °C at 30 °C / 70% RH), where it makes cooling
-a little more aggressive. `HumidityCoefficient` defaults to **0.15** — deliberately below the textbook
-Steadman value of 0.33, which is calibrated for outdoor apparent temperature and over-weights
-humidity at indoor room temperatures (≈0.4 °C per 10% RH at 22 °C, vs ≈0.9 °C at 0.33). Rooms
-without a humidity sensor simply omit this term.
+hotter) when muggy, slightly negative when very dry. Rooms without a humidity sensor omit this term.
+
+#### Calibrating `HumidityCoefficient`
+
+`HumidityCoefficient` defaults to **0.10**, calibrated against **Fanger PMV** (ISO 7730, sedentary
+met 1.1, still air, `t_r = t_a`) expressed as the equivalent air-temperature shift per **+10% RH**:
+
+| air °C | PMV (clo 1.0) | this model @ 0.10 |
+|---|---|---|
+| 16 | 0.18 | 0.18 |
+| 22 | 0.26 | 0.26 |
+| 26 | 0.33 | 0.33 |
+| 30 | 0.40 | 0.42 |
+
+Two things fall out of that table, and both matter:
+
+- **The Magnus vapour-pressure form is the right shape.** Its sensitivity grows with temperature at
+  almost exactly PMV's rate (≈2.6× from 16→32 °C, against PMV's ≈2.4× at fixed clothing), so no
+  temperature-dependent weighting is needed — the physics is already in the exponential.
+- **Humidity is *not* negligible indoors in winter.** At 20 °C a 10% RH change is still worth ≈0.24 °C.
+  The term must therefore stay active year-round. Note the direction of the goal: *keeping* humidity in
+  the felt temperature is what makes comfort humidity-invariant, because the controller then
+  compensates for it (slightly warmer air when dry, slightly cooler when muggy). Removing or tapering
+  the term would let humidity swings pass straight through to how the room feels.
+
+The textbook Steadman coefficient of **0.33** is an *outdoor* apparent-temperature figure and
+over-weights humidity at room temperature by roughly 3×. The previous value of **0.15** was ≈1.5× too
+strong (0.40 °C per 10% RH at 22 °C, against PMV's 0.26). The calibration is pinned by tests in
+[`ComfortMathTests`](../../test/apps/HassModel/AC/ComfortMathTests.cs) so it cannot drift silently.

@@ -1,9 +1,12 @@
 ﻿src.apps.HassModel.AC.AcConfig:
   DefaultProfileName: Standard
   EnvCoefficient: 0.1
-  MaxComfortOffset: 3
+  MaxComfortOffset: 5  # sanity guard only - if this binds in ordinary weather it is flattening the correction
   ReferenceHumidity: 50
-  HumidityCoefficient: 0.15  # below the Steadman 0.33: that value over-weights humidity at room temperature
+  HumidityCoefficient: 0.10  # calibrated to Fanger PMV: ~0.26 C per 10% RH at 22 C (Steadman's 0.33 is an outdoor figure)
+  WindCoefficient: 0.03  # C per km/h above CalmWindKmh, only while it is colder outside: -0.6 C at 30 km/h
+  CalmWindKmh: 10
+  WindTimeConstantHours: 3
   OutdoorTempTimeConstantHours: 15
   OutdoorTempBackfillHours: 48
   Profiles:
@@ -37,13 +40,15 @@
       SocMin: 90
       SocMax: 100
       Tolerance: 2
+    # Neutral runs down to 30%: the daily SoC trough parks at 30-45% (modal bucket 35-40%), which used
+    # to sit inside the -1 band and quietly held the whole house on Eco for ~45% of the time.
     - ProfileModifier: 0
-      SocMin: 50
+      SocMin: 30
       SocMax: 90
       Tolerance: 2
     - ProfileModifier: -1
       SocMin: 25
-      SocMax: 50
+      SocMax: 30
       Tolerance: 2
     - ProfileModifier: -2
       SocMin: 15

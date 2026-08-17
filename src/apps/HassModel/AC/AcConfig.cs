@@ -24,8 +24,30 @@ public class AcConfig
     /// </summary>
     public decimal EnvCoefficient { get; set; } = 0.1M;
 
-    /// <summary>Clamp (°C) on the total felt-temperature offset, so a bad outdoor reading can't drive the unit to extremes.</summary>
-    public decimal MaxComfortOffset { get; set; } = 3M;
+    /// <summary>
+    /// Clamp (°C) on the total felt-temperature offset, so a bad outdoor reading can't drive the unit
+    /// to extremes. This is a sanity guard, not a tuning knob — if it binds in ordinary weather it is
+    /// silently flattening the correction, which re-introduces exactly the weather dependence the felt
+    /// temperature exists to remove. Sized to stay clear of the envelope and draught terms combined.
+    /// </summary>
+    public decimal MaxComfortOffset { get; set; } = 5M;
+
+    /// <summary>
+    /// Draught coefficient: °C of felt temperature lost per km/h of wind above <see cref="CalmWindKmh"/>,
+    /// while it is colder outside than in. At 0.03 a 30 km/h wind is worth −0.6 °C.
+    /// </summary>
+    public decimal WindCoefficient { get; set; } = 0.03M;
+
+    /// <summary>Wind speed (km/h) below which there is no draught penalty — ordinary background air movement.</summary>
+    public decimal CalmWindKmh { get; set; } = 10M;
+
+    /// <summary>
+    /// Time constant (hours) of the wind-speed EMA. Much shorter than the outdoor-temperature constant:
+    /// draught is felt as the weather does it, not filtered through the building's thermal mass. It is
+    /// smoothed at all only because wind is gusty and the weather entity updates irregularly (median
+    /// 2.9 h between samples). 0 disables smoothing.
+    /// </summary>
+    public decimal WindTimeConstantHours { get; set; } = 3M;
 
     /// <summary>Reference relative humidity (%) at which the humidity term contributes nothing; only humidity above/below this shifts the felt temperature.</summary>
     public decimal ReferenceHumidity { get; set; } = 50M;
@@ -33,9 +55,12 @@ public class AcConfig
     /// <summary>
     /// Coefficient on the Steadman vapour-pressure (humidity) term of the felt-temperature estimate.
     /// Deliberately below the textbook Steadman value of 0.33 — the full coefficient is calibrated for
-    /// outdoor apparent temperature and over-weights humidity at indoor room temperatures.
+    /// outdoor apparent temperature and over-weights humidity at indoor room temperatures. Calibrated
+    /// against Fanger PMV (ISO 7730, sedentary, still air): the vapour-pressure form already grows with
+    /// temperature at very nearly PMV's rate, so only the overall scale needs fixing. At 0.10 the term
+    /// is worth ≈0.26 °C per 10 % RH at 22 °C, matching PMV; the previous 0.15 was ≈1.5× too strong.
     /// </summary>
-    public decimal HumidityCoefficient { get; set; } = 0.15M;
+    public decimal HumidityCoefficient { get; set; } = 0.10M;
 
     /// <summary>
     /// Time constant (hours) of the outdoor-temperature EMA that feeds the radiant envelope offset.
@@ -46,6 +71,38 @@ public class AcConfig
 
     /// <summary>Hours of weather history replayed on startup to seed the outdoor-temperature EMA.</summary>
     public int OutdoorTempBackfillHours { get; set; } = 48;
+
+    /// <summary>
+    /// How close (°C) a room must be to its off-point before the unit is allowed a <em>negative</em>
+    /// drive — i.e. before it may coast on the heat/cold still stored in the coil. Coasting only pays
+    /// off at the end of a cycle, where that residual would otherwise be stranded; further out it is
+    /// simply re-heated minutes later, so the drive is floored at zero instead. See <see cref="DriveMath"/>.
+    /// </summary>
+    public decimal DriveCoastWindow { get; set; } = 1M;
+
+    /// <summary>
+    /// Degrees of unit setpoint per degree a room is short of its off-point. 1.0 asks the unit to push
+    /// exactly as far past its return-air temperature as the coldest active room still has to travel.
+    /// </summary>
+    public decimal DriveErrorGain { get; set; } = 1M;
+
+    /// <summary>Cap (°C) on how far past its own return-air temperature the unit may be driven.</summary>
+    public decimal MaxDrive { get; set; } = 5M;
+
+    /// <summary>
+    /// Net movement (°C) in the conditioned direction a room must accumulate before it counts as having
+    /// responded and the stall clock resets. The room sensors quantise at 0.1 °C, so resetting on a
+    /// single tick pinned the drive at −1 through the middle of heating cycles.
+    /// </summary>
+    public decimal DriveProgressThreshold { get; set; } = 0.3M;
+
+    /// <summary>
+    /// How often (minutes) the per-room felt-temperature summary is written at <c>Information</c>. A
+    /// summary is also written immediately whenever a zone decision changes, so this only paces the
+    /// steady state. The deployed add-on journal holds roughly seven days, so this is what decides
+    /// whether a tuning change can still be judged a fortnight later.
+    /// </summary>
+    public int FeltLogIntervalMinutes { get; set; } = 15;
 }
 
 public class AcProfileConfig

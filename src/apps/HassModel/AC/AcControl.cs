@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -21,9 +21,24 @@ public class AcControl : IAsyncInitializable
     private readonly IMitsubishiClient _mitsubishiClient;
     private readonly HaHistoryClient _historyClient;
     private readonly Dictionary<int, DateTime> _tempLastChangedDict = new();
+
+    // Net movement in the conditioned direction accumulated since the stall clock last reset. The room
+    // sensors quantise at 0.1 C, so a single tick is not evidence the room is responding.
+    private readonly Dictionary<int, decimal> _tempProgressDict = new();
+
+    // Which mode those accumulators were built under. "Helpful" movement flips sign between cooling and
+    // heating, so credit banked in the other mode is not just stale, it means the opposite.
+    private bool? _progressIsCooling;
+
+    // Rate limiting for the Information-level telemetry (see LogRoomSummary).
+    private readonly Dictionary<int, (DateTime LoggedAt, bool Enable, ZoneVeto Veto)> _lastRoomLogDict = new();
+    private DateTime _driveLoggedAt;
+    private decimal _driveLogged;
     private int _curSocModifier = 0;
     private decimal? _outdoorTempEma;
     private DateTime _outdoorTempEmaUpdatedUtc;
+    private decimal? _windEma;
+    private DateTime _windEmaUpdatedUtc;
 
     public AcControl(IHaContext ha, INetDaemonScheduler scheduler, IAppConfig<AcConfig> config,
         ILogger<AcControl> logger, IMitsubishiClient mitsubishiClient, HaHistoryClient historyClient)
@@ -37,6 +52,7 @@ public class AcControl : IAsyncInitializable
         {
             _tempLastChangedDict.Add(room.ZoneId,
                 room?.TemperatureSensorEntity?.EntityState?.LastChanged ?? DateTime.Now);
+            _tempProgressDict.Add(room!.ZoneId, 0M);
             room.AcToggleEntity.StateChanges()
                 .SubscribeAsync(acToggleEvent =>
                 {
@@ -66,8 +82,15 @@ public class AcControl : IAsyncInitializable
                         var tempDiff = Convert.ToDecimal(temperatureChangedEvent.New.State) -
                                        Convert.ToDecimal(temperatureChangedEvent.Old.State);
                         var isCooling = _mitsubishiClient.State.SetMode == AcMode.Cool;
-                        if ((isCooling && tempDiff < 0) || (!isCooling && tempDiff > 0))
-                            _tempLastChangedDict[room.ZoneId] = DateTime.Now;
+                        DiscardProgressOnModeFlip(isCooling);
+                        // Only a sustained move counts as the room responding: accumulate net progress
+                        // and reset the stall clock once it clears the threshold. Resetting on a single
+                        // 0.1 C tick pinned the drive at -1 through the middle of heating cycles.
+                        var (progress, reached) = DriveMath.AccumulateProgress(
+                            _tempProgressDict.GetValueOrDefault(room.ZoneId), tempDiff, isCooling,
+                            _config.Value.DriveProgressThreshold);
+                        _tempProgressDict[room.ZoneId] = progress;
+                        if (reached) _tempLastChangedDict[room.ZoneId] = DateTime.Now;
                     }
 
                     return HandleChange();
@@ -88,14 +111,14 @@ public class AcControl : IAsyncInitializable
 
         _forecastHome.StateChanges().SubscribeAsync(_ =>
         {
-            UpdateOutdoorTempEma();
+            UpdateWeatherEmas();
             return HandleChange();
         }, _logger);
         _config.Value.SolarBatteryStateOfChargeEntity.StateChanges().SubscribeAsync(_ => HandleSocChange(), _logger);
 
         scheduler.RunEvery(TimeSpan.FromSeconds(60), () =>
         {
-            UpdateOutdoorTempEma();
+            UpdateWeatherEmas();
             var currentMeasuredTemp = _mitsubishiClient.State?.RoomTemp;
             _mitsubishiClient.UpdateState().Wait();
             if (currentMeasuredTemp != _mitsubishiClient.State?.RoomTemp) HandleChange().Wait();
@@ -112,6 +135,13 @@ public class AcControl : IAsyncInitializable
     // WeatherOffset economy gate keeps using the instantaneous CurrentWeatherTemperature.
     private decimal SmoothedWeatherTemperature => _outdoorTempEma ?? CurrentWeatherTemperature;
 
+    private decimal? CurrentWindSpeedOrNull =>
+        _forecastHome.Attributes?.WindSpeed is { } w ? Convert.ToDecimal(w) : null;
+
+    // Wind smoothed over a much shorter constant than the temperature: a draught is felt as the weather
+    // does it, not filtered through the building's thermal mass. Null until a reading has been seen.
+    private decimal? SmoothedWindSpeed => _windEma ?? CurrentWindSpeedOrNull;
+
     public async Task InitializeAsync(CancellationToken cancellationToken)
     {
         _logger.LogDebug("Attempting to login to mitsubishi client");
@@ -119,11 +149,13 @@ public class AcControl : IAsyncInitializable
         _logger.LogDebug("Successfully logged in to mitsubishi client");
 
         _logger.LogInformation(
-            "Felt-temperature control: EnvCoefficient {Env}, MaxComfortOffset {Max}°C, humidity coef {HumCoef} @ ref {RefRh}%, outdoor EMA τ {Tau}h (backfill {Backfill}h)",
+            "Felt-temperature control: EnvCoefficient {Env}, MaxComfortOffset {Max}°C, humidity coef {HumCoef} @ ref {RefRh}%, wind coef {WindCoef}/km/h above {Calm} km/h, outdoor EMA τ {Tau}h / wind EMA τ {WindTau}h (backfill {Backfill}h)",
             _config.Value.EnvCoefficient, _config.Value.MaxComfortOffset, _config.Value.HumidityCoefficient,
-            _config.Value.ReferenceHumidity, _config.Value.OutdoorTempTimeConstantHours, _config.Value.OutdoorTempBackfillHours);
+            _config.Value.ReferenceHumidity, _config.Value.WindCoefficient, _config.Value.CalmWindKmh,
+            _config.Value.OutdoorTempTimeConstantHours, _config.Value.WindTimeConstantHours,
+            _config.Value.OutdoorTempBackfillHours);
 
-        await SeedOutdoorTempEmaAsync();
+        await SeedWeatherEmasAsync();
         await HandleSocChange(cancellationToken);
         await HandleChange(cancellationToken);
     }
@@ -133,33 +165,69 @@ public class AcControl : IAsyncInitializable
     /// smoothed value rather than the instantaneous reading after a restart. Falls back to the current
     /// reading when no history is available; either way it then advances to "now".
     /// </summary>
-    private async Task SeedOutdoorTempEmaAsync()
+    private async Task SeedWeatherEmasAsync()
     {
         var startUtc = DateTime.UtcNow.AddHours(-_config.Value.OutdoorTempBackfillHours);
-        var history = await _historyClient.GetAttributeHistoryAsync(_forecastHome.EntityId, "temperature", startUtc);
-        var seed = history is not null ? ComfortMath.SeedEma(history, _config.Value.OutdoorTempTimeConstantHours) : null;
-        if (seed is { } s)
+
+        var tempHistory = await _historyClient.GetAttributeHistoryAsync(_forecastHome.EntityId, "temperature", startUtc);
+        if (tempHistory is not null &&
+            ComfortMath.SeedEma(tempHistory, _config.Value.OutdoorTempTimeConstantHours) is { } tempSeed)
         {
-            _outdoorTempEma = s.Ema;
-            _outdoorTempEmaUpdatedUtc = s.AsOfUtc;
+            _outdoorTempEma = tempSeed.Ema;
+            _outdoorTempEmaUpdatedUtc = tempSeed.AsOfUtc;
         }
 
-        UpdateOutdoorTempEma(); // advance the seed to the current reading/time (or seed it when there was no history)
+        var windHistory = await _historyClient.GetAttributeHistoryAsync(_forecastHome.EntityId, "wind_speed", startUtc);
+        if (windHistory is not null &&
+            ComfortMath.SeedEma(windHistory, _config.Value.WindTimeConstantHours) is { } windSeed)
+        {
+            _windEma = windSeed.Ema;
+            _windEmaUpdatedUtc = windSeed.AsOfUtc;
+        }
+
+        UpdateWeatherEmas(); // advance the seeds to the current readings/time (or seed them when there was no history)
 
         _logger.LogInformation(
-            "Outdoor temp EMA seeded from {Count} weather history sample(s) over {Hours}h: smoothed {Smoothed:0.0}°C vs instantaneous {Raw:0.0}°C",
-            history?.Count ?? 0, _config.Value.OutdoorTempBackfillHours, SmoothedWeatherTemperature, CurrentWeatherTemperature);
+            "Weather EMAs seeded from {TempCount} temperature and {WindCount} wind sample(s) over {Hours}h: outdoor {Smoothed:0.0}°C (raw {Raw:0.0}°C), wind {Wind:0.0} km/h (raw {RawWind:0.0})",
+            tempHistory?.Count ?? 0, windHistory?.Count ?? 0, _config.Value.OutdoorTempBackfillHours,
+            SmoothedWeatherTemperature, CurrentWeatherTemperature, SmoothedWindSpeed, CurrentWindSpeedOrNull);
     }
 
-    /// <summary>Folds the current outdoor reading into the EMA (or initialises it on the first call).</summary>
-    private void UpdateOutdoorTempEma()
+    /// <summary>
+    /// Clears the per-room progress accumulators when the unit swaps between cooling and heating.
+    /// "Helpful" movement is <em>falling</em> temperature while cooling and <em>rising</em> while
+    /// heating, so credit banked before the swap counts the wrong way afterwards and could reset a
+    /// room's stall clock on movement that is actually taking it further from target. The mode is
+    /// unit-wide, so one flip invalidates every room at once.
+    /// </summary>
+    private void DiscardProgressOnModeFlip(bool isCooling)
     {
-        if (CurrentWeatherTemperatureOrNull is not { } reading) return;
+        if (_progressIsCooling == isCooling) return;
+        _progressIsCooling = isCooling;
+        foreach (var zoneId in _tempProgressDict.Keys.ToList()) _tempProgressDict[zoneId] = 0M;
+    }
+
+    /// <summary>Folds the current weather readings into their EMAs (or initialises them on the first call).</summary>
+    private void UpdateWeatherEmas()
+    {
         var nowUtc = DateTime.UtcNow;
-        _outdoorTempEma = _outdoorTempEma is { } prev
-            ? ComfortMath.EmaStep(prev, _outdoorTempEmaUpdatedUtc, reading, nowUtc, _config.Value.OutdoorTempTimeConstantHours)
-            : reading;
-        _outdoorTempEmaUpdatedUtc = nowUtc;
+
+        if (CurrentWeatherTemperatureOrNull is { } temperature)
+        {
+            _outdoorTempEma = _outdoorTempEma is { } previousTemp
+                ? ComfortMath.EmaStep(previousTemp, _outdoorTempEmaUpdatedUtc, temperature, nowUtc,
+                    _config.Value.OutdoorTempTimeConstantHours)
+                : temperature;
+            _outdoorTempEmaUpdatedUtc = nowUtc;
+        }
+
+        if (CurrentWindSpeedOrNull is { } wind)
+        {
+            _windEma = _windEma is { } previousWind
+                ? ComfortMath.EmaStep(previousWind, _windEmaUpdatedUtc, wind, nowUtc, _config.Value.WindTimeConstantHours)
+                : wind;
+            _windEmaUpdatedUtc = nowUtc;
+        }
     }
 
     private async Task HandleChange(CancellationToken cancellationToken = default)
@@ -187,11 +255,20 @@ public class AcControl : IAsyncInitializable
         UpdateLogInputs();
     }
 
+    /// <summary>
+    /// Sets how hard the unit drives, as an offset from its own return-air temperature. See
+    /// <see cref="DriveMath"/> for the shape of the calculation — in particular why a negative drive
+    /// (the coil-residual coast) is only allowed near a room's off-point, and why the rooms are
+    /// aggregated with Max rather than an average.
+    /// </summary>
     private async Task SetTemperature(CancellationToken cancellationToken = default)
     {
-        if (_mitsubishiClient.State.SetMode is not (AcMode.Cool or AcMode.Heat)) return;
-        var isCooling = _mitsubishiClient.State.SetMode is AcMode.Cool;
+        var mode = _mitsubishiClient.State.SetMode;
+        if (mode is not (AcMode.Cool or AcMode.Heat)) return;
+        var isCooling = mode is AcMode.Cool;
 
+        // Rooms the unit is currently working for: zone open now, or closed within the last 5 minutes
+        // (so the drive doesn't collapse the instant a zone satisfies).
         var validRooms = _config.Value.Rooms
             .Where(room =>
                 (room.IsOn && _mitsubishiClient.State.IsZoneOn(room.ZoneId))
@@ -199,32 +276,52 @@ public class AcControl : IAsyncInitializable
                     && DateTime.Now - room.ZoneOnLogEntity.EntityState.LastChanged.Value <
                     TimeSpan.FromMinutes(5)))
             .ToList();
-        var aggressiveness = -1M;
-        if (validRooms.Count == 0)
-            _logger.LogDebug("No valid rooms to calculate temperate, skipping");
-        else
-            aggressiveness =
-                validRooms
-                    .Average(room =>
-                    {
-                        var tempStateChange = _tempLastChangedDict[room.ZoneId];
-                        var zoneOnStateChange = room.ZoneOnLogEntity!.EntityState!.LastChanged!.Value;
-                        var lastStateChange = tempStateChange > zoneOnStateChange ? tempStateChange : zoneOnStateChange;
-                        var lastStateChangeTimeSpan = DateTime.Now - lastStateChange;
-                        var roomAggressiveness = Convert.ToDecimal(lastStateChangeTimeSpan.TotalMinutes / 5) - 1M;
-                        _logger.LogDebug("Room {Room} has aggressiveness {Aggressiveness}", room.Name,
-                            roomAggressiveness);
-                        return roomAggressiveness;
-                    });
 
-        _logger.LogDebug("Total aggressiveness is: {Aggressiveness}", aggressiveness);
-        _config.Value.AcAggressivenessLogEntity.SetValue(Convert.ToDouble(aggressiveness));
+        var driveRooms = new List<DriveMath.RoomDrive>();
+        foreach (var room in validRooms)
+        {
+            if (GetComfortPoints(room, mode) is not { } points) continue;
 
-        aggressiveness = Math.Floor(aggressiveness);
+            // Time since the room last made real progress, or since its zone opened — whichever is later.
+            var lastProgress = _tempLastChangedDict.GetValueOrDefault(room.ZoneId, DateTime.Now);
+            var zoneOpened = room.ZoneOnLogEntity?.EntityState?.LastChanged;
+            if (zoneOpened is { } opened && opened > lastProgress) lastProgress = opened;
+
+            var roomDrive = new DriveMath.RoomDrive(points.FeltTemp, points.OffPoint,
+                (DateTime.Now - lastProgress).TotalMinutes);
+            driveRooms.Add(roomDrive);
+
+            _logger.LogDebug(
+                "Drive {Room}: felt {Felt:0.0}°C vs off-point {Off:0.0}°C (error {Error:0.0}), stalled {Stalled:0.0} min -> {Drive:0.00}",
+                room.Name, points.FeltTemp, points.OffPoint,
+                DriveMath.Error(points.FeltTemp, points.OffPoint, isCooling), roomDrive.MinutesSinceProgress,
+                DriveMath.ForRoom(roomDrive, isCooling, _config.Value.DriveCoastWindow, _config.Value.DriveErrorGain));
+        }
+
+        if (driveRooms.Count == 0) _logger.LogDebug("No valid rooms to calculate temperate, skipping");
+
+        // Log the unrounded figure — it keeps the fractional resolution that makes the drive legible in
+        // history — but command the whole degrees the unit actually accepts.
+        var rawDrive = DriveMath.RawForUnit(driveRooms, isCooling, _config.Value.DriveCoastWindow, _config.Value.DriveErrorGain);
+        var drive = DriveMath.ForUnit(driveRooms, isCooling, _config.Value.DriveCoastWindow,
+            _config.Value.DriveErrorGain, _config.Value.MaxDrive);
+
+        _logger.LogDebug("Total drive is {Raw:0.00} -> commanding {Drive:0.00} °C past return air {RoomTemp:0.0}°C",
+            rawDrive, drive, _mitsubishiClient.State.RoomTemp);
+        _config.Value.AcAggressivenessLogEntity.SetValue(Convert.ToDouble(rawDrive));
+
+        // Same rate limiting as the per-room summary: paced in the steady state, immediate on a change.
+        if (drive != _driveLogged ||
+            DateTime.Now - _driveLoggedAt >= TimeSpan.FromMinutes(_config.Value.FeltLogIntervalMinutes))
+        {
+            (_driveLoggedAt, _driveLogged) = (DateTime.Now, drive);
+            _logger.LogInformation(
+                "Drive {Now:yyyy-MM-dd HH:mm} ({Mode}): {Rooms} room(s) driving, raw {Raw:0.00} -> {Drive:0.00}°C past return air {RoomTemp:0.0}°C",
+                DateTime.Now, mode, driveRooms.Count, rawDrive, drive, _mitsubishiClient.State.RoomTemp);
+        }
 
         await _mitsubishiClient.SetTemperature(
-            _mitsubishiClient.State.RoomTemp +
-            (isCooling ? -aggressiveness : aggressiveness), cancellationToken);
+            _mitsubishiClient.State.RoomTemp + (isCooling ? -drive : drive), cancellationToken);
     }
 
     private AcMode GetDesiredAcMode()
@@ -249,63 +346,150 @@ public class AcControl : IAsyncInitializable
         return currentMode;
     }
 
-    private bool ShouldEnableZone(AcRoomConfig room, AcMode? mode = null, bool log = false)
+    /// <summary>
+    /// The felt temperature and hysteresis thresholds for a room in a given mode — everything the zone
+    /// decision compares, and everything the drive calculation needs. Null when the room is not
+    /// evaluable (missing setpoint or reading, or the SoC shift has pushed it past the last profile).
+    /// </summary>
+    private readonly record struct ComfortPoints(
+        decimal FeltTemp,
+        decimal EnvOffset,
+        decimal HumidityOffset,
+        decimal WindOffset,
+        decimal KEnv,
+        decimal ForcePoint,
+        decimal OnPoint,
+        decimal OffPoint,
+        decimal WeatherOffPoint);
+
+    private ComfortPoints? GetComfortPoints(AcRoomConfig room, AcMode mode)
     {
-        if (!CheckContactAndMotion(room)) return false;
-        mode ??= _mitsubishiClient.State.SetMode;
-        if (mode is not (AcMode.Cool or AcMode.Heat)) return false;
-        var isCooling = mode is AcMode.Cool;
-        if (!room.IsOn || room.SetTemperature is null || room.CurrentTemperate is null) return false;
+        if (room.SetTemperature is null || room.CurrentTemperate is null) return null;
 
         var profile = GetEffectiveProfile(room.AcProfileSelectEntity?.State);
-        if (profile is null) return false;
+        if (profile is null) return null;
 
-        var forcePoint = room.SetTemperature.Value + (isCooling ? profile.ForceTolerance : -profile.ForceTolerance);
-        var onPoint = room.SetTemperature.Value + (isCooling ? profile.OnTolerance : -profile.OnTolerance);
-        var offPoint = room.SetTemperature.Value + (isCooling ? profile.OffTolerance : -profile.OffTolerance);
-        var weatherOffPoint = room.SetTemperature.Value + (isCooling ? -profile.WeatherOffset : profile.WeatherOffset);
+        var isCooling = mode is AcMode.Cool;
+        var airTemp = room.CurrentTemperate.Value;
+        var kEnv = room.EnvCoefficient ?? _config.Value.EnvCoefficient;
 
         // Regulate the estimated *felt* temperature, not raw air temperature: cold surfaces in winter
         // make a room feel colder than the sensor reads, warm surfaces in summer warmer, and humid
         // air feels warmer than dry air at the same temperature.
         var feltTemp = ComfortMath.FeltTemperature(
-            room.CurrentTemperate.Value,
+            airTemp,
             SmoothedWeatherTemperature,
-            room.EnvCoefficient ?? _config.Value.EnvCoefficient,
+            kEnv,
             _config.Value.MaxComfortOffset,
             room.CurrentHumidity,
             _config.Value.ReferenceHumidity,
-            _config.Value.HumidityCoefficient);
+            _config.Value.HumidityCoefficient,
+            SmoothedWindSpeed,
+            _config.Value.WindCoefficient,
+            _config.Value.CalmWindKmh);
 
+        return new ComfortPoints(
+            feltTemp,
+            ComfortMath.EnvelopeOffset(airTemp, SmoothedWeatherTemperature, kEnv),
+            room.CurrentHumidity is { } rh
+                ? ComfortMath.HumidityOffset(airTemp, rh, _config.Value.ReferenceHumidity, _config.Value.HumidityCoefficient)
+                : 0M,
+            SmoothedWindSpeed is { } wind
+                ? ComfortMath.WindOffset(airTemp, SmoothedWeatherTemperature, wind, _config.Value.WindCoefficient, _config.Value.CalmWindKmh)
+                : 0M,
+            kEnv,
+            room.SetTemperature.Value + (isCooling ? profile.ForceTolerance : -profile.ForceTolerance),
+            room.SetTemperature.Value + (isCooling ? profile.OnTolerance : -profile.OnTolerance),
+            room.SetTemperature.Value + (isCooling ? profile.OffTolerance : -profile.OffTolerance),
+            room.SetTemperature.Value + (isCooling ? -profile.WeatherOffset : profile.WeatherOffset));
+    }
+
+    /// <summary>Why a zone was refused before the felt-temperature comparison could even run.</summary>
+    private enum ZoneVeto
+    {
+        None,
+        Occupancy,       // door left open, or the room has been empty long enough
+        NotConditioning, // the unit is not in Cool or Heat
+        SwitchedOff,     // the room's own AC toggle is off
+        NoReading,       // missing setpoint or temperature sensor value
+        NoProfile        // the SoC shift pushed this room past the last profile: zone off entirely
+    }
+
+    private (bool Enable, ZoneVeto Veto, ComfortPoints? Points) EvaluateZone(AcRoomConfig room, AcMode mode)
+    {
+        if (!CheckContactAndMotion(room)) return (false, ZoneVeto.Occupancy, null);
+        if (mode is not (AcMode.Cool or AcMode.Heat)) return (false, ZoneVeto.NotConditioning, null);
+        if (!room.IsOn) return (false, ZoneVeto.SwitchedOff, null);
+        if (room.SetTemperature is null || room.CurrentTemperate is null) return (false, ZoneVeto.NoReading, null);
+        if (GetComfortPoints(room, mode) is not { } points) return (false, ZoneVeto.NoProfile, null);
+
+        var isCooling = mode is AcMode.Cool;
         var isAcOn = _mitsubishiClient.State.Power;
-
-        if (log && _logger.IsEnabled(LogLevel.Debug))
-        {
-            var kEnv = room.EnvCoefficient ?? _config.Value.EnvCoefficient;
-            var envOffset = ComfortMath.EnvelopeOffset(room.CurrentTemperate.Value, SmoothedWeatherTemperature, kEnv);
-            var humOffset = room.CurrentHumidity is { } rh
-                ? ComfortMath.HumidityOffset(room.CurrentTemperate.Value, rh, _config.Value.ReferenceHumidity, _config.Value.HumidityCoefficient)
-                : 0M;
-            _logger.LogDebug(
-                "Felt temp {Room} ({Mode}): air {Air:0.0}°C + envelope {Env:+0.0;-0.0} (outdoor {Outdoor:0.0}°C smoothed, raw {Raw:0.0}°C, kEnv {KEnv}) + humidity {Hum:+0.0;-0.0} (RH {Rh:0}%) = felt {Felt:0.0}°C; set {Set:0.0}°C, force/on/off {Force:0.0}/{On:0.0}/{Off:0.0}, weatherGate {Gate:0.0}°C, acOn {AcOn}",
-                room.Name, mode, room.CurrentTemperate.Value, envOffset, SmoothedWeatherTemperature, CurrentWeatherTemperature,
-                kEnv, humOffset, room.CurrentHumidity, feltTemp, room.SetTemperature, forcePoint, onPoint, offPoint, weatherOffPoint, isAcOn);
-        }
+        var feltTemp = points.FeltTemp;
 
         if (isCooling)
         {
-            if (CurrentWeatherTemperature <= weatherOffPoint) return false;
-            if (feltTemp >= (isAcOn ? onPoint : forcePoint)) return true;
-            if (feltTemp <= offPoint) return false;
+            if (CurrentWeatherTemperature <= points.WeatherOffPoint) return (false, ZoneVeto.None, points);
+            if (feltTemp >= (isAcOn ? points.OnPoint : points.ForcePoint)) return (true, ZoneVeto.None, points);
+            if (feltTemp <= points.OffPoint) return (false, ZoneVeto.None, points);
         }
         else
         {
-            if (CurrentWeatherTemperature >= weatherOffPoint) return false;
-            if (feltTemp <= (isAcOn ? onPoint : forcePoint)) return true;
-            if (feltTemp >= offPoint) return false;
+            if (CurrentWeatherTemperature >= points.WeatherOffPoint) return (false, ZoneVeto.None, points);
+            if (feltTemp <= (isAcOn ? points.OnPoint : points.ForcePoint)) return (true, ZoneVeto.None, points);
+            if (feltTemp >= points.OffPoint) return (false, ZoneVeto.None, points);
         }
 
-        return _mitsubishiClient.State.IsZoneOn(room.ZoneId) && mode == _mitsubishiClient.State.SetMode;
+        return (_mitsubishiClient.State.IsZoneOn(room.ZoneId) && mode == _mitsubishiClient.State.SetMode,
+            ZoneVeto.None, points);
+    }
+
+    private bool ShouldEnableZone(AcRoomConfig room, AcMode? mode = null, bool log = false)
+    {
+        mode ??= _mitsubishiClient.State.SetMode;
+        var (enable, veto, points) = EvaluateZone(room, mode.Value);
+        if (log) LogRoomSummary(room, mode.Value, enable, veto, points);
+        return enable;
+    }
+
+    /// <summary>
+    /// Emits the per-room felt-temperature telemetry. The full breakdown stays at <c>Debug</c> for deep
+    /// dives, but the deployed add-on journal only holds about seven days at that rate, so the line that
+    /// actually has to survive long enough to judge a tuning change is a rate-limited <c>Information</c>
+    /// summary: one per room per <see cref="AcConfig.FeltLogIntervalMinutes"/>, plus one immediately
+    /// whenever the decision changes. It carries a full date, because the journal's own stamps are
+    /// time-only, and it is emitted for vetoed rooms too — those previously produced no line at all,
+    /// which silently hid exactly the rooms worth investigating.
+    /// </summary>
+    private void LogRoomSummary(AcRoomConfig room, AcMode mode, bool enable, ZoneVeto veto, ComfortPoints? points)
+    {
+        if (_logger.IsEnabled(LogLevel.Debug) && points is { } debugPoints)
+            _logger.LogDebug(
+                "Felt temp {Room} ({Mode}): air {Air:0.0}°C + envelope {Env:+0.0;-0.0} (outdoor {Outdoor:0.0}°C smoothed, raw {Raw:0.0}°C, kEnv {KEnv}) + humidity {Hum:+0.0;-0.0} (RH {Rh:0}%) + draught {Wind:+0.0;-0.0} ({WindKmh:0.0} km/h smoothed) = felt {Felt:0.0}°C; set {Set:0.0}°C, force/on/off {Force:0.0}/{On:0.0}/{Off:0.0}, weatherGate {Gate:0.0}°C, acOn {AcOn}",
+                room.Name, mode, room.CurrentTemperate!.Value, debugPoints.EnvOffset, SmoothedWeatherTemperature,
+                CurrentWeatherTemperature, debugPoints.KEnv, debugPoints.HumidityOffset, room.CurrentHumidity,
+                debugPoints.WindOffset, SmoothedWindSpeed, debugPoints.FeltTemp, room.SetTemperature,
+                debugPoints.ForcePoint, debugPoints.OnPoint, debugPoints.OffPoint, debugPoints.WeatherOffPoint,
+                _mitsubishiClient.State.Power);
+
+        var previous = _lastRoomLogDict.GetValueOrDefault(room.ZoneId);
+        var decisionChanged = previous.LoggedAt == default || previous.Enable != enable || previous.Veto != veto;
+        if (!decisionChanged &&
+            DateTime.Now - previous.LoggedAt < TimeSpan.FromMinutes(_config.Value.FeltLogIntervalMinutes)) return;
+        _lastRoomLogDict[room.ZoneId] = (DateTime.Now, enable, veto);
+
+        if (points is not { } p)
+        {
+            _logger.LogInformation("Felt {Now:yyyy-MM-dd HH:mm} {Room} ({Mode}): zone off — {Veto}",
+                DateTime.Now, room.Name, mode, veto);
+            return;
+        }
+
+        _logger.LogInformation(
+            "Felt {Now:yyyy-MM-dd HH:mm} {Room} ({Mode}): air {Air:0.0} + env {Env:+0.0;-0.0} + hum {Hum:+0.0;-0.0} (RH {Rh:0}%) + draught {Wind:+0.0;-0.0} = felt {Felt:0.0}°C | set {Set:0.0}, force/on/off {Force:0.0}/{On:0.0}/{Off:0.0} | outdoor {Outdoor:0.0} smoothed ({Raw:0.0} raw), wind {WindKmh:0.0} km/h | zone {Zone}",
+            DateTime.Now, room.Name, mode, room.CurrentTemperate!.Value, p.EnvOffset, p.HumidityOffset,
+            room.CurrentHumidity, p.WindOffset, p.FeltTemp, room.SetTemperature, p.ForcePoint, p.OnPoint, p.OffPoint,
+            SmoothedWeatherTemperature, CurrentWeatherTemperature, SmoothedWindSpeed, enable ? "ON" : "off");
     }
 
     private AcProfileConfig? GetEffectiveProfile(string? setProfileName)
