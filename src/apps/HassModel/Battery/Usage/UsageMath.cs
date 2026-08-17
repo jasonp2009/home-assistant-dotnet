@@ -149,6 +149,65 @@ public static class UsageMath
         return weightedSum / weightUsed * config.EstimatedUsageMultiplier;
     }
 
+    /// <summary>Trailing span treated as "recent"; also excluded from the norm, so a hot spell can't inflate its own reference.</summary>
+    private static readonly TimeSpan RecentWindow = TimeSpan.FromHours(24);
+
+    /// <summary>Minimum recent samples with a known norm before the scale is trusted (else neutral).</summary>
+    private const int MinRecentSamples = 6;
+
+    /// <summary>Bounds on the scale — safety rails rather than tuning dials, so they stay out of config.</summary>
+    private const decimal MinScale = 0.7m, MaxScale = 2m;
+
+    /// <summary>
+    /// A multiplier on the usage estimate reacting to the last 24 h of MEASURED consumption running
+    /// above/below its learned time-of-day norm. <see cref="EstimateSegmentUsage"/> leans on PRIOR days,
+    /// so without this a day running hotter than usual barely shifts the rest-of-today projection until
+    /// a day later. Below-normal is damped (running short of charge costs more than carrying spare).
+    /// Neutral (1) when disabled or when the recent window is too sparse to trust.
+    /// </summary>
+    public static decimal ComputeRecencyScale(
+        IReadOnlyCollection<UsageSample> samples,
+        DateTime nowUtc,
+        BatteryConfig config)
+    {
+        if (!config.UsageRecencyEnabled || config.UsageRecencyHalfLifeHours <= 0m) return 1m;
+        var recentStart = nowUtc - RecentWindow;
+
+        // Norm per time-of-day bucket, from days before the recent window.
+        var norms = new Dictionary<int, (decimal Sum, int Count)>();
+        foreach (var s in samples)
+        {
+            if (s.SegmentStartUtc >= recentStart) continue;
+            var key = LocalTimeOfDayKey(s.SegmentStartUtc, config.SegmentSizeMins);
+            var cur = norms.TryGetValue(key, out var v) ? v : default;
+            norms[key] = (cur.Sum + s.ConsumptionKwh, cur.Count + 1);
+        }
+
+        decimal actual = 0m, expected = 0m;
+        var covered = 0;
+        foreach (var s in samples)
+        {
+            if (s.SegmentStartUtc < recentStart || s.SegmentStartUtc >= nowUtc) continue;
+            if (!norms.TryGetValue(LocalTimeOfDayKey(s.SegmentStartUtc, config.SegmentSizeMins), out var n)) continue;
+            var normal = n.Sum / n.Count;
+            if (normal <= 0m) continue;
+
+            var ageHours = Convert.ToDecimal((nowUtc - s.SegmentStartUtc).TotalHours);
+            var weight = DecayWeight(ageHours, config.UsageRecencyHalfLifeHours);
+            actual += weight * s.ConsumptionKwh;
+            expected += weight * normal;
+            covered++;
+        }
+        if (covered < MinRecentSamples || expected <= 0m) return 1m;
+
+        var deviation = actual / expected - 1m;   // >0 hot, <0 cool, relative to normal
+        if (deviation < 0m) deviation *= config.UsageRecencyDownwardGain;
+        return Math.Clamp(1m + deviation, MinScale, MaxScale);
+    }
+
+    private static decimal DecayWeight(decimal ageHours, decimal halfLifeHours)
+        => Convert.ToDecimal(Math.Pow(0.5, Convert.ToDouble(ageHours / halfLifeHours)));
+
     /// <summary>The UTC start of the segment containing <paramref name="utc"/>, aligned to <paramref name="segment"/>.</summary>
     public static DateTime SegmentStart(DateTime utc, TimeSpan segment)
         => utc - TimeSpan.FromTicks(utc.Ticks % segment.Ticks);

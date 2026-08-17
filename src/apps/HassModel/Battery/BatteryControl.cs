@@ -67,10 +67,10 @@ public class BatteryControl
 
     private async Task<EnergySegmentAction> GetCurrentActionAsync()
     {
-        var (energySegments, currentSegmentUsage, currentChargeKwh) = await InitialiseEnergySegmentsAsync();
-        var hourlyUsage = GetHourlyUsage();
+        var (energySegments, currentSegmentUsage, currentChargeKwh, recencyScale) = await InitialiseEnergySegmentsAsync();
+        var hourlyUsage = GetHourlyUsage() * recencyScale; // runway tracks the same recency factor as the projection
         // Log the current segment's time-of-day estimate scaled to an hour (the runway/OptimiseSegments
-        // still uses the flat hourly average below — see GetHourlyUsage).
+        // uses the flat hourly average above, times the same scale — see GetHourlyUsage).
         var hourlyUsageEstimate = currentSegmentUsage * Convert.ToDecimal(TimeSpan.FromHours(1) / _config.SegmentSize);
         _logger.LogInformation(
             "Initialised segments with {SegmentCount} {SegmentStart} - {SegmentEnd} First segment is estimate: {IsEstimate} Hourly usage estimate: {HourlyUsageEstimate}",
@@ -139,12 +139,12 @@ public class BatteryControl
         return currentAction;
     }
 
-    private async Task<(List<EnergySegment> Segments, decimal CurrentSegmentUsageKwh, decimal CurrentChargeKwh)> InitialiseEnergySegmentsAsync()
+    private async Task<(List<EnergySegment> Segments, decimal CurrentSegmentUsageKwh, decimal CurrentChargeKwh, decimal RecencyScale)> InitialiseEnergySegmentsAsync()
     {
         await _usageTracker.EnsureBackfilledAsync();
         _usageTracker.Record();
         var fallbackSegmentUsage = GetAverageSegmentUsage();
-        var segmentUsageEstimator = _usageTracker.BuildEstimator(fallbackSegmentUsage);
+        var (segmentUsageEstimator, recencyScale) = _usageTracker.BuildEstimator(fallbackSegmentUsage);
         var currentBatteryChargeKwh = GetCurrentBatteryChargeKwh();
         var startUtc = GetCurrentSegmentStart();
         var currentSegmentUsage = segmentUsageEstimator(startUtc);
@@ -168,7 +168,7 @@ public class BatteryControl
             amberPrices = await _amberClient.GetCurrentPriceAsync() ?? [];
         }
         var segments = BatteryPlanner.BuildSegments(startUtc, currentBatteryChargeKwh, segmentUsageEstimator, solarForecast, amberPrices, _config);
-        return (segments, currentSegmentUsage, currentBatteryChargeKwh);
+        return (segments, currentSegmentUsage, currentBatteryChargeKwh, recencyScale);
     }
 
     /// <summary>

@@ -128,10 +128,47 @@ The per-segment **drain** in `BuildSegments` is a learned, time-of-day consumpti
    `EstimatedUsageMultiplier` for the higher `DemandWindowUsageMultiplier` (1.5) — inflating the
    projected drain there so the plan reserves more charge and doesn't get forced into an expensive
    grid import mid-window if load spikes. Left unset (0) demand windows drain like any other segment.
+6. **Recency scaling** ([`UsageMath.ComputeRecencyScale`](../../src/apps/HassModel/Battery/Usage/UsageMath.cs)).
+   Step 4 leans on **prior** days, so a day running hotter than usual barely shifts the *rest-of-today*
+   projection until its samples age into the time-of-day windows. The recency scale closes that gap: one
+   multiplier on top of the estimate, comparing the last 24 h of **measured** consumption against the
+   learned norm. Each recent sample is judged against the mean of its own time-of-day bucket **on
+   earlier days** — never against itself, so a hot spell can't inflate its own reference — weighted by
+   an exponential decay on its age (`UsageRecencyHalfLifeHours`). The deviation is applied
+   **asymmetrically**: above-normal in full, below-normal damped by `UsageRecencyDownwardGain`, then
+   clamped to `[0.7, 2]`. Too few recent samples with a known norm ⇒ a neutral `1`.
 
-The **runway** risk weight (above) still uses the flat 3-day *average* hourly usage, not the
-time-of-day estimate: runway is an average-rate concept, and an instantaneous near-zero overnight rate
-would make hours-to-empty effectively infinite.
+The scale multiplies **both** the forward per-segment estimate (so a hot day pulls the projected
+`MinCapacity` crossing earlier → earlier/more floor-defense buys) **and** the runway hourly usage (so
+hours-to-empty shrinks and the risk-weight pessimism engages at a higher SoC). It also scales the flat
+fallback used for buckets with no data. Set `UsageRecencyEnabled: false` to fall back to the exact prior
+behaviour.
+
+The scale is a **single scalar applied flat across the whole `MinForecastHours` (72 h) horizon**, not
+just the rest of today: a hot afternoon inflates the projected drain for day+2 and day+3 equally. In
+practice the plan is rebuilt every 5 minutes and far-out legs re-plan long before they fire, so the
+effect is bounded — but the anomaly is assumed to persist for the full horizon rather than decaying.
+
+> **Known baseline mismatch — not yet resolved.** The scale's denominator is a **flat mean** of
+> pre-24 h samples, but it multiplies step 4's **0.4/0.3/0.3 recency-weighted blend**. Those are two
+> different baselines, so the error factor is exactly `estimate / norm` — the estimate has already
+> tracked part of the deviation the scale then applies in full. (Window 1's cutoff of `now − 1 day`,
+> which pulls *today's* sample into the estimate for any bucket already elapsed today, is one
+> contributor, not the mechanism.) `GetHourlyUsage`'s 3-day sensors overlap similarly on the runway side.
+>
+> Measured: a sustained step change (two days at 1.5× the prior week) over-estimates drain by **25%**;
+> a single 3× day reaches **+39%**, bounded only by the `MaxScale` clamp. The bias is **one-sided** — a
+> cool day (0.6×) comes out at −1%, because the downward gain happens to cancel the blend lag. It also
+> **converges**: once a step persists beyond the 7-day history the norm catches up and the scale returns
+> to 1, so there is no permanent bias.
+>
+> The fix is to rebuild the norm from the same 1/3/7-day blend evaluated as of 24 h ago, so numerator and
+> denominator share a baseline (residual ≈ +2%). Note that merely making step 4 strictly prior-days does
+> **not** fix it — that still leaves ≈ +9%, because the blend/flat-mean mismatch remains.
+
+The **runway** risk weight (above) uses the flat 3-day *average* hourly usage (now × the recency
+scale), not the time-of-day estimate: runway is an average-rate concept, and an instantaneous near-zero
+overnight rate would make hours-to-empty effectively infinite.
 
 ## Key files
 
@@ -143,7 +180,7 @@ would make hours-to-empty effectively infinite.
 | [`BatteryControl.yaml`](../../src/apps/HassModel/Battery/BatteryControl.yaml) | Entity ids + tuning values |
 | [`Models/EnergySegment.cs`](../../src/apps/HassModel/Battery/Models/EnergySegment.cs) | A 5-minute slot: projected charge, prices, solar, action |
 | [`Extensions/EnergySegmentExtensions.cs`](../../src/apps/HassModel/Battery/Extensions/EnergySegmentExtensions.cs) | `ApplyPrice`, `ApplySolarForecast`, `GetHoursToEmpty`, `GetRiskWeight`, `GetWeightedPrice` |
-| [`Usage/UsageMath.cs`](../../src/apps/HassModel/Battery/Usage/UsageMath.cs) | Pure usage maths: `ComputeConsumption`, `SpreadWindow`, `BuildSamplesFromReadings`, `EstimateSegmentUsage` |
+| [`Usage/UsageMath.cs`](../../src/apps/HassModel/Battery/Usage/UsageMath.cs) | Pure usage maths: `ComputeConsumption`, `SpreadWindow`, `BuildSamplesFromReadings`, `EstimateSegmentUsage`, `ComputeRecencyScale` |
 | [`Usage/UsageTracker.cs`](../../src/apps/HassModel/Battery/Usage/UsageTracker.cs) | In-memory sample store: startup backfill + per-run live update + `BuildEstimator` |
 | [`Clients/AmberClient/`](../../src/apps/HassModel/Battery/Clients/AmberClient/) | Amber API client, interval models (`BaseInterval`/`Current`/`Forecast`/`Actual`), `AdvancedPrice`, channel/descriptor enums |
 | [`Clients/ForecastSolarClient/`](../../src/apps/HassModel/Battery/Clients/ForecastSolarClient/) | Forecast.Solar API client |
@@ -216,6 +253,21 @@ defaults that is `0` at ≥12 h runway → `1.0` at 6 h → `1.5` at 3 h → `2.
 | `UsageWindow1Days` / `UsageWindow1Weight` | 1 / 0.4 | Recent window (days back) and blend weight |
 | `UsageWindow2Days` / `UsageWindow2Weight` | 3 / 0.3 | Mid window |
 | `UsageWindow3Days` / `UsageWindow3Weight` | 7 / 0.3 | Long window |
+
+**Recency scaling** — react to a hotter/cooler-than-usual day within the day (see [Segmented usage estimate](#segmented-usage-estimate) step 6)
+
+| Key | Default | Meaning |
+|---|---|---|
+| `UsageRecencyEnabled` | true | Master switch; `false` = exact prior behaviour (scale fixed at 1) |
+| `UsageRecencyHalfLifeHours` | 4 | Age at which a sample counts half as much as one from now — the single knob for how sharply the scale favours recent hours. Smaller = twitchier, larger = smoother |
+| `UsageRecencyDownwardGain` | 0.5 | Fraction of a **below**-normal deviation applied (above-normal is always full). `<1` reacts faster up than down; `1` symmetric; `0` up-only |
+
+The 24 h "recent" window, the minimum sample count, and the `[0.7, 2]` scale clamps are fixed in
+[`UsageMath`](../../src/apps/HassModel/Battery/Usage/UsageMath.cs) rather than exposed: the first is a
+design invariant (a sample must not be part of the norm it is judged against) and the others are safety
+rails, not tuning dials. Keeping the clamps out of config also removes a failure mode — a partial YAML
+would otherwise bind them to `0`, and `clamp(x, 0, 0)` would silently zero every segment's projected
+drain, leaving the battery undefended.
 
 **Inverter modes** — strings matching the work-mode `select` options:
 `BatteryNoneMode` = `Self-consumption mode`, `BatteryChargeMode` = `Reserve power mode`,

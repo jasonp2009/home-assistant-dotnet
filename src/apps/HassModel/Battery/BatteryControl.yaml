@@ -25,6 +25,9 @@
   UsageWindow2Weight: 0.3
   UsageWindow3Days: 7
   UsageWindow3Weight: 0.3
+  UsageRecencyEnabled: true
+  UsageRecencyHalfLifeHours: 4
+  UsageRecencyDownwardGain: 0.5
   PessimismStartHours: 12
   PessimismMaxAtHours: 0
   PessimismMaxWeight: 2

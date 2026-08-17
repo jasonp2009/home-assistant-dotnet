@@ -51,6 +51,12 @@ public class BatteryConfig
         (UsageWindow3Days, UsageWindow3Weight)
     ];
 
+    // Recency scaling: multiplies the time-of-day estimate (and the runway usage) to track a day running
+    // hotter/cooler than its learned norm. See UsageMath.ComputeRecencyScale and docs/apps/battery-control.md.
+    public bool UsageRecencyEnabled { get; set; }
+    public decimal UsageRecencyHalfLifeHours { get; set; }   // sample age at which it counts half as much; smaller = twitchier
+    public decimal UsageRecencyDownwardGain { get; set; }    // fraction of a BELOW-normal deviation applied (above-normal always in full)
+
     // Risk weighting based on battery runway (hours-to-empty). Pessimism leans an estimated
     // price toward Amber's High bound (buy)/Low bound (sell); optimism leans the other way.
     // Thresholds are absolute hours, so higher usage shifts pessimism in at a higher state of charge.
