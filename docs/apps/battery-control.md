@@ -140,18 +140,31 @@ The per-segment **drain** in `BuildSegments` is a learned, time-of-day consumpti
 
 The scale multiplies **both** the forward per-segment estimate (so a hot day pulls the projected
 `MinCapacity` crossing earlier → earlier/more floor-defense buys) **and** the runway hourly usage (so
-hours-to-empty shrinks and the risk-weight pessimism engages at a higher SoC). Set
-`UsageRecencyEnabled: false` to fall back to the exact prior behaviour.
+hours-to-empty shrinks and the risk-weight pessimism engages at a higher SoC). It also scales the flat
+fallback used for buckets with no data. Set `UsageRecencyEnabled: false` to fall back to the exact prior
+behaviour.
 
-> **Known overlap — not yet resolved.** Step 4 is not purely prior-days: window 1's cutoff is
-> `now − 1 day`, so for any time-of-day bucket that has **already elapsed today** it averages *today's*
-> sample at weight `UsageWindow1Weight` (0.4). The recency scale then applies today's deviation a second
-> time, and `GetHourlyUsage`'s 3-day sensors carry the same overlap on the runway side. Measured on a
-> sustained step change (two days at 1.5× the prior week), the two compound to a **25% over-estimate** of
-> drain — biasing floor-defense buys earlier and larger than intended. Resolving it is a design decision
-> about where within-day responsiveness should live: either the norm is rebuilt from the same 1/3/7-day
-> blend evaluated as of 24 h ago, or step 4 is made strictly prior-days and the scale carries all
-> within-day information.
+The scale is a **single scalar applied flat across the whole `MinForecastHours` (72 h) horizon**, not
+just the rest of today: a hot afternoon inflates the projected drain for day+2 and day+3 equally. In
+practice the plan is rebuilt every 5 minutes and far-out legs re-plan long before they fire, so the
+effect is bounded — but the anomaly is assumed to persist for the full horizon rather than decaying.
+
+> **Known baseline mismatch — not yet resolved.** The scale's denominator is a **flat mean** of
+> pre-24 h samples, but it multiplies step 4's **0.4/0.3/0.3 recency-weighted blend**. Those are two
+> different baselines, so the error factor is exactly `estimate / norm` — the estimate has already
+> tracked part of the deviation the scale then applies in full. (Window 1's cutoff of `now − 1 day`,
+> which pulls *today's* sample into the estimate for any bucket already elapsed today, is one
+> contributor, not the mechanism.) `GetHourlyUsage`'s 3-day sensors overlap similarly on the runway side.
+>
+> Measured: a sustained step change (two days at 1.5× the prior week) over-estimates drain by **25%**;
+> a single 3× day reaches **+39%**, bounded only by the `MaxScale` clamp. The bias is **one-sided** — a
+> cool day (0.6×) comes out at −1%, because the downward gain happens to cancel the blend lag. It also
+> **converges**: once a step persists beyond the 7-day history the norm catches up and the scale returns
+> to 1, so there is no permanent bias.
+>
+> The fix is to rebuild the norm from the same 1/3/7-day blend evaluated as of 24 h ago, so numerator and
+> denominator share a baseline (residual ≈ +2%). Note that merely making step 4 strictly prior-days does
+> **not** fix it — that still leaves ≈ +9%, because the blend/flat-mean mismatch remains.
 
 The **runway** risk weight (above) uses the flat 3-day *average* hourly usage (now × the recency
 scale), not the time-of-day estimate: runway is an average-rate concept, and an instantaneous near-zero

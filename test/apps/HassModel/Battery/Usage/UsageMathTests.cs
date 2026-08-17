@@ -269,34 +269,36 @@ public class UsageMathTests
     }
 
     /// A day of 5-minute samples ending at <see cref="Now"/>, each `recentMultiplier` times the norm,
-    /// with `baselineDays` prior days at the norm itself. `profile` sets the norm per time-of-day: pass
-    /// a varying one to make the per-bucket lookup observable (a flat norm hides it — a global mean over
-    /// every older sample would give identical answers). Keyed on LOCAL time of day like the production
-    /// code, and a sample's prior-day counterparts share its key, so results hold in any timezone.
+    /// with `baselineDays` prior days at the norm itself. `profile` sets the norm per bucket: pass a
+    /// varying one to make the per-time-of-day lookup observable, since a flat norm hides it entirely
+    /// (a global mean over every older sample would give identical answers).
     private static List<UsageSample> RecencySamples(
-        decimal recentMultiplier, int baselineDays = 7, Func<DateTime, decimal>? profile = null)
+        decimal recentMultiplier, int baselineDays = 7, Func<int, decimal>? profile = null)
     {
         profile ??= _ => 1m;
         var samples = new List<UsageSample>();
         for (var i = 1; i <= 24 * 12; i++)
         {
             var t = Now.AddMinutes(-5 * i);
-            samples.Add(new UsageSample(t, profile(t) * recentMultiplier));
+            var norm = profile(i);
+            samples.Add(new UsageSample(t, norm * recentMultiplier));
             for (var d = 1; d <= baselineDays; d++)
-                samples.Add(new UsageSample(t.AddDays(-d), profile(t)));
+                samples.Add(new UsageSample(t.AddDays(-d), norm)); // same local bucket, earlier day
         }
         return samples;
     }
 
-    /// A realistic day shape: quiet overnight, moderate daytime, heavy evening.
-    private static decimal DailyShape(DateTime utc)
-        => DateTime.SpecifyKind(utc, DateTimeKind.Utc).ToLocalTime().Hour switch
-        {
-            < 6 => 0.05m,
-            < 17 => 0.15m,
-            < 22 => 0.40m,
-            _ => 0.10m
-        };
+    /// A day shape — heavy recent peak, moderate, then light — keyed on how many segments ago a sample
+    /// falls rather than on its wall-clock hour. Age-keying matters: a clock-hour shape slides under the
+    /// decay curve depending on the machine's timezone, so a mutation that a shaped fixture is meant to
+    /// catch could survive on a runner in another zone. Keyed on age, both the correct result and a
+    /// global-mean result are the same everywhere.
+    private static decimal DailyShape(int segmentsAgo) => segmentsAgo switch
+    {
+        <= 60 => 0.40m,  // the last 5 h
+        <= 132 => 0.15m, // 5-11 h ago
+        _ => 0.05m       // 11-24 h ago
+    };
 
     [Theory]
     // recent vs norm -> scale. Above-normal counts in full; below-normal is halved by the 0.5 gain.
@@ -317,7 +319,7 @@ public class UsageMathTests
     [InlineData(1.5, 1.5)] // a uniformly hotter day is measured per bucket, not against a daily average
     public void ComputeRecencyScale_ComparesEachSampleWithItsOwnTimeOfDayNorm(double recentMultiplier, double expected)
     {
-        // Overnight usage is 8x lighter than the evening peak, so judging a sample against a single
+        // The light part of the day is 8x lighter than the peak, so judging a sample against a single
         // all-day mean instead of its own time-of-day bucket lands nowhere near the expected scale.
         var samples = RecencySamples((decimal)recentMultiplier, profile: DailyShape);
 
