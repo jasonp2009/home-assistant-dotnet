@@ -65,7 +65,7 @@ public static class DriveMath
     }
 
     /// <summary>
-    /// The drive for the whole unit, in whole degrees.
+    /// The drive for the whole unit, before capping.
     ///
     /// <para>Aggregated with <b>Max</b>, not an average: the unit has a single setpoint and the zones
     /// gate delivery, so a room that is already satisfied has its zone shut anyway and must not be

@@ -26,6 +26,10 @@ public class AcControl : IAsyncInitializable
     // sensors quantise at 0.1 C, so a single tick is not evidence the room is responding.
     private readonly Dictionary<int, decimal> _tempProgressDict = new();
 
+    // Which mode those accumulators were built under. "Helpful" movement flips sign between cooling and
+    // heating, so credit banked in the other mode is not just stale, it means the opposite.
+    private bool? _progressIsCooling;
+
     // Rate limiting for the Information-level telemetry (see LogRoomSummary).
     private readonly Dictionary<int, (DateTime LoggedAt, bool Enable, ZoneVeto Veto)> _lastRoomLogDict = new();
     private DateTime _driveLoggedAt;
@@ -78,6 +82,7 @@ public class AcControl : IAsyncInitializable
                         var tempDiff = Convert.ToDecimal(temperatureChangedEvent.New.State) -
                                        Convert.ToDecimal(temperatureChangedEvent.Old.State);
                         var isCooling = _mitsubishiClient.State.SetMode == AcMode.Cool;
+                        DiscardProgressOnModeFlip(isCooling);
                         // Only a sustained move counts as the room responding: accumulate net progress
                         // and reset the stall clock once it clears the threshold. Resetting on a single
                         // 0.1 C tick pinned the drive at -1 through the middle of heating cycles.
@@ -186,6 +191,20 @@ public class AcControl : IAsyncInitializable
             "Weather EMAs seeded from {TempCount} temperature and {WindCount} wind sample(s) over {Hours}h: outdoor {Smoothed:0.0}°C (raw {Raw:0.0}°C), wind {Wind:0.0} km/h (raw {RawWind:0.0})",
             tempHistory?.Count ?? 0, windHistory?.Count ?? 0, _config.Value.OutdoorTempBackfillHours,
             SmoothedWeatherTemperature, CurrentWeatherTemperature, SmoothedWindSpeed, CurrentWindSpeedOrNull);
+    }
+
+    /// <summary>
+    /// Clears the per-room progress accumulators when the unit swaps between cooling and heating.
+    /// "Helpful" movement is <em>falling</em> temperature while cooling and <em>rising</em> while
+    /// heating, so credit banked before the swap counts the wrong way afterwards and could reset a
+    /// room's stall clock on movement that is actually taking it further from target. The mode is
+    /// unit-wide, so one flip invalidates every room at once.
+    /// </summary>
+    private void DiscardProgressOnModeFlip(bool isCooling)
+    {
+        if (_progressIsCooling == isCooling) return;
+        _progressIsCooling = isCooling;
+        foreach (var zoneId in _tempProgressDict.Keys.ToList()) _tempProgressDict[zoneId] = 0M;
     }
 
     /// <summary>Folds the current weather readings into their EMAs (or initialises them on the first call).</summary>
