@@ -215,13 +215,21 @@ public static class BatteryPlanner
     ///
     /// Round-trip efficiency is applied ONLY in the profit gate, not in the 1 kWh charge accounting.
     /// </summary>
-    public static void ApplyArbitrage(List<EnergySegment> energySegments, BatteryConfig config)
+    public static void ApplyArbitrage(List<EnergySegment> energySegments, BatteryConfig config, decimal hourlyUsage)
     {
         if (!config.ArbitrageEnabled) return;
         const decimal tol = 0.01m;
         var loopGuard = 0;
         while (loopGuard++ < energySegments.Count)
         {
+            // NOTE the asymmetry with the pair pricing below: ranking happens before a direction is known,
+            // so it always applies the runway-aware LegWeight, while the pair itself only applies it to
+            // sell-before-buy. A sell sitting on a low-SoC segment is therefore de-prioritised even if it
+            // ends up in a buy-before-sell pair that prices it at the flat weight. This affects the ORDER
+            // sells are tried in, never whether a pair is admissible, and de-prioritising a sell when the
+            // battery is projected low is the conservative direction — but it is an asymmetry, not an
+            // accident, and it is why the two calls do not read identically.
+            //
             // Rank candidate sells (Action==None, SellPricePerKw != null) by pessimistic earning, DESC: an
             // estimate sell is discounted toward its lowest plausible earning, a locked sell is at face value
             // (WeightedPrice passthrough). That stops a higher-but-uncertain forecast outranking a certain price
@@ -230,7 +238,7 @@ public static class BatteryPlanner
             // leg price, which would overflow the decimal range.
             var sells = energySegments
                 .Where(s => s.Action == EnergySegmentAction.None && s.SellPricePerKw != null && HasActionableSellPrice(s))
-                .OrderByDescending(s => s.WeightedPrice(isBuy: false, config.ArbitragePessimismWeight));
+                .OrderByDescending(s => s.WeightedPrice(isBuy: false, LegWeight(s, config.ArbitragePessimismWeight, config, hourlyUsage)));
 
             var committed = false;
             foreach (var sell in sells)
@@ -250,9 +258,14 @@ public static class BatteryPlanner
                     // Direction picks the pessimism: buy-before-sell (charge first) is low-regret and uses the
                     // lower ArbitrageBuyBeforeSellWeight; sell-before-buy (discharge first) keeps the full
                     // ArbitragePessimismWeight. Both legs of the pair share the chosen weight (see remarks).
-                    var weight = buyIndex < sellIndex ? config.ArbitrageBuyBeforeSellWeight : config.ArbitragePessimismWeight;
-                    var sellEarning = sell.WeightedPrice(isBuy: false, weight);
-                    var buyCost = buy.WeightedPrice(isBuy: true, weight);
+                    // The runway markup applies only to SELL-BEFORE-BUY: that is the direction whose premise
+                    // is a refill that has not happened yet, so it must be priced the way the boundary solver
+                    // prices the same segment. Buy-before-sell keeps the flat weight — it is pre-charging, and
+                    // if the export never materialises the energy still displaces load. See LegWeight.
+                    var buyBeforeSell = buyIndex < sellIndex;
+                    var weight = buyBeforeSell ? config.ArbitrageBuyBeforeSellWeight : config.ArbitragePessimismWeight;
+                    var sellEarning = sell.WeightedPrice(isBuy: false, buyBeforeSell ? weight : LegWeight(sell, weight, config, hourlyUsage));
+                    var buyCost = buy.WeightedPrice(isBuy: true, buyBeforeSell ? weight : LegWeight(buy, weight, config, hourlyUsage));
                     var net = sellEarning - buyCost / config.RoundTripEfficiency;
                     if (net > bestNet) { bestNet = net; bestBuy = buy; }
                 }
@@ -280,6 +293,64 @@ public static class BatteryPlanner
             }
             if (!committed) break; // No profitable feasible pair anywhere -> done
         }
+    }
+
+    /// <summary>
+    /// Anti-thrash guard applied to the action actually sent to the inverter. Returns
+    /// <see cref="EnergySegmentAction.None"/> when <paramref name="proposed"/> is the OPPOSITE of the last
+    /// committed action and fewer than <c>ActionReversalCooldownSegments</c> segments have passed since it;
+    /// otherwise returns <paramref name="proposed"/> unchanged.
+    ///
+    /// This is deliberately an ACTUATION-level rule, not a planning one: the planner re-derives the whole
+    /// plan from scratch every 5 minutes and holds no memory, so the oscillation it produces (production
+    /// showed Buy 25c -> Sell 24c -> Buy 26c on consecutive segments, and sell/none/sell/none fragmentation)
+    /// cannot be seen from inside a single plan. Keeping the rule here leaves <see cref="BatteryPlanner"/>
+    /// pure — the caller owns the "what did I do last" state.
+    ///
+    /// Two asymmetries, both chosen so the guard can only ever be SAFE:
+    ///  - It only ever downgrades to None. It never forces an action to continue, so it cannot keep
+    ///    discharging a battery the planner has decided to stop discharging.
+    ///  - A Usage (floor-defence) BUY is never blocked. Refusing to charge can strand the battery on the
+    ///    floor and force a dearer import later, so a mandatory buy always wins over the cooldown; only
+    ///    discretionary moves (any Sell, or an Arbitrage buy) are suppressible.
+    /// </summary>
+    public static EnergySegmentAction ApplyActionReversalCooldown(
+        EnergySegmentAction proposed,
+        EnergySegmentActionReason proposedReason,
+        EnergySegmentAction lastAction,
+        int segmentsSinceLastAction,
+        BatteryConfig config)
+    {
+        if (config.ActionReversalCooldownSegments <= 0) return proposed;
+        if (proposed is EnergySegmentAction.None || lastAction is EnergySegmentAction.None) return proposed;
+        if (proposed == lastAction) return proposed; // continuing a run, not reversing
+        if (segmentsSinceLastAction >= config.ActionReversalCooldownSegments) return proposed;
+        // Floor defence outranks the cooldown: never refuse to charge.
+        if (proposed is EnergySegmentAction.Buy && proposedReason is EnergySegmentActionReason.Usage) return proposed;
+        return EnergySegmentAction.None;
+    }
+
+    /// <summary>
+    /// The pessimism weight to price one arbitrage leg with: the MORE pessimistic of the flat arbitrage
+    /// weight and the runway risk weight the boundary solver would apply to the same segment
+    /// (<see cref="EnergySegmentExtensions.GetRiskWeight"/>).
+    ///
+    /// Arbitrage is DISCRETIONARY where the boundary solver is MANDATORY, so it must never be the more
+    /// optimistic of the two about the same segment. Taking the max does two things:
+    ///  - Where the solver is more pessimistic (short runway, where it marks a future buy up past the
+    ///    advanced High so it charges early), arbitrage inherits that markup. Otherwise arbitrage books a
+    ///    cheap refill at a segment the solver has already decided it will not wait for — it sells now on
+    ///    the promise of a price the rest of the planner refuses to plan around.
+    ///  - Where the solver is OPTIMISTIC (deep runway: GetRiskWeight goes negative, down to
+    ///    -OptimismMaxWeight), the flat arbitrage weight wins, so a refill is never priced BELOW its
+    ///    predicted value. Deferring to the runway weight unconditionally would make arbitrage more
+    ///    aggressive exactly when the battery is full — the opposite of the intent.
+    /// Locked (materialised) legs are unaffected: WeightedPrice returns them raw whatever the weight.
+    /// </summary>
+    private static decimal LegWeight(EnergySegment segment, decimal arbitrageWeight, BatteryConfig config, decimal hourlyUsage)
+    {
+        var runway = EnergySegmentExtensions.GetHoursToEmpty(segment.EstimatedBatteryChargeKwh, config.MinCapacity, hourlyUsage);
+        return Math.Max(arbitrageWeight, EnergySegmentExtensions.GetRiskWeight(runway, config));
     }
 
     // A leg is actionable for arbitrage only when WeightedPrice yields a real price rather than the
@@ -311,9 +382,27 @@ public static class BatteryPlanner
             // MinCapacity (same one-step buffer, so arbitrage can't park on the buy trigger). The hold-window
             // levels fall by the sell leg's applied delta, which subsumes the sell segment's natural flow, so
             // predict the held level the same way.
+            //
+            // On top of the fixed one-step buffer, reserve a fraction of the drain PROJECTED SO FAR in the
+            // hold window. The one-step buffer is a structural guard (it stops arbitrage parking the
+            // projection exactly on the buy trigger); it is not, and was never sized as, a forecast-error
+            // margin. But this branch's whole premise is "the battery survives on its own until the refill",
+            // and what threatens that is error in the projected household drain — a quantity that grows with
+            // how long the pair holds, while the fixed buffer does not. A pair whose window carries 15 kWh of
+            // projected drain was being judged on the same 0.83 kWh margin as one carrying 0.3 kWh.
+            //
+            // The reserve accumulates from the sell rather than being sized on the whole window, because the
+            // error that can have built up by segment i is the error in the drain projected between the sell
+            // and i. So a short hold reserves almost nothing (little can go wrong) and a long one reserves in
+            // proportion to what has to flow through it. ArbitrageHoldDrainReserveFraction is the tolerance
+            // stated explicitly: 0.5 means "this pair must still hold if the drain runs 50% over estimate".
+            // Left at 0 (unset) the behaviour is exactly the old fixed buffer.
+            var projectedDrainSinceSell = 0m;
             for (var i = sellIndex; i < buyIndex; i++)
             {
-                if (energySegments[i].EstimatedBatteryChargeKwh - config.SegmentDischargeAmountKwh - energySegments[sellIndex].NaturalChargeDeltaKwh < config.MinCapacity + config.SegmentDischargeAmountKwh - tol)
+                projectedDrainSinceSell += energySegments[i].UsageKwh;
+                var drainErrorReserve = config.ArbitrageHoldDrainReserveFraction * projectedDrainSinceSell;
+                if (energySegments[i].EstimatedBatteryChargeKwh - config.SegmentDischargeAmountKwh - energySegments[sellIndex].NaturalChargeDeltaKwh < config.MinCapacity + config.SegmentDischargeAmountKwh + drainErrorReserve - tol)
                     return false;
             }
         }

@@ -65,7 +65,7 @@ public class BatterySolarSmoothingTests
     {
         var segs = BatteryPlanner.BuildSegments(Base.AddMinutes(offsetMin), charge, SegmentUsage, solar, prices, Cfg());
         BatteryPlanner.OptimiseSegments(segs, Cfg(), HourlyUsage);
-        BatteryPlanner.ApplyArbitrage(segs, Cfg());
+        BatteryPlanner.ApplyArbitrage(segs, Cfg(), HourlyUsage);
         return segs[0].Action;
     }
 
