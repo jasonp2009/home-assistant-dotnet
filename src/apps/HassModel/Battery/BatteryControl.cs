@@ -90,6 +90,17 @@ public class BatteryControl
 
         LogPlanningContext(energySegments, currentChargeKwh);
 
+        // A failed Amber call leaves every segment unpriced. The planner now refuses to act on an unpriced
+        // segment, so this is benign — but say so plainly: the old symptom was a bare "buy 0c sell 0c" on
+        // the decision line, which is easy to miss and reads like a real zero price.
+        var pricedSegments = energySegments.Count(segment => segment.BuyPricePerKw is not null || segment.SellPricePerKw is not null);
+        if (pricedSegments == 0)
+        {
+            _logger.LogWarning(
+                "No Amber prices for any of the {SegmentCount} segments — holding (no action). Check for 'Failed to get amber prices' above.",
+                energySegments.Count);
+        }
+
         BatteryPlanner.OptimiseSegments(energySegments, _config, hourlyUsage);
         BatteryPlanner.ApplyArbitrage(energySegments, _config, hourlyUsage);
 
