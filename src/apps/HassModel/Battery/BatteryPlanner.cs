@@ -107,6 +107,12 @@ public static class BatteryPlanner
     /// buy trigger), so a single action would directly arm the opposite action a step later — the
     /// buy/sell loop. With the buffer the battery can reach a trigger only from solar (over max) or usage
     /// (under min), never from the solver's own action.
+    ///
+    /// A segment with no usable price is excluded from the candidate set (<see cref="CanBuy"/> /
+    /// <see cref="CanSell"/>) rather than merely ranked last, so an Amber outage leaves the plan empty
+    /// instead of grid-charging "now" blind. When no candidate qualifies the loop breaks and the
+    /// projection is left out of bounds — taking no action is the correct response to not knowing the
+    /// price, and the next replan retries once prices return.
     /// </summary>
     public static void OptimiseSegments(List<EnergySegment> energySegments, BatteryConfig config, decimal hourlyUsage)
     {
@@ -121,6 +127,8 @@ public static class BatteryPlanner
                 var maxPriceSegment = energySegments
                     .Where((segment, index) =>
                         segment.Action is EnergySegmentAction.None &&
+                        // No usable sell price => no action (see CanSell).
+                        CanSell(segment) &&
                         // Post-sell level subsumes this segment's natural flow (see the apply step below),
                         // so predict it the same way to keep the one-step buffer above Min intact.
                         config.MinCapacity + config.SegmentDischargeAmountKwh <= (segment.EstimatedBatteryChargeKwh - config.SegmentDischargeAmountKwh - segment.NaturalChargeDeltaKwh) &&
@@ -147,6 +155,8 @@ public static class BatteryPlanner
                 var lowestPriceSegment = energySegments
                     .Where((segment, index) =>
                         segment.Action is EnergySegmentAction.None &&
+                        // No usable buy price => no action (see CanBuy).
+                        CanBuy(segment) &&
                         // Post-buy level subsumes this segment's natural flow (see the apply step below),
                         // so predict it the same way to keep the one-step buffer below Max intact.
                         (segment.EstimatedBatteryChargeKwh + config.SegmentChargeAmountKwh - segment.NaturalChargeDeltaKwh) <= config.MaxCapacity - config.SegmentChargeAmountKwh &&
@@ -237,7 +247,7 @@ public static class BatteryPlanner
             // the decimal.Min/MaxValue sentinel) are excluded: the net calculation below does arithmetic on the
             // leg price, which would overflow the decimal range.
             var sells = energySegments
-                .Where(s => s.Action == EnergySegmentAction.None && s.SellPricePerKw != null && HasActionableSellPrice(s))
+                .Where(s => s.Action == EnergySegmentAction.None && CanSell(s))
                 .OrderByDescending(s => s.WeightedPrice(isBuy: false, LegWeight(s, config.ArbitragePessimismWeight, config, hourlyUsage)));
 
             var committed = false;
@@ -251,7 +261,7 @@ public static class BatteryPlanner
                 // WeightedPrice); keep the buy with the best net.
                 EnergySegment? bestBuy = null;
                 var bestNet = decimal.MinValue;
-                foreach (var buy in energySegments.Where(b => b.Action == EnergySegmentAction.None && b.BuyPricePerKw != null && b != sell && !b.IsDemandWindow && HasActionableBuyPrice(b)))
+                foreach (var buy in energySegments.Where(b => b.Action == EnergySegmentAction.None && CanBuy(b) && b != sell && !b.IsDemandWindow))
                 {
                     var buyIndex = energySegments.IndexOf(buy);
                     if (!FeasiblePair(buyIndex, sellIndex, energySegments, config, tol)) continue;
@@ -353,14 +363,32 @@ public static class BatteryPlanner
         return Math.Max(arbitrageWeight, EnergySegmentExtensions.GetRiskWeight(runway, config));
     }
 
-    // A leg is actionable for arbitrage only when WeightedPrice yields a real price rather than the
-    // un-actionable sentinel (decimal.Max/MinValue). That sentinel is returned for an ESTIMATE with no
-    // advanced (ML) band — a forecast past Amber's ~24h advanced horizon. ApplyArbitrage does arithmetic
-    // on the leg price (buyCost / RoundTripEfficiency), so feeding it a sentinel overflows the decimal
-    // range; these mirror the sentinel conditions in WeightedPrice so such legs are dropped, not picked.
-    // (Candidates already require BuyPricePerKw/SellPricePerKw != null, so a locked leg is always real.)
+    // A price is actionable only when WeightedPrice yields a real number rather than the un-actionable
+    // sentinel (decimal.Max/MinValue). That sentinel is returned for an ESTIMATE with no advanced (ML)
+    // band — a forecast past Amber's ~24h advanced horizon. These mirror the sentinel conditions in
+    // WeightedPrice so such segments are dropped, not picked; ApplyArbitrage additionally needs that
+    // because it does arithmetic on the leg price (buyCost / RoundTripEfficiency), and feeding it a
+    // sentinel overflows the decimal range. Callers reach these through CanBuy/CanSell.
     private static bool HasActionableBuyPrice(EnergySegment segment) => !segment.IsBuyEstimate || segment.AdvancedBuyPrice is not null;
     private static bool HasActionableSellPrice(EnergySegment segment) => !segment.IsSellEstimate || segment.AdvancedSellPrice is not null;
+
+    /// <summary>
+    /// True when the planner may BUY on this segment: it carries a buy price AND that price is one the
+    /// planner is willing to act on (locked, or an estimate with an advanced band).
+    ///
+    /// A segment the planner cannot price must be EXCLUDED from a candidate set, not merely ranked last.
+    /// <see cref="EnergySegmentExtensions.WeightedPrice"/> returns decimal.MaxValue for such a segment so
+    /// that a priced rival always outranks it, but that only defers the action while some rival IS priced.
+    /// When the Amber call fails every segment's price is null, every candidate ties at decimal.MaxValue,
+    /// and <c>MinBy</c> hands back the FIRST element — "now" — so the planner grid-charged immediately, at
+    /// an unknown price, on every replan until connectivity returned (observed 2026-08-30 and 2026-09-01;
+    /// log signature "buy 0c sell 0c"). Ranking alone also falls through to an unpriced segment once the
+    /// priced ones are used up. With no usable price the correct action is no action.
+    /// </summary>
+    private static bool CanBuy(EnergySegment segment) => segment.BuyPricePerKw is not null && HasActionableBuyPrice(segment);
+
+    /// <summary>Sell-side counterpart of <see cref="CanBuy"/>.</summary>
+    private static bool CanSell(EnergySegment segment) => segment.SellPricePerKw is not null && HasActionableSellPrice(segment);
 
     private static bool FeasiblePair(int buyIndex, int sellIndex, List<EnergySegment> energySegments, BatteryConfig config, decimal tol)
     {
